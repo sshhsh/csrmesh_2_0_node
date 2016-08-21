@@ -1,0 +1,156 @@
+   1                 		.file	"fast_pwm.c"
+   2                 		.variant xap2+
+   3                 	
+   4                 		.small
+   5                 	
+   6                 		.section	.debug_abbrev,"",@progbits
+   7                 	.Ldebug_abbrev0:
+   8                 		.section	.debug_info,"",@progbits
+   9                 	.Ldebug_info0:
+  10                 		.section	.debug_line,"",@progbits
+  11                 	.Ldebug_line0:
+  12 0000 00 00 00 00 		.text
+  12      00 02 00 00 
+  12      00 00 01 01 
+  12      FB 0E 0D 00 
+  12      01 01 01 01 
+  13                 	.Ltext0:
+  14                 	.Letext0:
+  15                 		.section	.debug_info
+  16 0000 00 00 00 56 		.4byte	0x56
+  17 0002 00 02       		.2byte	0x2
+  18 0003 00 00 00 00 		.4byte	.Ldebug_abbrev0
+  19 0005 04          		.1byte	0x4
+  20 0005 01          		.1byte	0x1
+  21 0006 00 00 00 00 		.4byte	.LASF7
+  22 0008 01          		.1byte	0x1
+  23 0008 00 00 00 00 		.4byte	.LASF8
+  24 000a 00 00 00 00 		.4byte	.LASF9
+  25 000c 00 00 00 00 		.4byte	.Ltext0
+  26 000e 00 00 00 00 		.4byte	.Letext0
+  27 0010 00 00 00 00 		.4byte	.Ldebug_line0
+  28 0012 02          		.1byte	0x2
+  29 0013 02          		.1byte	0x2
+  30 0013 08          		.1byte	0x8
+  31 0014 00 00 00 00 		.4byte	.LASF0
+  32 0016 02          		.1byte	0x2
+  33 0016 02          		.1byte	0x2
+  34 0017 07          		.1byte	0x7
+  35 0017 00 00 00 00 		.4byte	.LASF1
+  36 0019 02          		.1byte	0x2
+  37 001a 04          		.1byte	0x4
+  38 001a 07          		.1byte	0x7
+  39 001b 00 00 00 00 		.4byte	.LASF2
+  40 001d 02          		.1byte	0x2
+  41 001d 02          		.1byte	0x2
+  42 001e 06          		.1byte	0x6
+  43 001e 00 00 00 00 		.4byte	.LASF3
+  44 0020 02          		.1byte	0x2
+  45 0021 02          		.1byte	0x2
+  46 0021 05          		.1byte	0x5
+  47 0022 00 00 00 00 		.4byte	.LASF4
+  48 0024 02          		.1byte	0x2
+  49 0024 04          		.1byte	0x4
+  50 0025 05          		.1byte	0x5
+  51 0025 00 00 00 00 		.4byte	.LASF5
+  52 0027 02          		.1byte	0x2
+  53 0028 02          		.1byte	0x2
+  54 0028 07          		.1byte	0x7
+  55 0029 00 00 00 00 		.4byte	.LASF6
+  56 002b 03          		.1byte	0x3
+  57 002b 02          		.1byte	0x2
+  58 002c 07          		.1byte	0x7
+  59 002c 00          		.1byte	0x0
+  60                 		.section	.debug_abbrev
+  61 0000 01          		.1byte	0x1
+  62 0000 11          		.1byte	0x11
+  63 0001 01          		.1byte	0x1
+  64 0001 25          		.1byte	0x25
+  65 0002 0E          		.1byte	0xe
+  66 0002 13          		.1byte	0x13
+  67 0003 0B          		.1byte	0xb
+  68 0003 03          		.1byte	0x3
+  69 0004 0E          		.1byte	0xe
+  70 0004 1B          		.1byte	0x1b
+  71 0005 0E          		.1byte	0xe
+  72 0005 11          		.1byte	0x11
+  73 0006 01          		.1byte	0x1
+  74 0006 12          		.1byte	0x12
+  75 0007 01          		.1byte	0x1
+  76 0007 10          		.1byte	0x10
+  77 0008 06          		.1byte	0x6
+  78 0008 00          		.1byte	0x0
+  79 0009 00          		.1byte	0x0
+  80 0009 02          		.1byte	0x2
+  81 000a 24          		.1byte	0x24
+  82 000a 00          		.1byte	0x0
+  83 000b 0B          		.1byte	0xb
+  84 000b 0B          		.1byte	0xb
+  85 000c 3E          		.1byte	0x3e
+  86 000c 0B          		.1byte	0xb
+  87 000d 03          		.1byte	0x3
+  88 000d 0E          		.1byte	0xe
+  89 000e 00          		.1byte	0x0
+  90 000e 00          		.1byte	0x0
+  91 000f 03          		.1byte	0x3
+  92 000f 24          		.1byte	0x24
+  93 0010 00          		.1byte	0x0
+  94 0010 0B          		.1byte	0xb
+  95 0011 0B          		.1byte	0xb
+  96 0011 3E          		.1byte	0x3e
+  97 0012 0B          		.1byte	0xb
+  98 0012 00          		.1byte	0x0
+  99 0013 00          		.1byte	0x0
+ 100 0013 00          		.1byte	0x0
+ 101                 		.section	.debug_str,"MS",@progbits,1
+ 102                 	.LASF6:
+ 103 0000 75 6E 73 69 		.ascii "unsigned int\000"
+ 103      67 6E 65 64 
+ 103      20 69 6E 74 
+ 103      00 
+ 104                 	.LASF2:
+ 105 0006 6C 6F 6E 67 		.ascii "long unsigned int\000"
+ 105      20 75 6E 73 
+ 105      69 67 6E 65 
+ 105      64 20 69 6E 
+ 105      74 00 
+ 106                 	.LASF3:
+ 107 000f 73 69 67 6E 		.ascii "signed char\000"
+ 107      65 64 20 63 
+ 107      68 61 72 00 
+ 108                 	.LASF7:
+ 109 0015 47 4E 55 20 		.ascii "GNU C 4.3.4 CSR version 28 for xap [2131110]\000"
+ 109      43 20 34 2E 
+ 109      33 2E 34 20 
+ 109      43 53 52 20 
+ 109      76 65 72 73 
+ 110                 	.LASF1:
+ 111 002c 73 68 6F 72 		.ascii "short unsigned int\000"
+ 111      74 20 75 6E 
+ 111      73 69 67 6E 
+ 111      65 64 20 69 
+ 111      6E 74 00 
+ 112                 	.LASF4:
+ 113 0035 73 68 6F 72 		.ascii "short int\000"
+ 113      74 20 69 6E 
+ 113      74 00 
+ 114                 	.LASF0:
+ 115 003a 75 6E 73 69 		.ascii "unsigned char\000"
+ 115      67 6E 65 64 
+ 115      20 63 68 61 
+ 115      72 00 
+ 116                 	.LASF5:
+ 117 0041 6C 6F 6E 67 		.ascii "long int\000"
+ 117      20 69 6E 74 
+ 117      00 
+ 118                 	.LASF8:
+ 119 0046 66 61 73 74 		.ascii "fast_pwm.c\000"
+ 119      5F 70 77 6D 
+ 119      2E 63 00 
+ 120                 	.LASF9:
+ 121 004b 43 3A 5C 63 		.ascii "C:\\csrmesh_2_0_node\\applications\\CSRmeshLight2\000"
+ 121      73 72 6D 65 
+ 121      73 68 5F 32 
+ 121      5F 30 5F 6E 
+ 121      6F 64 65 5C 
+ 122                 		.ident	"GCC: (GNU) 4.3.4 CSR version 28 for xap [2131110]"

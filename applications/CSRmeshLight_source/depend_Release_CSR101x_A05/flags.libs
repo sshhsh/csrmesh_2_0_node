@@ -1,0 +1,9 @@
+csrmesh
+light_server
+power_server
+attention_server
+data_server
+data_client
+battery_server
+otau_eeprom
+gatt_lib_ram

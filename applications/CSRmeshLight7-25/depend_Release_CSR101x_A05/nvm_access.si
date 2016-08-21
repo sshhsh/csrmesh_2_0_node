@@ -1,0 +1,1954 @@
+   1                 		.file	"nvm_access.c"
+   2                 		.variant xap2+
+   3                 	
+   4                 		.small
+   5                 	
+   6                 		.section	.debug_abbrev,"",@progbits
+   7                 	.Ldebug_abbrev0:
+   8                 		.section	.debug_info,"",@progbits
+   9                 	.Ldebug_info0:
+  10                 		.section	.debug_line,"",@progbits
+  11                 	.Ldebug_line0:
+  12 0000 00 00 00 00 		.text
+  12      00 02 00 00 
+  12      00 00 01 01 
+  12      FB 0E 0D 00 
+  12      01 01 01 01 
+  13                 	.Ltext0:
+  14                 		.section	.text.Nvm_Disable,"ax",@progbits
+  15                 		.global	Nvm_Disable
+  16                 		.type	Nvm_Disable, @function
+  17                 	Nvm_Disable:
+  18                 	.LFB2:
+  19                 		.file 1 "nvm_access.c"
+   0:nvm_access.c  **** /******************************************************************************
+   1:nvm_access.c  ****  *  Copyright 2015 Qualcomm Technologies International, Ltd.
+   2:nvm_access.c  ****  *  Bluetooth Low Energy CSRmesh 2.0
+   3:nvm_access.c  ****  *  Application version 2.0
+   4:nvm_access.c  ****  *
+   5:nvm_access.c  ****  *  FILE
+   6:nvm_access.c  ****  *      nvm_access.c
+   7:nvm_access.c  ****  *
+   8:nvm_access.c  ****  *  DESCRIPTION
+   9:nvm_access.c  ****  *      This file defines routines used by application to access NVM.
+  10:nvm_access.c  ****  *
+  11:nvm_access.c  ****  *****************************************************************************/
+  12:nvm_access.c  **** 
+  13:nvm_access.c  **** /*============================================================================*
+  14:nvm_access.c  ****  *  SDK Header Files
+  15:nvm_access.c  ****  *============================================================================*/
+  16:nvm_access.c  **** 
+  17:nvm_access.c  **** #include <pio.h>
+  18:nvm_access.c  **** #include <nvm.h>
+  19:nvm_access.c  **** #include <i2c.h>
+  20:nvm_access.c  **** #include <panic.h>
+  21:nvm_access.c  **** 
+  22:nvm_access.c  **** /*============================================================================*
+  23:nvm_access.c  ****  *  Local Header Files
+  24:nvm_access.c  ****  *============================================================================*/
+  25:nvm_access.c  **** 
+  26:nvm_access.c  **** #include "nvm_access.h"
+  27:nvm_access.c  **** #include "app_gatt.h"
+  28:nvm_access.c  **** #include "battery_hw.h"
+  29:nvm_access.c  **** /*============================================================================*
+  30:nvm_access.c  ****  *  Public Function Implementations
+  31:nvm_access.c  ****  *============================================================================*/
+  32:nvm_access.c  **** 
+  33:nvm_access.c  **** /*----------------------------------------------------------------------------*
+  34:nvm_access.c  ****  *  NAME
+  35:nvm_access.c  ****  *      Nvm_Disable
+  36:nvm_access.c  ****  *
+  37:nvm_access.c  ****  *  DESCRIPTION
+  38:nvm_access.c  ****  *      This function is used to perform things necessary to save power on NVM 
+  39:nvm_access.c  ****  *      once the read/write operations are done.
+  40:nvm_access.c  ****  *
+  41:nvm_access.c  ****  *  RETURNS
+  42:nvm_access.c  ****  *      Nothing.
+  43:nvm_access.c  ****  *
+  44:nvm_access.c  ****  *---------------------------------------------------------------------------*/
+  45:nvm_access.c  **** 
+  46:nvm_access.c  **** extern void Nvm_Disable(void)
+  47:nvm_access.c  **** {
+  20                 		#0x0001
+  21 0000 01 0B       	.LCFI0:
+  22                 		.loc 1 49 0
+  48:nvm_access.c  **** pull_mode_strong_pull_down);
+  23                 	r	NvmDisable
+  24 0001 00 00 00 00 		.loc 1 50 0
+  24      00 9C 
+  49:nvm_access.c  **** 
+  25                 	d	AL,#0x0005
+  26 0004 05 14       		bsr	PioSetI2CPullMode
+  27 0005 00 00 00 00 		.loc 1 51 0
+  27      00 9C 
+  50:nvm_access.c  **** 
+  28                 	ave	#0x0001
+  29 0008 01 0F       	.LFE2:
+  30                 		.size	Nvm_Disable, .-Nvm_Disable
+  31                 		.global	__size_of_Nvm_Disable
+  32                 		.equ	__size_of_Nvm_Disable,. - Nvm_Disable
+  33                 		.section	.text.Nvm_Write,"ax",@progbits
+  34                 		.global	Nvm_Write
+  35                 		.type	Nvm_Write, @function
+  36                 	Nvm_Write:
+  37                 	.LFB4:
+  38                 		.loc 1 118 0
+  51:nvm_access.c  **** 
+  52:nvm_access.c  **** /*----------------------------------------------------------------------------*
+  53:nvm_access.c  ****  *  NAME
+  54:nvm_access.c  ****  *      Nvm_Read
+  55:nvm_access.c  ****  *
+  56:nvm_access.c  ****  *  DESCRIPTION
+  57:nvm_access.c  ****  *      Read words from the NVM Store after preparing the NVM to be readable. 
+  58:nvm_access.c  ****  *      After the read operation, perform things necessary in slave 
+  59:nvm_access.c  ****  *      application to save power on NVM.
+  60:nvm_access.c  ****  *
+  61:nvm_access.c  ****  *      Read words starting at the word offset, and store them in the supplied
+  62:nvm_access.c  ****  *      buffer.
+  63:nvm_access.c  ****  *
+  64:nvm_access.c  ****  *  RETURNS
+  65:nvm_access.c  ****  *      The result of the NVM read operation
+  66:nvm_access.c  ****  *
+  67:nvm_access.c  ****  *---------------------------------------------------------------------------*/
+  68:nvm_access.c  **** 
+  69:nvm_access.c  **** extern bool Nvm_Read(uint16* buffer, uint16 length, uint16 offset)
+  70:nvm_access.c  **** {
+  71:nvm_access.c  ****     sys_status result;
+  72:nvm_access.c  **** 
+  73:nvm_access.c  ****     if(CheckLowBatteryVoltage())
+  74:nvm_access.c  ****     {
+  75:nvm_access.c  ****         /* As the current voltage is below the threshold voltage,do not proceed 
+  76:nvm_access.c  ****          * with the NVM Read.
+  77:nvm_access.c  ****          * Broadcast the low battery event onto the network and return.
+  78:nvm_access.c  ****          */
+  79:nvm_access.c  ****         return FALSE;
+  80:nvm_access.c  ****     }
+  81:nvm_access.c  **** 
+  82:nvm_access.c  ****     /* Read from NVM. Firmware re-enables the NVM if it is disabled */
+  83:nvm_access.c  ****     result = NvmRead(buffer, length, offset);
+  84:nvm_access.c  **** 
+  85:nvm_access.c  ****     /* Disable NVM to save power after read operation */
+  86:nvm_access.c  ****     Nvm_Disable();
+  87:nvm_access.c  **** 
+  88:nvm_access.c  ****     /* Report panic is NVM read is not successful */
+  89:nvm_access.c  ****     if(sys_status_success != result)
+  90:nvm_access.c  ****     {
+  91:nvm_access.c  ****         ReportPanic(app_panic_nvm_read);
+  92:nvm_access.c  ****     }
+  93:nvm_access.c  **** 
+  94:nvm_access.c  ****     return TRUE;
+  95:nvm_access.c  **** }
+  96:nvm_access.c  **** 
+  97:nvm_access.c  **** 
+  98:nvm_access.c  **** /*----------------------------------------------------------------------------*
+  99:nvm_access.c  ****  *  NAME
+ 100:nvm_access.c  ****  *      Nvm_Write
+ 101:nvm_access.c  ****  *
+ 102:nvm_access.c  ****  *  DESCRIPTION
+ 103:nvm_access.c  ****  *      Write words to the NVM store after preparing the NVM to be writable. 
+ 104:nvm_access.c  ****  *      After the write operation, perform things necessary in slave 
+ 105:nvm_access.c  ****  *      application to save power on NVM.
+ 106:nvm_access.c  ****  *
+ 107:nvm_access.c  ****  *      Write words from the supplied buffer into the NVM Store, starting at the
+ 108:nvm_access.c  ****  *      given word offset.
+ 109:nvm_access.c  ****  *
+ 110:nvm_access.c  ****  *  RETURNS
+ 111:nvm_access.c  ****  *      The result of the nvm write operation
+ 112:nvm_access.c  ****  *
+ 113:nvm_access.c  ****  *---------------------------------------------------------------------------*/
+ 114:nvm_access.c  **** 
+ 115:nvm_access.c  **** extern bool Nvm_Write(uint16* buffer, uint16 length, uint16 offset)
+ 116:nvm_access.c  **** {
+ 117:nvm_access.c  ****     sys_status result;
+  39                 	er	#0x0005
+  40                 	.LCFI1:
+  41 0000 05 0B       		st	AL,@(0x0002,Y)
+  42                 		st	AH,@(0x0003,Y)
+  43 0001 02 27       		.loc 1 122 0
+  44 0002 03 23       		bsr	CheckLowBatteryVoltage
+ 118:nvm_access.c  ****     /* As the current voltage is below the threshold voltage,do not proceed 
+ 119:nvm_access.c  ****          * with the NVM Read.
+ 120:nvm_access.c  ****          * Broadcast the low battery event onto the network and return.
+ 121:nvm_access.c  ****          */
+  45                 	
+  46 0003 00 00 00 00 		tst	@$XAP_AL
+  46      00 9C 
+  47                 		bne	.L8
+  48 0006 00 00 00 99 	.L4:
+  49 0008 00 00 00 00 		.loc 1 132 0
+  49      00 F0 
+  50                 		ld	AL,@(0x0005,Y)
+ 122:nvm_access.c  ****        * Broadcast the low battery event onto the network and return.
+ 123:nvm_access.c  ****          */
+ 124:nvm_access.c  ****         return ret;
+ 125:nvm_access.c  ****     }
+ 126:nvm_access.c  **** 
+ 127:nvm_access.c  ****     /* Write to NVM. Firmware re-enables the NVM if it is disabled */
+ 128:nvm_access.c  ****     result = NvmWrite(buffer, length, offset);
+ 129:nvm_access.c  **** 
+ 130:nvm_access.c  ****     /* Disable NVM to save power after write operation */
+ 131:nvm_access.c  ****     Nvm_Disable();
+  51                 	L,@(0,Y)
+  52 000b 05 17       		ld	AL,@(0x0002,Y)
+  53 000c 00 27       		ld	AH,@(0x0003,Y)
+  54 000d 02 17       		bsr	NvmWrite
+  55 000e 03 13       		st	AL,@(0x0001,Y)
+  56 000f 00 00 00 00 	.LVL2:
+  56      00 9C 
+  57 0012 01 27       		.loc 1 135 0
+  58                 		bsr	Nvm_Disable
+ 132:nvm_access.c  ****  /* Disable NVM to save power after write operation */
+ 133:nvm_access.c  ****     Nvm_Disable();
+ 134:nvm_access.c  **** 
+  59                 	138 0
+  60 0013 00 00 00 00 		tst	@(0x0001,Y)
+  60      00 9C 
+ 135:nvm_access.c  **** * Disable NVM to save power after write operation */
+ 136:nvm_access.c  ****     Nvm_Disable();
+ 137:nvm_access.c  **** 
+  61                 	ne	.L6
+  62 0016 01 9B       	.LVL3:
+  63 0017 00 00 00 00 		ld	AL,#0x0001
+  63      00 F0 
+  64                 	.LVL4:
+  65 001a 01 14       		bra	.L5
+  66                 	.LVL5:
+  67 001b 00 00 00 00 	.L6:
+  67      00 E0 
+  68                 		.loc 1 163 0
+  69                 		ld	AL,#0x0007
+ 138:nvm_access.c  **** * Disable NVM to save power after write operation */
+ 139:nvm_access.c  ****     Nvm_Disable();
+ 140:nvm_access.c  **** 
+ 141:nvm_access.c  ****     /* If NvmWrite was a success, return */
+ 142:nvm_access.c  ****     if(sys_status_success == result)
+ 143:nvm_access.c  ****     {
+ 144:nvm_access.c  ****         /* Write was successful. */
+ 145:nvm_access.c  ****         ret = TRUE;
+ 146:nvm_access.c  ****     }
+ 147:nvm_access.c  **** #ifdef NVM_TYPE_FLASH
+ 148:nvm_access.c  ****     else if(nvm_status_needs_erase == result)
+ 149:nvm_access.c  ****     {
+ 150:nvm_access.c  ****         /* The application already has a copy of NVM data in its variables,
+ 151:nvm_access.c  ****          * so we can erase the NVM 
+ 152:nvm_access.c  ****          */
+ 153:nvm_access.c  ****         Nvm_Erase();
+ 154:nvm_access.c  **** 
+ 155:nvm_access.c  ****         /* Write back the NVM data. 
+ 156:nvm_access.c  ****          * Please note that the following function writes data into NVM and 
+ 157:nvm_access.c  ****          * should not fail. 
+ 158:nvm_access.c  ****          */
+ 159:nvm_access.c  ****          WriteApplicationAndServiceDataToNVM();
+ 160:nvm_access.c  **** 
+ 161:nvm_access.c  ****         ret = TRUE;
+ 162:nvm_access.c  ****     }
+  70                 	rtPanic
+  71 001e 07 14       	.LVL6:
+  72 001f 00 00 00 00 	.L8:
+  72      00 9C 
+  73                 		ld	AL,#0x0000
+  74                 	.LVL7:
+  75 0022 00 14       	.L5:
+  76                 	.LVL8:
+  77                 		.loc 1 167 0
+  78                 		leave	#0x0005
+ 163:nvm_access.c  **** nAndServiceDataToNVM();
+ 164:nvm_access.c  **** 
+ 165:nvm_access.c  ****         ret = TRUE;
+ 166:nvm_access.c  ****     }
+  79                 	size	Nvm_Write, .-Nvm_Write
+  80 0023 05 0F       		.global	__size_of_Nvm_Write
+  81                 		.equ	__size_of_Nvm_Write,. - Nvm_Write
+  82                 		.section	.text.Nvm_Read,"ax",@progbits
+  83                 		.global	Nvm_Read
+  84                 		.type	Nvm_Read, @function
+  85                 	Nvm_Read:
+  86                 	.LFB3:
+  87                 		.loc 1 72 0
+  88                 	.LVL9:
+  89                 		enter	#0x0005
+  72:nvm_access.c  **** {
+  90                 		AL,@(0x0002,Y)
+  91                 		st	AH,@(0x0003,Y)
+  92 0000 05 0B       		.loc 1 75 0
+  93                 		bsr	CheckLowBatteryVoltage
+  94 0001 02 27       	.LVL10:
+  95 0002 03 23       		tst	@$XAP_AL
+  75:nvm_access.c  ****     if(CheckLowBatteryVoltage())
+  96                 	L10
+  97 0003 00 00 00 00 		ld	AL,#0x0000
+  97      00 9C 
+  98                 		bra	.L11
+  99 0006 00 00 00 99 	.L10:
+ 100 0008 00 00 00 00 		.loc 1 85 0
+ 100      00 F4 
+ 101 000b 00 14       		ld	AL,@(0x0005,Y)
+ 102 000c 00 00 00 00 		st	AL,@(0,Y)
+ 102      00 E0 
+ 103                 		ld	AL,@(0x0002,Y)
+  85:nvm_access.c  ****     result = NvmRead(buffer, length, offset);
+ 104                 	(0x0003,Y)
+ 105 000f 05 17       		bsr	NvmRead
+ 106 0010 00 27       		st	AL,@(0x0001,Y)
+ 107 0011 02 17       	.LVL11:
+ 108 0012 03 13       		.loc 1 88 0
+ 109 0013 00 00 00 00 		bsr	Nvm_Disable
+ 109      00 9C 
+ 110 0016 01 27       		.loc 1 91 0
+ 111                 		tst	@(0x0001,Y)
+  88:nvm_access.c  ****     Nvm_Disable();
+ 112                 	4
+ 113 0017 00 00 00 00 	.LVL12:
+ 113      00 9C 
+  91:nvm_access.c  ****     if(sys_status_success != result)
+ 114                 	12:
+ 115 001a 01 9B       		.loc 1 93 0
+ 116 001b 00 00 00 00 		ld	AL,#0x0006
+ 116      00 F4 
+ 117                 		bsr	ReportPanic
+ 118                 	.L14:
+  93:nvm_access.c  ****         ReportPanic(app_panic_nvm_read);
+ 119                 	L,#0x0001
+ 120 001e 06 14       	.LVL13:
+ 121 001f 00 00 00 00 	.L11:
+ 121      00 9C 
+ 122                 		.loc 1 97 0
+ 123 0022 01 14       		leave	#0x0005
+ 124                 	.LFE3:
+ 125                 		.size	Nvm_Read, .-Nvm_Read
+  97:nvm_access.c  **** }
+ 126                 	l	__size_of_Nvm_Read
+ 127 0023 05 0F       		.equ	__size_of_Nvm_Read,. - Nvm_Read
+ 128                 		.section	.debug_frame,"",@progbits
+ 129                 	.Lframe0:
+ 130                 		.4byte	.LECIE0-.LSCIE0
+ 131                 	.LSCIE0:
+ 132                 		.4byte	0xffffffff
+ 133                 		.1byte	0x1
+ 134 0000 00 00 00 00 		.ascii "\000"
+ 135                 		.1byte	0x1
+ 136 0002 FF FF FF FF 		.1byte	0x7f
+ 137 0004 01          		.1byte	0x3
+ 138 0004 00          		.1byte	0xc
+ 139 0005 01          		.1byte	0x5
+ 140 0005 7F          		.1byte	0x0
+ 141 0006 03          		.p2align	2
+ 142 0006 0C          	.LECIE0:
+ 143 0007 05          	.LSFDE0:
+ 144 0007 00          		.4byte	.LEFDE0-.LASFDE0
+ 145                 	.LASFDE0:
+ 146                 		.4byte	.Lframe0
+ 147                 		.4byte	.LFB2
+ 148 0008 00 00 00 00 		.4byte	.LFE2-.LFB2
+ 149                 		.1byte	0x4
+ 150 000a 00 00 00 00 		.4byte	.LCFI0-.LFB2
+ 151 000c 00 00 00 00 		.1byte	0xe
+ 152 000e 00 00 00 00 		.1byte	0x1
+ 153 0010 41          		.1byte	0x83
+ 154                 		.1byte	0x1
+ 155 0010 0E          		.p2align	2
+ 156 0011 01          	.LEFDE0:
+ 157 0011 83          	.LSFDE2:
+ 158 0012 01          		.4byte	.LEFDE2-.LASFDE2
+ 159 0012 00 00 00    	.LASFDE2:
+ 160                 		.4byte	.Lframe0
+ 161                 		.4byte	.LFB4
+ 162 0014 00 00 00 00 		.4byte	.LFE4-.LFB4
+ 163                 		.1byte	0x4
+ 164 0016 00 00 00 00 		.4byte	.LCFI1-.LFB4
+ 165 0018 00 00 00 00 		.1byte	0xe
+ 166 001a 00 00 00 00 		.1byte	0x5
+ 167 001c 41          		.1byte	0x83
+ 168                 		.1byte	0x1
+ 169 001c 0E          		.p2align	2
+ 170 001d 05          	.LEFDE2:
+ 171 001d 83          	.LSFDE4:
+ 172 001e 01          		.4byte	.LEFDE4-.LASFDE4
+ 173 001e 00 00 00    	.LASFDE4:
+ 174                 		.4byte	.Lframe0
+ 175                 		.4byte	.LFB3
+ 176 0020 00 00 00 00 		.4byte	.LFE3-.LFB3
+ 177                 		.1byte	0x4
+ 178 0022 00 00 00 00 		.4byte	.LCFI2-.LFB3
+ 179 0024 00 00 00 00 		.1byte	0xe
+ 180 0026 00 00 00 00 		.1byte	0x5
+ 181 0028 41          		.1byte	0x83
+ 182                 		.1byte	0x1
+ 183 0028 0E          		.p2align	2
+ 184 0029 05          	.LEFDE4:
+ 185 0029 83          		.text
+ 186 002a 01          	.Letext0:
+ 187 002a 00 00 00    		.section	.debug_loc,"",@progbits
+ 188                 	.Ldebug_loc0:
+ 189                 	.LLST0:
+ 190                 		.4byte	.LFB2
+ 191                 		.4byte	.LCFI0
+ 192                 		.2byte	0x1
+ 193                 		.1byte	0x55
+ 194 0000 00 00 00 00 		.4byte	.LCFI0
+ 195 0002 00 00 00 00 		.4byte	.LFE2
+ 196 0004 00 01       		.2byte	0x2
+ 197 0005 55          		.1byte	0x75
+ 198 0005 00 00 00 00 		.1byte	0x1
+ 199 0007 00 00 00 00 		.4byte	0x0
+ 200 0009 00 02       		.4byte	0x0
+ 201 000a 75          	.LLST1:
+ 202 000b 01          		.4byte	.LFB4
+ 203 000b 00 00 00 00 		.4byte	.LCFI1
+ 204 000d 00 00 00 00 		.2byte	0x1
+ 205                 		.1byte	0x55
+ 206 000f 00 00 00 00 		.4byte	.LCFI1
+ 207 0011 00 00 00 00 		.4byte	.LFE4
+ 208 0013 00 01       		.2byte	0x2
+ 209 0014 55          		.1byte	0x75
+ 210 0015 00 00 00 00 		.1byte	0x5
+ 211 0017 00 00 00 00 		.4byte	0x0
+ 212 0019 00 02       		.4byte	0x0
+ 213 001a 75          	.LLST2:
+ 214 001a 05          		.4byte	.LVL0
+ 215 001b 00 00 00 00 		.4byte	.LVL1
+ 216 001d 00 00 00 00 		.2byte	0x1
+ 217                 		.1byte	0x51
+ 218 001f 00 00 00 00 		.4byte	.LVL1
+ 219 0021 00 00 00 00 		.4byte	.LFE4
+ 220 0023 00 01       		.2byte	0x2
+ 221 0024 51          		.1byte	0x76
+ 222 0024 00 00 00 00 		.1byte	0x2
+ 223 0026 00 00 00 00 		.4byte	0x0
+ 224 0028 00 02       		.4byte	0x0
+ 225 0029 76          	.LLST3:
+ 226 002a 02          		.4byte	.LVL0
+ 227 002a 00 00 00 00 		.4byte	.LVL1
+ 228 002c 00 00 00 00 		.2byte	0x1
+ 229                 		.1byte	0x50
+ 230 002e 00 00 00 00 		.4byte	.LVL1
+ 231 0030 00 00 00 00 		.4byte	.LFE4
+ 232 0032 00 01       		.2byte	0x2
+ 233 0033 50          		.1byte	0x76
+ 234 0034 00 00 00 00 		.1byte	0x3
+ 235 0036 00 00 00 00 		.4byte	0x0
+ 236 0038 00 02       		.4byte	0x0
+ 237 0039 76          	.LLST4:
+ 238 0039 03          		.4byte	.LVL0
+ 239 003a 00 00 00 00 		.4byte	.LVL3
+ 240 003c 00 00 00 00 		.2byte	0x2
+ 241                 		.1byte	0x91
+ 242 003e 00 00 00 00 		.1byte	0x0
+ 243 0040 00 00 00 00 		.4byte	.LVL3
+ 244 0042 00 02       		.4byte	.LVL6
+ 245 0043 91          		.2byte	0x2
+ 246 0043 00          		.1byte	0x76
+ 247 0044 00 00 00 00 		.1byte	0x5
+ 248 0046 00 00 00 00 		.4byte	.LVL6
+ 249 0048 00 02       		.4byte	.LFE4
+ 250 0049 76          		.2byte	0x2
+ 251 0049 05          		.1byte	0x91
+ 252 004a 00 00 00 00 		.1byte	0x0
+ 253 004c 00 00 00 00 		.4byte	0x0
+ 254 004e 00 02       		.4byte	0x0
+ 255 004f 91          	.LLST5:
+ 256 004f 00          		.4byte	.LVL4
+ 257 0050 00 00 00 00 		.4byte	.LVL5
+ 258 0052 00 00 00 00 		.2byte	0x1
+ 259                 		.1byte	0x51
+ 260 0054 00 00 00 00 		.4byte	.LVL7
+ 261 0056 00 00 00 00 		.4byte	.LVL8
+ 262 0058 00 01       		.2byte	0x1
+ 263 0059 51          		.1byte	0x51
+ 264 0059 00 00 00 00 		.4byte	0x0
+ 265 005b 00 00 00 00 		.4byte	0x0
+ 266 005d 00 01       	.LLST6:
+ 267 005e 51          		.4byte	.LFB3
+ 268 005f 00 00 00 00 		.4byte	.LCFI2
+ 269 0061 00 00 00 00 		.2byte	0x1
+ 270                 		.1byte	0x55
+ 271 0063 00 00 00 00 		.4byte	.LCFI2
+ 272 0065 00 00 00 00 		.4byte	.LFE3
+ 273 0067 00 01       		.2byte	0x2
+ 274 0068 55          		.1byte	0x75
+ 275 0068 00 00 00 00 		.1byte	0x5
+ 276 006a 00 00 00 00 		.4byte	0x0
+ 277 006c 00 02       		.4byte	0x0
+ 278 006d 75          	.LLST7:
+ 279 006e 05          		.4byte	.LVL9
+ 280 006e 00 00 00 00 		.4byte	.LVL10
+ 281 0070 00 00 00 00 		.2byte	0x1
+ 282                 		.1byte	0x51
+ 283 0072 00 00 00 00 		.4byte	.LVL10
+ 284 0074 00 00 00 00 		.4byte	.LFE3
+ 285 0076 00 01       		.2byte	0x2
+ 286 0077 51          		.1byte	0x76
+ 287 0078 00 00 00 00 		.1byte	0x2
+ 288 007a 00 00 00 00 		.4byte	0x0
+ 289 007c 00 02       		.4byte	0x0
+ 290 007d 76          	.LLST8:
+ 291 007d 02          		.4byte	.LVL9
+ 292 007e 00 00 00 00 		.4byte	.LVL10
+ 293 0080 00 00 00 00 		.2byte	0x1
+ 294                 		.1byte	0x50
+ 295 0082 00 00 00 00 		.4byte	.LVL10
+ 296 0084 00 00 00 00 		.4byte	.LFE3
+ 297 0086 00 01       		.2byte	0x2
+ 298 0087 50          		.1byte	0x76
+ 299 0087 00 00 00 00 		.1byte	0x3
+ 300 0089 00 00 00 00 		.4byte	0x0
+ 301 008b 00 02       		.4byte	0x0
+ 302 008c 76          	.LLST9:
+ 303 008d 03          		.4byte	.LVL9
+ 304 008d 00 00 00 00 		.4byte	.LVL12
+ 305 008f 00 00 00 00 		.2byte	0x2
+ 306                 		.1byte	0x91
+ 307 0091 00 00 00 00 		.1byte	0x0
+ 308 0093 00 00 00 00 		.4byte	.LVL12
+ 309 0095 00 02       		.4byte	.LVL13
+ 310 0096 91          		.2byte	0x2
+ 311 0097 00          		.1byte	0x76
+ 312 0097 00 00 00 00 		.1byte	0x5
+ 313 0099 00 00 00 00 		.4byte	.LVL13
+ 314 009b 00 02       		.4byte	.LFE3
+ 315 009c 76          		.2byte	0x2
+ 316 009d 05          		.1byte	0x91
+ 317 009d 00 00 00 00 		.1byte	0x0
+ 318 009f 00 00 00 00 		.4byte	0x0
+ 319 00a1 00 02       		.4byte	0x0
+ 320 00a2 91          		.file 2 "C:/CSR_uEnergy_SDK-2.5.1/tools/include/CSR101x_A05/types.h"
+ 321 00a3 00          		.file 3 "C:/CSR_uEnergy_SDK-2.5.1/tools/include/CSR101x_A05/status.h"
+ 322 00a3 00 00 00 00 		.file 4 "C:/CSR_uEnergy_SDK-2.5.1/tools/include/CSR101x_A05/pio.h"
+ 323 00a5 00 00 00 00 		.file 5 "app_gatt.h"
+ 324                 		.section	.debug_info
+ 325                 		.4byte	0x42e
+ 326                 		.2byte	0x2
+ 327                 		.4byte	.Ldebug_abbrev0
+ 328                 		.1byte	0x4
+ 329 0000 00 00 04 2E 		.1byte	0x1
+ 330 0002 00 02       		.4byte	.LASF118
+ 331 0003 00 00 00 00 		.1byte	0x1
+ 332 0005 04          		.4byte	.LASF119
+ 333 0005 01          		.4byte	.LASF120
+ 334 0006 00 00 00 00 		.4byte	0x0
+ 335 0008 01          		.4byte	0x0
+ 336 0008 00 00 00 00 		.4byte	.Ldebug_ranges0+0x0
+ 337 000a 00 00 00 00 		.4byte	.Ldebug_line0
+ 338 000c 00 00 00 00 		.1byte	0x2
+ 339 000e 00 00 00 00 		.1byte	0x2
+ 340 0010 00 00 00 00 		.1byte	0x8
+ 341 0012 00 00 00 00 		.4byte	.LASF0
+ 342 0014 02          		.1byte	0x3
+ 343 0015 02          		.4byte	.LASF6
+ 344 0015 08          		.1byte	0x2
+ 345 0016 00 00 00 00 		.1byte	0x1f
+ 346 0018 03          		.4byte	0x3b
+ 347 0018 00 00 00 00 		.1byte	0x2
+ 348 001a 02          		.1byte	0x2
+ 349 001b 1F          		.1byte	0x7
+ 350 001b 00 00 00 3B 		.4byte	.LASF1
+ 351 001d 02          		.1byte	0x2
+ 352 001e 02          		.1byte	0x4
+ 353 001e 07          		.1byte	0x7
+ 354 001f 00 00 00 00 		.4byte	.LASF2
+ 355 0021 02          		.1byte	0x2
+ 356 0021 04          		.1byte	0x2
+ 357 0022 07          		.1byte	0x6
+ 358 0022 00 00 00 00 		.4byte	.LASF3
+ 359 0024 02          		.1byte	0x2
+ 360 0025 02          		.1byte	0x2
+ 361 0025 06          		.1byte	0x5
+ 362 0026 00 00 00 00 		.4byte	.LASF4
+ 363 0028 02          		.1byte	0x2
+ 364 0028 02          		.1byte	0x4
+ 365 0029 05          		.1byte	0x5
+ 366 0029 00 00 00 00 		.4byte	.LASF5
+ 367 002b 02          		.1byte	0x3
+ 368 002c 04          		.4byte	.LASF7
+ 369 002c 05          		.1byte	0x2
+ 370 002d 00 00 00 00 		.1byte	0x2a
+ 371 002f 03          		.4byte	0x69
+ 372 002f 00 00 00 00 		.1byte	0x2
+ 373 0031 02          		.1byte	0x2
+ 374 0032 2A          		.1byte	0x7
+ 375 0032 00 00 00 69 		.4byte	.LASF8
+ 376 0034 02          		.1byte	0x4
+ 377 0035 02          		.1byte	0x2
+ 378 0035 07          		.1byte	0x3
+ 379 0036 00 00 00 00 		.1byte	0x39
+ 380 0038 04          		.4byte	0x2a9
+ 381 0038 02          		.1byte	0x5
+ 382 0039 03          		.4byte	.LASF9
+ 383 0039 39          		.1byte	0x0
+ 384 003a 00 00 02 A9 		.1byte	0x5
+ 385 003c 05          		.4byte	.LASF10
+ 386 003c 00 00 00 00 		.1byte	0x80,0x2
+ 387 003e 00          		.1byte	0x5
+ 388 003f 05          		.4byte	.LASF11
+ 389 003f 00 00 00 00 		.1byte	0x81,0x2
+ 390 0041 80 02       		.1byte	0x5
+ 391 0042 05          		.4byte	.LASF12
+ 392 0043 00 00 00 00 		.1byte	0x82,0x2
+ 393 0045 81 02       		.1byte	0x5
+ 394 0046 05          		.4byte	.LASF13
+ 395 0046 00 00 00 00 		.1byte	0x83,0x2
+ 396 0048 82 02       		.1byte	0x5
+ 397 0049 05          		.4byte	.LASF14
+ 398 004a 00 00 00 00 		.1byte	0x84,0x2
+ 399 004c 83 02       		.1byte	0x5
+ 400 004d 05          		.4byte	.LASF15
+ 401 004d 00 00 00 00 		.1byte	0x85,0x2
+ 402 004f 84 02       		.1byte	0x5
+ 403 0050 05          		.4byte	.LASF16
+ 404 0051 00 00 00 00 		.1byte	0x80,0x4
+ 405 0053 85 02       		.1byte	0x5
+ 406 0054 05          		.4byte	.LASF17
+ 407 0054 00 00 00 00 		.1byte	0x81,0x4
+ 408 0056 80 04       		.1byte	0x5
+ 409 0057 05          		.4byte	.LASF18
+ 410 0058 00 00 00 00 		.1byte	0x82,0x4
+ 411 005a 81 04       		.1byte	0x5
+ 412 005b 05          		.4byte	.LASF19
+ 413 005b 00 00 00 00 		.1byte	0x83,0x4
+ 414 005d 82 04       		.1byte	0x5
+ 415 005e 05          		.4byte	.LASF20
+ 416 005f 00 00 00 00 		.1byte	0x84,0x4
+ 417 0061 83 04       		.1byte	0x5
+ 418 0062 05          		.4byte	.LASF21
+ 419 0062 00 00 00 00 		.1byte	0x85,0x4
+ 420 0064 84 04       		.1byte	0x5
+ 421 0065 05          		.4byte	.LASF22
+ 422 0066 00 00 00 00 		.1byte	0x86,0x4
+ 423 0068 85 04       		.1byte	0x5
+ 424 0069 05          		.4byte	.LASF23
+ 425 0069 00 00 00 00 		.1byte	0x87,0x4
+ 426 006b 86 04       		.1byte	0x5
+ 427 006c 05          		.4byte	.LASF24
+ 428 006d 00 00 00 00 		.1byte	0x88,0x4
+ 429 006f 87 04       		.1byte	0x5
+ 430 0070 05          		.4byte	.LASF25
+ 431 0070 00 00 00 00 		.1byte	0x89,0x4
+ 432 0072 88 04       		.1byte	0x5
+ 433 0073 05          		.4byte	.LASF26
+ 434 0074 00 00 00 00 		.1byte	0x8a,0x4
+ 435 0076 89 04       		.1byte	0x5
+ 436 0077 05          		.4byte	.LASF27
+ 437 0077 00 00 00 00 		.1byte	0x8b,0x4
+ 438 0079 8A 04       		.1byte	0x5
+ 439 007a 05          		.4byte	.LASF28
+ 440 007b 00 00 00 00 		.1byte	0x80,0x6
+ 441 007d 8B 04       		.1byte	0x5
+ 442 007e 05          		.4byte	.LASF29
+ 443 007e 00 00 00 00 		.1byte	0x81,0x6
+ 444 0080 80 06       		.1byte	0x5
+ 445 0081 05          		.4byte	.LASF30
+ 446 0082 00 00 00 00 		.1byte	0x82,0x6
+ 447 0084 81 06       		.1byte	0x5
+ 448 0085 05          		.4byte	.LASF31
+ 449 0085 00 00 00 00 		.1byte	0x83,0x6
+ 450 0087 82 06       		.1byte	0x5
+ 451 0088 05          		.4byte	.LASF32
+ 452 0089 00 00 00 00 		.1byte	0x84,0x6
+ 453 008b 83 06       		.1byte	0x5
+ 454 008c 05          		.4byte	.LASF33
+ 455 008c 00 00 00 00 		.1byte	0x85,0x6
+ 456 008e 84 06       		.1byte	0x5
+ 457 008f 05          		.4byte	.LASF34
+ 458 0090 00 00 00 00 		.1byte	0x80,0x10
+ 459 0092 85 06       		.1byte	0x5
+ 460 0093 05          		.4byte	.LASF35
+ 461 0093 00 00 00 00 		.1byte	0x81,0x10
+ 462 0095 80 10       		.1byte	0x5
+ 463 0096 05          		.4byte	.LASF36
+ 464 0097 00 00 00 00 		.1byte	0x82,0x10
+ 465 0099 81 10       		.1byte	0x5
+ 466 009a 05          		.4byte	.LASF37
+ 467 009a 00 00 00 00 		.1byte	0x83,0x10
+ 468 009c 82 10       		.1byte	0x5
+ 469 009d 05          		.4byte	.LASF38
+ 470 009e 00 00 00 00 		.1byte	0x80,0x12
+ 471 00a0 83 10       		.1byte	0x5
+ 472 00a1 05          		.4byte	.LASF39
+ 473 00a1 00 00 00 00 		.1byte	0x81,0x14
+ 474 00a3 80 12       		.1byte	0x5
+ 475 00a4 05          		.4byte	.LASF40
+ 476 00a5 00 00 00 00 		.1byte	0x82,0x14
+ 477 00a7 81 14       		.1byte	0x5
+ 478 00a8 05          		.4byte	.LASF41
+ 479 00a8 00 00 00 00 		.1byte	0x83,0x14
+ 480 00aa 82 14       		.1byte	0x5
+ 481 00ab 05          		.4byte	.LASF42
+ 482 00ac 00 00 00 00 		.1byte	0x84,0x14
+ 483 00ae 83 14       		.1byte	0x5
+ 484 00af 05          		.4byte	.LASF43
+ 485 00af 00 00 00 00 		.1byte	0x85,0x14
+ 486 00b1 84 14       		.1byte	0x5
+ 487 00b2 05          		.4byte	.LASF44
+ 488 00b3 00 00 00 00 		.1byte	0x86,0x14
+ 489 00b5 85 14       		.1byte	0x5
+ 490 00b6 05          		.4byte	.LASF45
+ 491 00b6 00 00 00 00 		.1byte	0x87,0x14
+ 492 00b8 86 14       		.1byte	0x5
+ 493 00b9 05          		.4byte	.LASF46
+ 494 00ba 00 00 00 00 		.1byte	0x88,0x14
+ 495 00bc 87 14       		.1byte	0x5
+ 496 00bd 05          		.4byte	.LASF47
+ 497 00bd 00 00 00 00 		.1byte	0x89,0x14
+ 498 00bf 88 14       		.1byte	0x5
+ 499 00c0 05          		.4byte	.LASF48
+ 500 00c1 00 00 00 00 		.1byte	0x8a,0x14
+ 501 00c3 89 14       		.1byte	0x5
+ 502 00c4 05          		.4byte	.LASF49
+ 503 00c4 00 00 00 00 		.1byte	0x8b,0x14
+ 504 00c6 8A 14       		.1byte	0x5
+ 505 00c7 05          		.4byte	.LASF50
+ 506 00c8 00 00 00 00 		.1byte	0x8c,0x14
+ 507 00ca 8B 14       		.1byte	0x5
+ 508 00cb 05          		.4byte	.LASF51
+ 509 00cb 00 00 00 00 		.1byte	0x8d,0x14
+ 510 00cd 8C 14       		.1byte	0x5
+ 511 00ce 05          		.4byte	.LASF52
+ 512 00cf 00 00 00 00 		.1byte	0x8e,0x14
+ 513 00d1 8D 14       		.1byte	0x5
+ 514 00d2 05          		.4byte	.LASF53
+ 515 00d2 00 00 00 00 		.1byte	0x8f,0x14
+ 516 00d4 8E 14       		.1byte	0x5
+ 517 00d5 05          		.4byte	.LASF54
+ 518 00d6 00 00 00 00 		.1byte	0x90,0x14
+ 519 00d8 8F 14       		.1byte	0x5
+ 520 00d9 05          		.4byte	.LASF55
+ 521 00d9 00 00 00 00 		.1byte	0x91,0x14
+ 522 00db 90 14       		.1byte	0x5
+ 523 00dc 05          		.4byte	.LASF56
+ 524 00dd 00 00 00 00 		.1byte	0xb3,0x14
+ 525 00df 91 14       		.1byte	0x5
+ 526 00e0 05          		.4byte	.LASF57
+ 527 00e0 00 00 00 00 		.1byte	0xb4,0x14
+ 528 00e2 B3 14       		.1byte	0x5
+ 529 00e3 05          		.4byte	.LASF58
+ 530 00e4 00 00 00 00 		.1byte	0xb5,0x14
+ 531 00e6 B4 14       		.1byte	0x5
+ 532 00e7 05          		.4byte	.LASF59
+ 533 00e7 00 00 00 00 		.1byte	0xb6,0x14
+ 534 00e9 B5 14       		.1byte	0x5
+ 535 00ea 05          		.4byte	.LASF60
+ 536 00eb 00 00 00 00 		.1byte	0xb7,0x14
+ 537 00ed B6 14       		.1byte	0x5
+ 538 00ee 05          		.4byte	.LASF61
+ 539 00ee 00 00 00 00 		.1byte	0xb8,0x14
+ 540 00f0 B7 14       		.1byte	0x5
+ 541 00f1 05          		.4byte	.LASF62
+ 542 00f2 00 00 00 00 		.1byte	0xb9,0x14
+ 543 00f4 B8 14       		.1byte	0x5
+ 544 00f5 05          		.4byte	.LASF63
+ 545 00f5 00 00 00 00 		.1byte	0xba,0x14
+ 546 00f7 B9 14       		.1byte	0x5
+ 547 00f8 05          		.4byte	.LASF64
+ 548 00f9 00 00 00 00 		.1byte	0xbb,0x14
+ 549 00fb BA 14       		.1byte	0x5
+ 550 00fc 05          		.4byte	.LASF65
+ 551 00fc 00 00 00 00 		.1byte	0xbc,0x14
+ 552 00fe BB 14       		.1byte	0x5
+ 553 00ff 05          		.4byte	.LASF66
+ 554 0100 00 00 00 00 		.1byte	0xbd,0x14
+ 555 0102 BC 14       		.1byte	0x5
+ 556 0103 05          		.4byte	.LASF67
+ 557 0103 00 00 00 00 		.1byte	0xbf,0x14
+ 558 0105 BD 14       		.1byte	0x5
+ 559 0106 05          		.4byte	.LASF68
+ 560 0107 00 00 00 00 		.1byte	0xc0,0x14
+ 561 0109 BF 14       		.1byte	0x5
+ 562 010a 05          		.4byte	.LASF69
+ 563 010a 00 00 00 00 		.1byte	0xc1,0x14
+ 564 010c C0 14       		.1byte	0x5
+ 565 010d 05          		.4byte	.LASF70
+ 566 010e 00 00 00 00 		.1byte	0xc2,0x14
+ 567 0110 C1 14       		.1byte	0x5
+ 568 0111 05          		.4byte	.LASF71
+ 569 0111 00 00 00 00 		.1byte	0xc3,0x14
+ 570 0113 C2 14       		.1byte	0x5
+ 571 0114 05          		.4byte	.LASF72
+ 572 0115 00 00 00 00 		.1byte	0x80,0x15
+ 573 0117 C3 14       		.1byte	0x5
+ 574 0118 05          		.4byte	.LASF73
+ 575 0118 00 00 00 00 		.1byte	0x80,0x15
+ 576 011a 80 15       		.1byte	0x5
+ 577 011b 05          		.4byte	.LASF74
+ 578 011c 00 00 00 00 		.1byte	0xff,0x15
+ 579 011e 80 15       		.1byte	0x5
+ 580 011f 05          		.4byte	.LASF75
+ 581 011f 00 00 00 00 		.1byte	0x80,0x16
+ 582 0121 FF 15       		.1byte	0x5
+ 583 0122 05          		.4byte	.LASF76
+ 584 0123 00 00 00 00 		.1byte	0x81,0x16
+ 585 0125 80 16       		.1byte	0x5
+ 586 0126 05          		.4byte	.LASF77
+ 587 0126 00 00 00 00 		.1byte	0x82,0x16
+ 588 0128 81 16       		.1byte	0x5
+ 589 0129 05          		.4byte	.LASF78
+ 590 012a 00 00 00 00 		.1byte	0x83,0x16
+ 591 012c 82 16       		.1byte	0x5
+ 592 012d 05          		.4byte	.LASF79
+ 593 012d 00 00 00 00 		.1byte	0x84,0x16
+ 594 012f 83 16       		.1byte	0x5
+ 595 0130 05          		.4byte	.LASF80
+ 596 0131 00 00 00 00 		.1byte	0x85,0x16
+ 597 0133 84 16       		.1byte	0x5
+ 598 0134 05          		.4byte	.LASF81
+ 599 0134 00 00 00 00 		.1byte	0x86,0x16
+ 600 0136 85 16       		.1byte	0x5
+ 601 0137 05          		.4byte	.LASF82
+ 602 0138 00 00 00 00 		.1byte	0x87,0x16
+ 603 013a 86 16       		.1byte	0x5
+ 604 013b 05          		.4byte	.LASF83
+ 605 013b 00 00 00 00 		.1byte	0x88,0x16
+ 606 013d 87 16       		.1byte	0x5
+ 607 013e 05          		.4byte	.LASF84
+ 608 013f 00 00 00 00 		.1byte	0x89,0x16
+ 609 0141 88 16       		.1byte	0x5
+ 610 0142 05          		.4byte	.LASF85
+ 611 0142 00 00 00 00 		.1byte	0x8a,0x16
+ 612 0144 89 16       		.1byte	0x5
+ 613 0145 05          		.4byte	.LASF86
+ 614 0146 00 00 00 00 		.1byte	0xff,0x16
+ 615 0148 8A 16       		.1byte	0x5
+ 616 0149 05          		.4byte	.LASF87
+ 617 0149 00 00 00 00 		.1byte	0x80,0x17
+ 618 014b FF 16       		.1byte	0x5
+ 619 014c 05          		.4byte	.LASF88
+ 620 014d 00 00 00 00 		.1byte	0xff,0xff,0x3
+ 621 014f 80 17       		.1byte	0x0
+ 622 0150 05          		.1byte	0x3
+ 623 0150 00 00 00 00 		.4byte	.LASF89
+ 624 0152 FF FF 03    		.1byte	0x3
+ 625 0154 00          		.1byte	0xd3
+ 626 0154 03          		.4byte	0x70
+ 627 0155 00 00 00 00 		.1byte	0x4
+ 628 0157 03          		.1byte	0x2
+ 629 0157 D3          		.1byte	0x4
+ 630 0158 00 00 00 70 		.1byte	0xa7
+ 631 015a 04          		.4byte	0x2e7
+ 632 015a 02          		.1byte	0x5
+ 633 015b 04          		.4byte	.LASF90
+ 634 015b A7          		.1byte	0x0
+ 635 015c 00 00 02 E7 		.1byte	0x5
+ 636 015e 05          		.4byte	.LASF91
+ 637 015e 00 00 00 00 		.1byte	0x1
+ 638 0160 00          		.1byte	0x5
+ 639 0161 05          		.4byte	.LASF92
+ 640 0161 00 00 00 00 		.1byte	0x3
+ 641 0163 01          		.1byte	0x5
+ 642 0164 05          		.4byte	.LASF93
+ 643 0164 00 00 00 00 		.1byte	0x5
+ 644 0166 03          		.1byte	0x5
+ 645 0167 05          		.4byte	.LASF94
+ 646 0167 00 00 00 00 		.1byte	0x7
+ 647 0169 05          		.1byte	0x5
+ 648 016a 05          		.4byte	.LASF95
+ 649 016a 00 00 00 00 		.1byte	0x9
+ 650 016c 07          		.1byte	0x5
+ 651 016d 05          		.4byte	.LASF96
+ 652 016d 00 00 00 00 		.1byte	0xd
+ 653 016f 09          		.1byte	0x0
+ 654 0170 05          		.1byte	0x6
+ 655 0170 00 00 00 00 		.1byte	0x2
+ 656 0172 0D          		.1byte	0x7
+ 657 0173 00          		.1byte	0x4
+ 658 0173 06          		.1byte	0x2
+ 659 0174 02          		.1byte	0x5
+ 660 0174 07          		.1byte	0x6e
+ 661 0175 04          		.4byte	0x359
+ 662 0175 02          		.1byte	0x5
+ 663 0176 05          		.4byte	.LASF97
+ 664 0176 6E          		.1byte	0x1
+ 665 0177 00 00 03 59 		.1byte	0x5
+ 666 0179 05          		.4byte	.LASF98
+ 667 0179 00 00 00 00 		.1byte	0x2
+ 668 017b 01          		.1byte	0x5
+ 669 017c 05          		.4byte	.LASF99
+ 670 017c 00 00 00 00 		.1byte	0x3
+ 671 017e 02          		.1byte	0x5
+ 672 017f 05          		.4byte	.LASF100
+ 673 017f 00 00 00 00 		.1byte	0x4
+ 674 0181 03          		.1byte	0x5
+ 675 0182 05          		.4byte	.LASF101
+ 676 0182 00 00 00 00 		.1byte	0x5
+ 677 0184 04          		.1byte	0x5
+ 678 0185 05          		.4byte	.LASF102
+ 679 0185 00 00 00 00 		.1byte	0x6
+ 680 0187 05          		.1byte	0x5
+ 681 0188 05          		.4byte	.LASF103
+ 682 0188 00 00 00 00 		.1byte	0x7
+ 683 018a 06          		.1byte	0x5
+ 684 018b 05          		.4byte	.LASF104
+ 685 018b 00 00 00 00 		.1byte	0x8
+ 686 018d 07          		.1byte	0x5
+ 687 018e 05          		.4byte	.LASF105
+ 688 018e 00 00 00 00 		.1byte	0x9
+ 689 0190 08          		.1byte	0x5
+ 690 0191 05          		.4byte	.LASF106
+ 691 0191 00 00 00 00 		.1byte	0xa
+ 692 0193 09          		.1byte	0x5
+ 693 0194 05          		.4byte	.LASF107
+ 694 0194 00 00 00 00 		.1byte	0xb
+ 695 0196 0A          		.1byte	0x5
+ 696 0197 05          		.4byte	.LASF108
+ 697 0197 00 00 00 00 		.1byte	0xc
+ 698 0199 0B          		.1byte	0x5
+ 699 019a 05          		.4byte	.LASF109
+ 700 019a 00 00 00 00 		.1byte	0xd
+ 701 019c 0C          		.1byte	0x5
+ 702 019d 05          		.4byte	.LASF110
+ 703 019d 00 00 00 00 		.1byte	0xe
+ 704 019f 0D          		.1byte	0x5
+ 705 01a0 05          		.4byte	.LASF111
+ 706 01a0 00 00 00 00 		.1byte	0xf
+ 707 01a2 0E          		.1byte	0x5
+ 708 01a3 05          		.4byte	.LASF112
+ 709 01a3 00 00 00 00 		.1byte	0x10
+ 710 01a5 0F          		.1byte	0x5
+ 711 01a6 05          		.4byte	.LASF113
+ 712 01a6 00 00 00 00 		.1byte	0x11
+ 713 01a8 10          		.1byte	0x0
+ 714 01a9 05          		.1byte	0x7
+ 715 01a9 00 00 00 00 		.1byte	0x1
+ 716 01ab 11          		.4byte	.LASF121
+ 717 01ac 00          		.1byte	0x1
+ 718 01ac 07          		.1byte	0x30
+ 719 01ad 01          		.1byte	0x1
+ 720 01ad 00 00 00 00 		.4byte	.LFB2
+ 721 01af 01          		.4byte	.LFE2
+ 722 01b0 30          		.4byte	.LLST0
+ 723 01b0 01          		.1byte	0x8
+ 724 01b1 00 00 00 00 		.1byte	0x1
+ 725 01b3 00 00 00 00 		.4byte	.LASF122
+ 726 01b5 00 00 00 00 		.1byte	0x1
+ 727 01b7 08          		.1byte	0x76
+ 728 01b7 01          		.1byte	0x1
+ 729 01b8 00 00 00 00 		.4byte	0x5e
+ 730 01ba 01          		.4byte	.LFB4
+ 731 01ba 76          		.4byte	.LFE4
+ 732 01bb 01          		.4byte	.LLST1
+ 733 01bb 00 00 00 5E 		.4byte	0x3d6
+ 734 01bd 00 00 00 00 		.1byte	0x9
+ 735 01bf 00 00 00 00 		.4byte	.LASF114
+ 736 01c1 00 00 00 00 		.1byte	0x1
+ 737 01c3 00 00 03 D6 		.1byte	0x75
+ 738 01c5 09          		.4byte	0x3d6
+ 739 01c6 00 00 00 00 		.4byte	.LLST2
+ 740 01c8 01          		.1byte	0x9
+ 741 01c8 75          		.4byte	.LASF115
+ 742 01c9 00 00 03 D6 		.1byte	0x1
+ 743 01cb 00 00 00 00 		.1byte	0x75
+ 744 01cd 09          		.4byte	0x30
+ 745 01cd 00 00 00 00 		.4byte	.LLST3
+ 746 01cf 01          		.1byte	0x9
+ 747 01d0 75          		.4byte	.LASF116
+ 748 01d0 00 00 00 30 		.1byte	0x1
+ 749 01d2 00 00 00 00 		.1byte	0x75
+ 750 01d4 09          		.4byte	0x30
+ 751 01d5 00 00 00 00 		.4byte	.LLST4
+ 752 01d7 01          		.1byte	0xa
+ 753 01d7 75          		.4byte	.LASF117
+ 754 01d8 00 00 00 30 		.1byte	0x1
+ 755 01da 00 00 00 00 		.1byte	0x77
+ 756 01dc 0A          		.4byte	0x2a9
+ 757 01dc 00 00 00 00 		.1byte	0x2
+ 758 01de 01          		.1byte	0x76
+ 759 01df 77          		.1byte	0x1
+ 760 01df 00 00 02 A9 		.1byte	0xb
+ 761 01e1 02          		.ascii "ret\000"
+ 762 01e2 76          		.1byte	0x1
+ 763 01e2 01          		.1byte	0x78
+ 764 01e3 0B          		.4byte	0x5e
+ 765 01e3 72 65 74 00 		.4byte	.LLST5
+ 766 01e5 01          		.1byte	0x0
+ 767 01e6 78          		.1byte	0xc
+ 768 01e6 00 00 00 5E 		.1byte	0x2
+ 769 01e8 00 00 00 00 		.4byte	0x30
+ 770 01ea 00          		.1byte	0xd
+ 771 01eb 0C          		.1byte	0x1
+ 772 01eb 02          		.4byte	.LASF123
+ 773 01ec 00 00 00 30 		.1byte	0x1
+ 774 01ee 0D          		.1byte	0x48
+ 775 01ee 01          		.1byte	0x1
+ 776 01ef 00 00 00 00 		.4byte	0x5e
+ 777 01f1 01          		.4byte	.LFB3
+ 778 01f1 48          		.4byte	.LFE3
+ 779 01f2 01          		.4byte	.LLST6
+ 780 01f2 00 00 00 5E 		.1byte	0x9
+ 781 01f4 00 00 00 00 		.4byte	.LASF114
+ 782 01f6 00 00 00 00 		.1byte	0x1
+ 783 01f8 00 00 00 00 		.1byte	0x47
+ 784 01fa 09          		.4byte	0x3d6
+ 785 01fb 00 00 00 00 		.4byte	.LLST7
+ 786 01fd 01          		.1byte	0x9
+ 787 01fd 47          		.4byte	.LASF115
+ 788 01fe 00 00 03 D6 		.1byte	0x1
+ 789 0200 00 00 00 00 		.1byte	0x47
+ 790 0202 09          		.4byte	0x30
+ 791 0202 00 00 00 00 		.4byte	.LLST8
+ 792 0204 01          		.1byte	0x9
+ 793 0205 47          		.4byte	.LASF116
+ 794 0205 00 00 00 30 		.1byte	0x1
+ 795 0207 00 00 00 00 		.1byte	0x47
+ 796 0209 09          		.4byte	0x30
+ 797 020a 00 00 00 00 		.4byte	.LLST9
+ 798 020c 01          		.1byte	0xa
+ 799 020c 47          		.4byte	.LASF117
+ 800 020d 00 00 00 30 		.1byte	0x1
+ 801 020f 00 00 00 00 		.1byte	0x49
+ 802 0211 0A          		.4byte	0x2a9
+ 803 0211 00 00 00 00 		.1byte	0x2
+ 804 0213 01          		.1byte	0x76
+ 805 0214 49          		.1byte	0x1
+ 806 0214 00 00 02 A9 		.1byte	0x0
+ 807 0216 02          		.1byte	0x0
+ 808 0217 76          		.section	.debug_abbrev
+ 809 0217 01          		.1byte	0x1
+ 810 0218 00          		.1byte	0x11
+ 811 0218 00          		.1byte	0x1
+ 812                 		.1byte	0x25
+ 813 0000 01          		.1byte	0xe
+ 814 0000 11          		.1byte	0x13
+ 815 0001 01          		.1byte	0xb
+ 816 0001 25          		.1byte	0x3
+ 817 0002 0E          		.1byte	0xe
+ 818 0002 13          		.1byte	0x1b
+ 819 0003 0B          		.1byte	0xe
+ 820 0003 03          		.1byte	0x11
+ 821 0004 0E          		.1byte	0x1
+ 822 0004 1B          		.1byte	0x52
+ 823 0005 0E          		.1byte	0x1
+ 824 0005 11          		.1byte	0x55
+ 825 0006 01          		.1byte	0x6
+ 826 0006 52          		.1byte	0x10
+ 827 0007 01          		.1byte	0x6
+ 828 0007 55          		.1byte	0x0
+ 829 0008 06          		.1byte	0x0
+ 830 0008 10          		.1byte	0x2
+ 831 0009 06          		.1byte	0x24
+ 832 0009 00          		.1byte	0x0
+ 833 000a 00          		.1byte	0xb
+ 834 000a 02          		.1byte	0xb
+ 835 000b 24          		.1byte	0x3e
+ 836 000b 00          		.1byte	0xb
+ 837 000c 0B          		.1byte	0x3
+ 838 000c 0B          		.1byte	0xe
+ 839 000d 3E          		.1byte	0x0
+ 840 000d 0B          		.1byte	0x0
+ 841 000e 03          		.1byte	0x3
+ 842 000e 0E          		.1byte	0x16
+ 843 000f 00          		.1byte	0x0
+ 844 000f 00          		.1byte	0x3
+ 845 0010 03          		.1byte	0xe
+ 846 0010 16          		.1byte	0x3a
+ 847 0011 00          		.1byte	0xb
+ 848 0011 03          		.1byte	0x3b
+ 849 0012 0E          		.1byte	0xb
+ 850 0012 3A          		.1byte	0x49
+ 851 0013 0B          		.1byte	0x13
+ 852 0013 3B          		.1byte	0x0
+ 853 0014 0B          		.1byte	0x0
+ 854 0014 49          		.1byte	0x4
+ 855 0015 13          		.1byte	0x4
+ 856 0015 00          		.1byte	0x1
+ 857 0016 00          		.1byte	0xb
+ 858 0016 04          		.1byte	0xb
+ 859 0017 04          		.1byte	0x3a
+ 860 0017 01          		.1byte	0xb
+ 861 0018 0B          		.1byte	0x3b
+ 862 0018 0B          		.1byte	0xb
+ 863 0019 3A          		.1byte	0x1
+ 864 0019 0B          		.1byte	0x13
+ 865 001a 3B          		.1byte	0x0
+ 866 001a 0B          		.1byte	0x0
+ 867 001b 01          		.1byte	0x5
+ 868 001b 13          		.1byte	0x28
+ 869 001c 00          		.1byte	0x0
+ 870 001c 00          		.1byte	0x3
+ 871 001d 05          		.1byte	0xe
+ 872 001d 28          		.1byte	0x1c
+ 873 001e 00          		.1byte	0xd
+ 874 001e 03          		.1byte	0x0
+ 875 001f 0E          		.1byte	0x0
+ 876 001f 1C          		.1byte	0x6
+ 877 0020 0D          		.1byte	0x24
+ 878 0020 00          		.1byte	0x0
+ 879 0021 00          		.1byte	0xb
+ 880 0021 06          		.1byte	0xb
+ 881 0022 24          		.1byte	0x3e
+ 882 0022 00          		.1byte	0xb
+ 883 0023 0B          		.1byte	0x0
+ 884 0023 0B          		.1byte	0x0
+ 885 0024 3E          		.1byte	0x7
+ 886 0024 0B          		.1byte	0x2e
+ 887 0025 00          		.1byte	0x0
+ 888 0025 00          		.1byte	0x3f
+ 889 0026 07          		.1byte	0xc
+ 890 0026 2E          		.1byte	0x3
+ 891 0027 00          		.1byte	0xe
+ 892 0027 3F          		.1byte	0x3a
+ 893 0028 0C          		.1byte	0xb
+ 894 0028 03          		.1byte	0x3b
+ 895 0029 0E          		.1byte	0xb
+ 896 0029 3A          		.1byte	0x27
+ 897 002a 0B          		.1byte	0xc
+ 898 002a 3B          		.1byte	0x11
+ 899 002b 0B          		.1byte	0x1
+ 900 002b 27          		.1byte	0x12
+ 901 002c 0C          		.1byte	0x1
+ 902 002c 11          		.1byte	0x40
+ 903 002d 01          		.1byte	0x6
+ 904 002d 12          		.1byte	0x0
+ 905 002e 01          		.1byte	0x0
+ 906 002e 40          		.1byte	0x8
+ 907 002f 06          		.1byte	0x2e
+ 908 002f 00          		.1byte	0x1
+ 909 0030 00          		.1byte	0x3f
+ 910 0030 08          		.1byte	0xc
+ 911 0031 2E          		.1byte	0x3
+ 912 0031 01          		.1byte	0xe
+ 913 0032 3F          		.1byte	0x3a
+ 914 0032 0C          		.1byte	0xb
+ 915 0033 03          		.1byte	0x3b
+ 916 0033 0E          		.1byte	0xb
+ 917 0034 3A          		.1byte	0x27
+ 918 0034 0B          		.1byte	0xc
+ 919 0035 3B          		.1byte	0x49
+ 920 0035 0B          		.1byte	0x13
+ 921 0036 27          		.1byte	0x11
+ 922 0036 0C          		.1byte	0x1
+ 923 0037 49          		.1byte	0x12
+ 924 0037 13          		.1byte	0x1
+ 925 0038 11          		.1byte	0x40
+ 926 0038 01          		.1byte	0x6
+ 927 0039 12          		.1byte	0x1
+ 928 0039 01          		.1byte	0x13
+ 929 003a 40          		.1byte	0x0
+ 930 003a 06          		.1byte	0x0
+ 931 003b 01          		.1byte	0x9
+ 932 003b 13          		.1byte	0x5
+ 933 003c 00          		.1byte	0x0
+ 934 003c 00          		.1byte	0x3
+ 935 003d 09          		.1byte	0xe
+ 936 003d 05          		.1byte	0x3a
+ 937 003e 00          		.1byte	0xb
+ 938 003e 03          		.1byte	0x3b
+ 939 003f 0E          		.1byte	0xb
+ 940 003f 3A          		.1byte	0x49
+ 941 0040 0B          		.1byte	0x13
+ 942 0040 3B          		.1byte	0x2
+ 943 0041 0B          		.1byte	0x6
+ 944 0041 49          		.1byte	0x0
+ 945 0042 13          		.1byte	0x0
+ 946 0042 02          		.1byte	0xa
+ 947 0043 06          		.1byte	0x34
+ 948 0043 00          		.1byte	0x0
+ 949 0044 00          		.1byte	0x3
+ 950 0044 0A          		.1byte	0xe
+ 951 0045 34          		.1byte	0x3a
+ 952 0045 00          		.1byte	0xb
+ 953 0046 03          		.1byte	0x3b
+ 954 0046 0E          		.1byte	0xb
+ 955 0047 3A          		.1byte	0x49
+ 956 0047 0B          		.1byte	0x13
+ 957 0048 3B          		.1byte	0x2
+ 958 0048 0B          		.1byte	0xa
+ 959 0049 49          		.1byte	0x0
+ 960 0049 13          		.1byte	0x0
+ 961 004a 02          		.1byte	0xb
+ 962 004a 0A          		.1byte	0x34
+ 963 004b 00          		.1byte	0x0
+ 964 004b 00          		.1byte	0x3
+ 965 004c 0B          		.1byte	0x8
+ 966 004c 34          		.1byte	0x3a
+ 967 004d 00          		.1byte	0xb
+ 968 004d 03          		.1byte	0x3b
+ 969 004e 08          		.1byte	0xb
+ 970 004e 3A          		.1byte	0x49
+ 971 004f 0B          		.1byte	0x13
+ 972 004f 3B          		.1byte	0x2
+ 973 0050 0B          		.1byte	0x6
+ 974 0050 49          		.1byte	0x0
+ 975 0051 13          		.1byte	0x0
+ 976 0051 02          		.1byte	0xc
+ 977 0052 06          		.1byte	0xf
+ 978 0052 00          		.1byte	0x0
+ 979 0053 00          		.1byte	0xb
+ 980 0053 0C          		.1byte	0xb
+ 981 0054 0F          		.1byte	0x49
+ 982 0054 00          		.1byte	0x13
+ 983 0055 0B          		.1byte	0x0
+ 984 0055 0B          		.1byte	0x0
+ 985 0056 49          		.1byte	0xd
+ 986 0056 13          		.1byte	0x2e
+ 987 0057 00          		.1byte	0x1
+ 988 0057 00          		.1byte	0x3f
+ 989 0058 0D          		.1byte	0xc
+ 990 0058 2E          		.1byte	0x3
+ 991 0059 01          		.1byte	0xe
+ 992 0059 3F          		.1byte	0x3a
+ 993 005a 0C          		.1byte	0xb
+ 994 005a 03          		.1byte	0x3b
+ 995 005b 0E          		.1byte	0xb
+ 996 005b 3A          		.1byte	0x27
+ 997 005c 0B          		.1byte	0xc
+ 998 005c 3B          		.1byte	0x49
+ 999 005d 0B          		.1byte	0x13
+ 1000 005d 27          		.1byte	0x11
+ 1001 005e 0C          		.1byte	0x1
+ 1002 005e 49          		.1byte	0x12
+ 1003 005f 13          		.1byte	0x1
+ 1004 005f 11          		.1byte	0x40
+ 1005 0060 01          		.1byte	0x6
+ 1006 0060 12          		.1byte	0x0
+ 1007 0061 01          		.1byte	0x0
+ 1008 0061 40          		.1byte	0x0
+ 1009 0062 06          		.section	.debug_pubnames,"",@progbits
+ 1010 0062 00          		.4byte	0x39
+ 1011 0063 00          		.2byte	0x2
+ 1012 0063 00          		.4byte	.Ldebug_info0
+ 1013                 		.4byte	0x432
+ 1014 0000 00 00 00 39 		.4byte	0x359
+ 1015 0002 00 02       		.ascii "Nvm_Disable\000"
+ 1016 0003 00 00 00 00 		.4byte	0x36e
+ 1017 0005 00 00 04 32 		.ascii "Nvm_Write\000"
+ 1018 0007 00 00 03 59 		.4byte	0x3dc
+ 1019 0009 4E 76 6D 5F 		.ascii "Nvm_Read\000"
+ 1019      44 69 73 61 
+ 1019      62 6C 65 00 
+ 1020 000f 00 00 03 6E 		.4byte	0x0
+ 1021 0011 4E 76 6D 5F 		.section	.debug_aranges,"",@progbits
+ 1021      57 72 69 74 
+ 1021      65 00 
+ 1022 0016 00 00 03 DC 		.4byte	0x2c
+ 1023 0018 4E 76 6D 5F 		.2byte	0x2
+ 1023      52 65 61 64 
+ 1023      00 
+ 1024 001c 00 00 00 00 		.4byte	.Ldebug_info0
+ 1025                 		.1byte	0x4
+ 1026 0000 00 00 00 2C 		.1byte	0x0
+ 1027 0002 00 02       		.2byte	0x0
+ 1028 0003 00 00 00 00 		.2byte	0x0
+ 1029 0005 04          		.4byte	.LFB2
+ 1030 0005 00          		.4byte	.LFE2-.LFB2
+ 1031 0006 00 00       		.4byte	.LFB4
+ 1032 0007 00 00       		.4byte	.LFE4-.LFB4
+ 1033 0008 00 00 00 00 		.4byte	.LFB3
+ 1034 000a 00 00 00 00 		.4byte	.LFE3-.LFB3
+ 1035 000c 00 00 00 00 		.4byte	0x0
+ 1036 000e 00 00 00 00 		.4byte	0x0
+ 1037 0010 00 00 00 00 		.section	.debug_ranges,"",@progbits
+ 1038 0012 00 00 00 00 	.Ldebug_ranges0:
+ 1039 0014 00 00 00 00 		.4byte	.Ltext0
+ 1040 0016 00 00 00 00 		.4byte	.Letext0
+ 1041                 		.4byte	.LFB2
+ 1042                 		.4byte	.LFE2
+ 1043 0000 00 00 00 00 		.4byte	.LFB4
+ 1044 0002 00 00 00 00 		.4byte	.LFE4
+ 1045 0004 00 00 00 00 		.4byte	.LFB3
+ 1046 0006 00 00 00 00 		.4byte	.LFE3
+ 1047 0008 00 00 00 00 		.4byte	0x0
+ 1048 000a 00 00 00 00 		.4byte	0x0
+ 1049 000c 00 00 00 00 		.section	.debug_str,"MS",@progbits,1
+ 1050 000e 00 00 00 00 	.LASF101:
+ 1051 0010 00 00 00 00 		.ascii "app_panic_db_registration\000"
+ 1052 0012 00 00 00 00 	.LASF46:
+ 1053                 		.ascii "gatt_status_insufficient_authorization\000"
+ 1054                 	.LASF117:
+ 1055 0000 61 70 70 5F 		.ascii "result\000"
+ 1055      70 61 6E 69 
+ 1055      63 5F 64 62 
+ 1055      5F 72 65 67 
+ 1055      69 73 74 72 
+ 1056                 	.LASF53:
+ 1057 000d 67 61 74 74 		.ascii "gatt_status_insufficient_encryption\000"
+ 1057      5F 73 74 61 
+ 1057      74 75 73 5F 
+ 1057      69 6E 73 75 
+ 1057      66 66 69 63 
+ 1058                 	.LASF44:
+ 1059 0020 72 65 73 75 		.ascii "gatt_status_request_not_supported\000"
+ 1059      6C 74 00 
+ 1060                 	.LASF108:
+ 1061 0024 67 61 74 74 		.ascii "app_panic_invalid_state\000"
+ 1061      5F 73 74 61 
+ 1061      74 75 73 5F 
+ 1061      69 6E 73 75 
+ 1061      66 66 69 63 
+ 1062                 	.LASF24:
+ 1063 0036 67 61 74 74 		.ascii "i2c_status_fail_timeout\000"
+ 1063      5F 73 74 61 
+ 1063      74 75 73 5F 
+ 1063      72 65 71 75 
+ 1063      65 73 74 5F 
+ 1064                 	.LASF73:
+ 1065 0047 61 70 70 5F 		.ascii "gatt_status_app_first_code\000"
+ 1065      70 61 6E 69 
+ 1065      63 5F 69 6E 
+ 1065      76 61 6C 69 
+ 1065      64 5F 73 74 
+ 1066                 	.LASF30:
+ 1067 0053 69 32 63 5F 		.ascii "spi_status_erase_pending\000"
+ 1067      73 74 61 74 
+ 1067      75 73 5F 66 
+ 1067      61 69 6C 5F 
+ 1067      74 69 6D 65 
+ 1068                 	.LASF25:
+ 1069 005f 67 61 74 74 		.ascii "i2c_status_fail_inactive\000"
+ 1069      5F 73 74 61 
+ 1069      74 75 73 5F 
+ 1069      61 70 70 5F 
+ 1069      66 69 72 73 
+ 1070                 	.LASF23:
+ 1071 006c 73 70 69 5F 		.ascii "i2c_status_fail_arb_lost\000"
+ 1071      73 74 61 74 
+ 1071      75 73 5F 65 
+ 1071      72 61 73 65 
+ 1071      5F 70 65 6E 
+ 1072                 	.LASF4:
+ 1073 0079 69 32 63 5F 		.ascii "short int\000"
+ 1073      73 74 61 74 
+ 1073      75 73 5F 66 
+ 1073      61 69 6C 5F 
+ 1073      69 6E 61 63 
+ 1074                 	.LASF121:
+ 1075 0085 69 32 63 5F 		.ascii "Nvm_Disable\000"
+ 1075      73 74 61 74 
+ 1075      75 73 5F 66 
+ 1075      61 69 6C 5F 
+ 1075      61 72 62 5F 
+ 1076                 	.LASF62:
+ 1077 0092 73 68 6F 72 		.ascii "gatt_status_success_more\000"
+ 1077      74 20 69 6E 
+ 1077      74 00 
+ 1078                 	.LASF18:
+ 1079 0097 4E 76 6D 5F 		.ascii "i2c_status_hardware_busy\000"
+ 1079      44 69 73 61 
+ 1079      62 6C 65 00 
+ 1080                 	.LASF28:
+ 1081 009d 67 61 74 74 		.ascii "spi_status_waiting\000"
+ 1081      5F 73 74 61 
+ 1081      74 75 73 5F 
+ 1081      73 75 63 63 
+ 1081      65 73 73 5F 
+ 1082                 	.LASF89:
+ 1083 00a9 69 32 63 5F 		.ascii "sys_status\000"
+ 1083      73 74 61 74 
+ 1083      75 73 5F 68 
+ 1083      61 72 64 77 
+ 1083      61 72 65 5F 
+ 1084                 	.LASF27:
+ 1085 00b6 73 70 69 5F 		.ascii "i2c_status_fail_write_poll_timeout\000"
+ 1085      73 74 61 74 
+ 1085      75 73 5F 77 
+ 1085      61 69 74 69 
+ 1085      6E 67 00 
+ 1086                 	.LASF70:
+ 1087 00bf 73 79 73 5F 		.ascii "gatt_status_data_validation_failed\000"
+ 1087      73 74 61 74 
+ 1087      75 73 00 
+ 1088                 	.LASF35:
+ 1089 00c5 69 32 63 5F 		.ascii "l2cap_status_conn_disallowed\000"
+ 1089      73 74 61 74 
+ 1089      75 73 5F 66 
+ 1089      61 69 6C 5F 
+ 1089      77 72 69 74 
+ 1090                 	.LASF80:
+ 1091 00d6 67 61 74 74 		.ascii "sm_status_pairing_not_supported\000"
+ 1091      5F 73 74 61 
+ 1091      74 75 73 5F 
+ 1091      64 61 74 61 
+ 1091      5F 76 61 6C 
+ 1092                 	.LASF59:
+ 1093 00e8 6C 32 63 61 		.ascii "gatt_status_timeout\000"
+ 1093      70 5F 73 74 
+ 1093      61 74 75 73 
+ 1093      5F 63 6F 6E 
+ 1093      6E 5F 64 69 
+ 1094                 	.LASF49:
+ 1095 00f6 73 6D 5F 73 		.ascii "gatt_status_not_long\000"
+ 1095      74 61 74 75 
+ 1095      73 5F 70 61 
+ 1095      69 72 69 6E 
+ 1095      67 5F 6E 6F 
+ 1096                 	.LASF90:
+ 1097 0106 67 61 74 74 		.ascii "pio_i2c_pull_mode_no_pulls\000"
+ 1097      5F 73 74 61 
+ 1097      74 75 73 5F 
+ 1097      74 69 6D 65 
+ 1097      6F 75 74 00 
+ 1098                 	.LASF88:
+ 1099 0110 67 61 74 74 		.ascii "sys_status_invalid\000"
+ 1099      5F 73 74 61 
+ 1099      74 75 73 5F 
+ 1099      6E 6F 74 5F 
+ 1099      6C 6F 6E 67 
+ 1100                 	.LASF22:
+ 1101 011b 70 69 6F 5F 		.ascii "i2c_status_fail_bus_busy\000"
+ 1101      69 32 63 5F 
+ 1101      70 75 6C 6C 
+ 1101      5F 6D 6F 64 
+ 1101      65 5F 6E 6F 
+ 1102                 	.LASF56:
+ 1103 0128 73 79 73 5F 		.ascii "gatt_status_device_not_found\000"
+ 1103      73 74 61 74 
+ 1103      75 73 5F 69 
+ 1103      6E 76 61 6C 
+ 1103      69 64 00 
+ 1104                 	.LASF26:
+ 1105 0132 69 32 63 5F 		.ascii "i2c_status_fail_unknown\000"
+ 1105      73 74 61 74 
+ 1105      75 73 5F 66 
+ 1105      61 69 6C 5F 
+ 1105      62 75 73 5F 
+ 1106                 	.LASF21:
+ 1107 013e 67 61 74 74 		.ascii "i2c_status_fail_nacked\000"
+ 1107      5F 73 74 61 
+ 1107      74 75 73 5F 
+ 1107      64 65 76 69 
+ 1107      63 65 5F 6E 
+ 1108                 	.LASF6:
+ 1109 014d 69 32 63 5F 		.ascii "uint16\000"
+ 1109      73 74 61 74 
+ 1109      75 73 5F 66 
+ 1109      61 69 6C 5F 
+ 1109      75 6E 6B 6E 
+ 1110                 	.LASF83:
+ 1111 0159 69 32 63 5F 		.ascii "sm_status_unspecified_reason\000"
+ 1111      73 74 61 74 
+ 1111      75 73 5F 66 
+ 1111      61 69 6C 5F 
+ 1111      6E 61 63 6B 
+ 1112                 	.LASF57:
+ 1113 0164 75 69 6E 74 		.ascii "gatt_status_sign_failed\000"
+ 1113      31 36 00 
+ 1114                 	.LASF122:
+ 1115 0168 73 6D 5F 73 		.ascii "Nvm_Write\000"
+ 1115      74 61 74 75 
+ 1115      73 5F 75 6E 
+ 1115      73 70 65 63 
+ 1115      69 66 69 65 
+ 1116                 	.LASF82:
+ 1117 0176 67 61 74 74 		.ascii "sm_status_command_not_supported\000"
+ 1117      5F 73 74 61 
+ 1117      74 75 73 5F 
+ 1117      73 69 67 6E 
+ 1117      5F 66 61 69 
+ 1118                 	.LASF72:
+ 1119 0182 4E 76 6D 5F 		.ascii "gatt_status_app_mask\000"
+ 1119      57 72 69 74 
+ 1119      65 00 
+ 1120                 	.LASF45:
+ 1121 0187 73 6D 5F 73 		.ascii "gatt_status_invalid_offset\000"
+ 1121      74 61 74 75 
+ 1121      73 5F 63 6F 
+ 1121      6D 6D 61 6E 
+ 1121      64 5F 6E 6F 
+ 1122                 	.LASF12:
+ 1123 0197 67 61 74 74 		.ascii "nvm_status_invalid_configuration\000"
+ 1123      5F 73 74 61 
+ 1123      74 75 73 5F 
+ 1123      61 70 70 5F 
+ 1123      6D 61 73 6B 
+ 1124                 	.LASF7:
+ 1125 01a2 67 61 74 74 		.ascii "bool\000"
+ 1125      5F 73 74 61 
+ 1125      74 75 73 5F 
+ 1125      69 6E 76 61 
+ 1125      6C 69 64 5F 
+ 1126                 	.LASF43:
+ 1127 01af 6E 76 6D 5F 		.ascii "gatt_status_insufficient_authentication\000"
+ 1127      73 74 61 74 
+ 1127      75 73 5F 69 
+ 1127      6E 76 61 6C 
+ 1127      69 64 5F 63 
+ 1128                 	.LASF19:
+ 1129 01c0 62 6F 6F 6C 		.ascii "i2c_status_controller_disabled\000"
+ 1129      00 
+ 1130                 	.LASF112:
+ 1131 01c2 67 61 74 74 		.ascii "app_panic_set_scan_params\000"
+ 1131      5F 73 74 61 
+ 1131      74 75 73 5F 
+ 1131      69 6E 73 75 
+ 1131      66 66 69 63 
+ 1132                 	.LASF39:
+ 1133 01d6 69 32 63 5F 		.ascii "gatt_status_invalid_handle\000"
+ 1133      73 74 61 74 
+ 1133      75 73 5F 63 
+ 1133      6F 6E 74 72 
+ 1133      6F 6C 6C 65 
+ 1134                 	.LASF85:
+ 1135 01e6 61 70 70 5F 		.ascii "sm_status_invalid_parameters\000"
+ 1135      70 61 6E 69 
+ 1135      63 5F 73 65 
+ 1135      74 5F 73 63 
+ 1135      61 6E 5F 70 
+ 1136                 	.LASF94:
+ 1137 01f3 67 61 74 74 		.ascii "pio_i2c_pull_mode_strong_pull_up\000"
+ 1137      5F 73 74 61 
+ 1137      74 75 73 5F 
+ 1137      69 6E 76 61 
+ 1137      6C 69 64 5F 
+ 1138                 	.LASF123:
+ 1139 0200 73 6D 5F 73 		.ascii "Nvm_Read\000"
+ 1139      74 61 74 75 
+ 1139      73 5F 69 6E 
+ 1139      76 61 6C 69 
+ 1139      64 5F 70 61 
+ 1140                 	.LASF118:
+ 1141 020f 70 69 6F 5F 		.ascii "GNU C 4.3.4 CSR version 28 for xap [2131110]\000"
+ 1141      69 32 63 5F 
+ 1141      70 75 6C 6C 
+ 1141      5F 6D 6F 64 
+ 1141      65 5F 73 74 
+ 1142                 	.LASF103:
+ 1143 021f 4E 76 6D 5F 		.ascii "app_panic_nvm_write\000"
+ 1143      52 65 61 64 
+ 1143      00 
+ 1144                 	.LASF91:
+ 1145 0224 47 4E 55 20 		.ascii "pio_i2c_pull_mode_weak_pull_down\000"
+ 1145      43 20 34 2E 
+ 1145      33 2E 34 20 
+ 1145      43 53 52 20 
+ 1145      76 65 72 73 
+ 1146                 	.LASF51:
+ 1147 023a 61 70 70 5F 		.ascii "gatt_status_invalid_length\000"
+ 1147      70 61 6E 69 
+ 1147      63 5F 6E 76 
+ 1147      6D 5F 77 72 
+ 1147      69 74 65 00 
+ 1148                 	.LASF107:
+ 1149 0244 70 69 6F 5F 		.ascii "app_panic_con_param_update\000"
+ 1149      69 32 63 5F 
+ 1149      70 75 6C 6C 
+ 1149      5F 6D 6F 64 
+ 1149      65 5F 77 65 
+ 1150                 	.LASF5:
+ 1151 0255 67 61 74 74 		.ascii "long int\000"
+ 1151      5F 73 74 61 
+ 1151      74 75 73 5F 
+ 1151      69 6E 76 61 
+ 1151      6C 69 64 5F 
+ 1152                 	.LASF75:
+ 1153 0262 61 70 70 5F 		.ascii "sm_status_reserved\000"
+ 1153      70 61 6E 69 
+ 1153      63 5F 63 6F 
+ 1153      6E 5F 70 61 
+ 1153      72 61 6D 5F 
+ 1154                 	.LASF96:
+ 1155 0270 6C 6F 6E 67 		.ascii "pio_i2c_pull_mode_strong_sticky\000"
+ 1155      20 69 6E 74 
+ 1155      00 
+ 1156                 	.LASF116:
+ 1157 0274 73 6D 5F 73 		.ascii "offset\000"
+ 1157      74 61 74 75 
+ 1157      73 5F 72 65 
+ 1157      73 65 72 76 
+ 1157      65 64 00 
+ 1158                 	.LASF36:
+ 1159 027e 70 69 6F 5F 		.ascii "l2cap_status_conn_not_ongoing\000"
+ 1159      69 32 63 5F 
+ 1159      70 75 6C 6C 
+ 1159      5F 6D 6F 64 
+ 1159      65 5F 73 74 
+ 1160                 	.LASF47:
+ 1161 028e 6F 66 66 73 		.ascii "gatt_status_prepare_queue_full\000"
+ 1161      65 74 00 
+ 1162                 	.LASF78:
+ 1163 0291 6C 32 63 61 		.ascii "sm_status_authentication_requirements\000"
+ 1163      70 5F 73 74 
+ 1163      61 74 75 73 
+ 1163      5F 63 6F 6E 
+ 1163      6E 5F 6E 6F 
+ 1164                 	.LASF20:
+ 1165 02a0 67 61 74 74 		.ascii "i2c_status_fail\000"
+ 1165      5F 73 74 61 
+ 1165      74 75 73 5F 
+ 1165      70 72 65 70 
+ 1165      61 72 65 5F 
+ 1166                 	.LASF32:
+ 1167 02b0 73 6D 5F 73 		.ascii "spi_status_fail_timeout\000"
+ 1167      74 61 74 75 
+ 1167      73 5F 61 75 
+ 1167      74 68 65 6E 
+ 1167      74 69 63 61 
+ 1168                 	.LASF41:
+ 1169 02c3 69 32 63 5F 		.ascii "gatt_status_write_not_permitted\000"
+ 1169      73 74 61 74 
+ 1169      75 73 5F 66 
+ 1169      61 69 6C 00 
+ 1170                 	.LASF79:
+ 1171 02cb 73 70 69 5F 		.ascii "sm_status_confirm_value_failed\000"
+ 1171      73 74 61 74 
+ 1171      75 73 5F 66 
+ 1171      61 69 6C 5F 
+ 1171      74 69 6D 65 
+ 1172                 	.LASF115:
+ 1173 02d7 67 61 74 74 		.ascii "length\000"
+ 1173      5F 73 74 61 
+ 1173      74 75 73 5F 
+ 1173      77 72 69 74 
+ 1173      65 5F 6E 6F 
+ 1174                 	.LASF68:
+ 1175 02e7 73 6D 5F 73 		.ascii "gatt_status_invalid_operation\000"
+ 1175      74 61 74 75 
+ 1175      73 5F 63 6F 
+ 1175      6E 66 69 72 
+ 1175      6D 5F 76 61 
+ 1176                 	.LASF67:
+ 1177 02f6 6C 65 6E 67 		.ascii "gatt_status_invalid_permissions\000"
+ 1177      74 68 00 
+ 1178                 	.LASF0:
+ 1179 02fa 67 61 74 74 		.ascii "unsigned char\000"
+ 1179      5F 73 74 61 
+ 1179      74 75 73 5F 
+ 1179      69 6E 76 61 
+ 1179      6C 69 64 5F 
+ 1180                 	.LASF98:
+ 1181 0309 67 61 74 74 		.ascii "app_panic_set_advert_data\000"
+ 1181      5F 73 74 61 
+ 1181      74 75 73 5F 
+ 1181      69 6E 76 61 
+ 1181      6C 69 64 5F 
+ 1182                 	.LASF106:
+ 1183 0319 75 6E 73 69 		.ascii "app_panic_add_whitelist\000"
+ 1183      67 6E 65 64 
+ 1183      20 63 68 61 
+ 1183      72 00 
+ 1184                 	.LASF92:
+ 1185 0320 61 70 70 5F 		.ascii "pio_i2c_pull_mode_weak_pull_up\000"
+ 1185      70 61 6E 69 
+ 1185      63 5F 73 65 
+ 1185      74 5F 61 64 
+ 1185      76 65 72 74 
+ 1186                 	.LASF3:
+ 1187 032d 61 70 70 5F 		.ascii "signed char\000"
+ 1187      70 61 6E 69 
+ 1187      63 5F 61 64 
+ 1187      64 5F 77 68 
+ 1187      69 74 65 6C 
+ 1188                 	.LASF10:
+ 1189 0339 70 69 6F 5F 		.ascii "nvm_status_empty\000"
+ 1189      69 32 63 5F 
+ 1189      70 75 6C 6C 
+ 1189      5F 6D 6F 64 
+ 1189      65 5F 77 65 
+ 1190                 	.LASF8:
+ 1191 0348 73 69 67 6E 		.ascii "unsigned int\000"
+ 1191      65 64 20 63 
+ 1191      68 61 72 00 
+ 1192                 	.LASF97:
+ 1193 034e 6E 76 6D 5F 		.ascii "app_panic_set_advert_params\000"
+ 1193      73 74 61 74 
+ 1193      75 73 5F 65 
+ 1193      6D 70 74 79 
+ 1193      00 
+ 1194                 	.LASF61:
+ 1195 0357 75 6E 73 69 		.ascii "gatt_status_invalid_uuid\000"
+ 1195      67 6E 65 64 
+ 1195      20 69 6E 74 
+ 1195      00 
+ 1196                 	.LASF31:
+ 1197 035d 61 70 70 5F 		.ascii "spi_status_fail\000"
+ 1197      70 61 6E 69 
+ 1197      63 5F 73 65 
+ 1197      74 5F 61 64 
+ 1197      76 65 72 74 
+ 1198                 	.LASF102:
+ 1199 036b 67 61 74 74 		.ascii "app_panic_nvm_read\000"
+ 1199      5F 73 74 61 
+ 1199      74 75 73 5F 
+ 1199      69 6E 76 61 
+ 1199      6C 69 64 5F 
+ 1200                 	.LASF100:
+ 1201 0378 73 70 69 5F 		.ascii "app_panic_connection_est\000"
+ 1201      73 74 61 74 
+ 1201      75 73 5F 66 
+ 1201      61 69 6C 00 
+ 1202                 	.LASF99:
+ 1203 0380 61 70 70 5F 		.ascii "app_panic_set_scan_rsp_data\000"
+ 1203      70 61 6E 69 
+ 1203      63 5F 6E 76 
+ 1203      6D 5F 72 65 
+ 1203      61 64 00 
+ 1204                 	.LASF1:
+ 1205 0389 61 70 70 5F 		.ascii "short unsigned int\000"
+ 1205      70 61 6E 69 
+ 1205      63 5F 63 6F 
+ 1205      6E 6E 65 63 
+ 1205      74 69 6F 6E 
+ 1206                 	.LASF76:
+ 1207 0396 61 70 70 5F 		.ascii "sm_status_passkey_entry_failed\000"
+ 1207      70 61 6E 69 
+ 1207      63 5F 73 65 
+ 1207      74 5F 73 63 
+ 1207      61 6E 5F 72 
+ 1208                 	.LASF40:
+ 1209 03a4 73 68 6F 72 		.ascii "gatt_status_read_not_permitted\000"
+ 1209      74 20 75 6E 
+ 1209      73 69 67 6E 
+ 1209      65 64 20 69 
+ 1209      6E 74 00 
+ 1210                 	.LASF11:
+ 1211 03ad 73 6D 5F 73 		.ascii "nvm_status_needs_erase\000"
+ 1211      74 61 74 75 
+ 1211      73 5F 70 61 
+ 1211      73 73 6B 65 
+ 1211      79 5F 65 6E 
+ 1212                 	.LASF14:
+ 1213 03bd 67 61 74 74 		.ascii "nvm_status_invalid_offset\000"
+ 1213      5F 73 74 61 
+ 1213      74 75 73 5F 
+ 1213      72 65 61 64 
+ 1213      5F 6E 6F 74 
+ 1214                 	.LASF34:
+ 1215 03cc 6E 76 6D 5F 		.ascii "l2cap_status_invalid_conn_state\000"
+ 1215      73 74 61 74 
+ 1215      75 73 5F 6E 
+ 1215      65 65 64 73 
+ 1215      5F 65 72 61 
+ 1216                 	.LASF69:
+ 1217 03d8 6E 76 6D 5F 		.ascii "gatt_status_invalid_param_value\000"
+ 1217      73 74 61 74 
+ 1217      75 73 5F 69 
+ 1217      6E 76 61 6C 
+ 1217      69 64 5F 6F 
+ 1218                 	.LASF37:
+ 1219 03e5 6C 32 63 61 		.ascii "l2cap_status_buffer_full\000"
+ 1219      70 5F 73 74 
+ 1219      61 74 75 73 
+ 1219      5F 69 6E 76 
+ 1219      61 6C 69 64 
+ 1220                 	.LASF33:
+ 1221 03f5 67 61 74 74 		.ascii "spi_status_page_overflow\000"
+ 1221      5F 73 74 61 
+ 1221      74 75 73 5F 
+ 1221      69 6E 76 61 
+ 1221      6C 69 64 5F 
+ 1222                 	.LASF77:
+ 1223 0405 6C 32 63 61 		.ascii "sm_status_oob_not_available\000"
+ 1223      70 5F 73 74 
+ 1223      61 74 75 73 
+ 1223      5F 62 75 66 
+ 1223      66 65 72 5F 
+ 1224                 	.LASF113:
+ 1225 0411 73 70 69 5F 		.ascii "app_panic_nvm_erase\000"
+ 1225      73 74 61 74 
+ 1225      75 73 5F 70 
+ 1225      61 67 65 5F 
+ 1225      6F 76 65 72 
+ 1226                 	.LASF81:
+ 1227 041e 73 6D 5F 73 		.ascii "sm_status_encryption_key_size\000"
+ 1227      74 61 74 75 
+ 1227      73 5F 6F 6F 
+ 1227      62 5F 6E 6F 
+ 1227      74 5F 61 76 
+ 1228                 	.LASF84:
+ 1229 042c 61 70 70 5F 		.ascii "sm_status_repeated_attempts\000"
+ 1229      70 61 6E 69 
+ 1229      63 5F 6E 76 
+ 1229      6D 5F 65 72 
+ 1229      61 73 65 00 
+ 1230                 	.LASF55:
+ 1231 0436 73 6D 5F 73 		.ascii "gatt_status_insufficient_resources\000"
+ 1231      74 61 74 75 
+ 1231      73 5F 65 6E 
+ 1231      63 72 79 70 
+ 1231      74 69 6F 6E 
+ 1232                 	.LASF60:
+ 1233 0445 73 6D 5F 73 		.ascii "gatt_status_invalid_mtu\000"
+ 1233      74 61 74 75 
+ 1233      73 5F 72 65 
+ 1233      70 65 61 74 
+ 1233      65 64 5F 61 
+ 1234                 	.LASF114:
+ 1235 0453 67 61 74 74 		.ascii "buffer\000"
+ 1235      5F 73 74 61 
+ 1235      74 75 73 5F 
+ 1235      69 6E 73 75 
+ 1235      66 66 69 63 
+ 1236                 	.LASF111:
+ 1237 0464 67 61 74 74 		.ascii "app_panic_uuid_not_supported\000"
+ 1237      5F 73 74 61 
+ 1237      74 75 73 5F 
+ 1237      69 6E 76 61 
+ 1237      6C 69 64 5F 
+ 1238                 	.LASF58:
+ 1239 0470 62 75 66 66 		.ascii "gatt_status_busy\000"
+ 1239      65 72 00 
+ 1240                 	.LASF54:
+ 1241 0474 61 70 70 5F 		.ascii "gatt_status_unsupported_group_type\000"
+ 1241      70 61 6E 69 
+ 1241      63 5F 75 75 
+ 1241      69 64 5F 6E 
+ 1241      6F 74 5F 73 
+ 1242                 	.LASF2:
+ 1243 0482 67 61 74 74 		.ascii "long unsigned int\000"
+ 1243      5F 73 74 61 
+ 1243      74 75 73 5F 
+ 1243      62 75 73 79 
+ 1243      00 
+ 1244                 	.LASF42:
+ 1245 048b 67 61 74 74 		.ascii "gatt_status_invalid_pdu\000"
+ 1245      5F 73 74 61 
+ 1245      74 75 73 5F 
+ 1245      75 6E 73 75 
+ 1245      70 70 6F 72 
+ 1246                 	.LASF13:
+ 1247 049c 6C 6F 6E 67 		.ascii "nvm_status_not_initialised\000"
+ 1247      20 75 6E 73 
+ 1247      69 67 6E 65 
+ 1247      64 20 69 6E 
+ 1247      74 00 
+ 1248                 	.LASF38:
+ 1249 04a5 67 61 74 74 		.ascii "ls_status_limited_advertising_timeout\000"
+ 1249      5F 73 74 61 
+ 1249      74 75 73 5F 
+ 1249      69 6E 76 61 
+ 1249      6C 69 64 5F 
+ 1250                 	.LASF120:
+ 1251 04b1 6E 76 6D 5F 		.ascii "C:\\csrmesh_2_0_node\\applications\\CSRmeshLight\000"
+ 1251      73 74 61 74 
+ 1251      75 73 5F 6E 
+ 1251      6F 74 5F 69 
+ 1251      6E 69 74 69 
+ 1252                 	.LASF87:
+ 1253 04bf 6C 73 5F 73 		.ascii "sm_status_timeout\000"
+ 1253      74 61 74 75 
+ 1253      73 5F 6C 69 
+ 1253      6D 69 74 65 
+ 1253      64 5F 61 64 
+ 1254                 	.LASF50:
+ 1255 04d2 43 3A 5C 63 		.ascii "gatt_status_insufficient_encr_key_size\000"
+ 1255      73 72 6D 65 
+ 1255      73 68 5F 32 
+ 1255      5F 30 5F 6E 
+ 1255      6F 64 65 5C 
+ 1256                 	.LASF29:
+ 1257 04e9 73 6D 5F 73 		.ascii "spi_status_hardware_busy\000"
+ 1257      74 61 74 75 
+ 1257      73 5F 74 69 
+ 1257      6D 65 6F 75 
+ 1257      74 00 
+ 1258                 	.LASF119:
+ 1259 04f2 67 61 74 74 		.ascii "nvm_access.c\000"
+ 1259      5F 73 74 61 
+ 1259      74 75 73 5F 
+ 1259      69 6E 73 75 
+ 1259      66 66 69 63 
+ 1260                 	.LASF71:
+ 1261 0505 73 70 69 5F 		.ascii "gatt_status_irq_proceed\000"
+ 1261      73 74 61 74 
+ 1261      75 73 5F 68 
+ 1261      61 72 64 77 
+ 1261      61 72 65 5F 
+ 1262                 	.LASF63:
+ 1263 0512 6E 76 6D 5F 		.ascii "gatt_status_success_sent\000"
+ 1263      61 63 63 65 
+ 1263      73 73 2E 63 
+ 1263      00 
+ 1264                 	.LASF74:
+ 1265 0518 67 61 74 74 		.ascii "gatt_status_app_last_code\000"
+ 1265      5F 73 74 61 
+ 1265      74 75 73 5F 
+ 1265      69 72 71 5F 
+ 1265      70 72 6F 63 
+ 1266                 	.LASF93:
+ 1267 0524 67 61 74 74 		.ascii "pio_i2c_pull_mode_strong_pull_down\000"
+ 1267      5F 73 74 61 
+ 1267      74 75 73 5F 
+ 1267      73 75 63 63 
+ 1267      65 73 73 5F 
+ 1268                 	.LASF52:
+ 1269 0531 67 61 74 74 		.ascii "gatt_status_unlikely_error\000"
+ 1269      5F 73 74 61 
+ 1269      74 75 73 5F 
+ 1269      61 70 70 5F 
+ 1269      6C 61 73 74 
+ 1270                 	.LASF16:
+ 1271 053e 70 69 6F 5F 		.ascii "i2c_status_waiting\000"
+ 1271      69 32 63 5F 
+ 1271      70 75 6C 6C 
+ 1271      5F 6D 6F 64 
+ 1271      65 5F 73 74 
+ 1272                 	.LASF64:
+ 1273 054f 67 61 74 74 		.ascii "gatt_status_invalid_cid\000"
+ 1273      5F 73 74 61 
+ 1273      74 75 73 5F 
+ 1273      75 6E 6C 69 
+ 1273      6B 65 6C 79 
+ 1274                 	.LASF110:
+ 1275 055d 69 32 63 5F 		.ascii "app_panic_gap_set_mode\000"
+ 1275      73 74 61 74 
+ 1275      75 73 5F 77 
+ 1275      61 69 74 69 
+ 1275      6E 67 00 
+ 1276                 	.LASF86:
+ 1277 0566 67 61 74 74 		.ascii "sm_status_last_standardised\000"
+ 1277      5F 73 74 61 
+ 1277      74 75 73 5F 
+ 1277      69 6E 76 61 
+ 1277      6C 69 64 5F 
+ 1278                 	.LASF104:
+ 1279 0572 61 70 70 5F 		.ascii "app_panic_read_tx_pwr_level\000"
+ 1279      70 61 6E 69 
+ 1279      63 5F 67 61 
+ 1279      70 5F 73 65 
+ 1279      74 5F 6D 6F 
+ 1280                 	.LASF66:
+ 1281 057e 73 6D 5F 73 		.ascii "gatt_status_db_full\000"
+ 1281      74 61 74 75 
+ 1281      73 5F 6C 61 
+ 1281      73 74 5F 73 
+ 1281      74 61 6E 64 
+ 1282                 	.LASF95:
+ 1283 058c 61 70 70 5F 		.ascii "pio_i2c_pull_mode_weak_sticky\000"
+ 1283      70 61 6E 69 
+ 1283      63 5F 72 65 
+ 1283      61 64 5F 74 
+ 1283      78 5F 70 77 
+ 1284                 	.LASF109:
+ 1285 059a 67 61 74 74 		.ascii "app_panic_unexpected_beep_type\000"
+ 1285      5F 73 74 61 
+ 1285      74 75 73 5F 
+ 1285      64 62 5F 66 
+ 1285      75 6C 6C 00 
+ 1286                 	.LASF9:
+ 1287 05a4 70 69 6F 5F 		.ascii "sys_status_success\000"
+ 1287      69 32 63 5F 
+ 1287      70 75 6C 6C 
+ 1287      5F 6D 6F 64 
+ 1287      65 5F 77 65 
+ 1288                 	.LASF17:
+ 1289 05b3 61 70 70 5F 		.ascii "i2c_status_firmware_busy\000"
+ 1289      70 61 6E 69 
+ 1289      63 5F 75 6E 
+ 1289      65 78 70 65 
+ 1289      63 74 65 64 
+ 1290                 	.LASF15:
+ 1291 05c2 73 79 73 5F 		.ascii "nvm_status_invalid_buffer\000"
+ 1291      73 74 61 74 
+ 1291      75 73 5F 73 
+ 1291      75 63 63 65 
+ 1291      73 73 00 
+ 1292                 	.LASF65:
+ 1293 05cc 69 32 63 5F 		.ascii "gatt_status_invalid_db\000"
+ 1293      73 74 61 74 
+ 1293      75 73 5F 66 
+ 1293      69 72 6D 77 
+ 1293      61 72 65 5F 
+ 1294                 	.LASF105:
+ 1295 05d8 6E 76 6D 5F 		.ascii "app_panic_delete_whitelist\000"
+ 1295      73 74 61 74 
+ 1295      75 73 5F 69 
+ 1295      6E 76 61 6C 
+ 1295      69 64 5F 62 
+ 1296                 	.LASF48:
+ 1297 05e5 67 61 74 74 		.ascii "gatt_status_attr_not_found\000"
+ 1297      5F 73 74 61 
+ 1297      74 75 73 5F 
+ 1297      69 6E 76 61 
+ 1297      6C 69 64 5F 
+ 1298                 		.ident	"GCC: (GNU) 4.3.4 CSR version 28 for xap [2131110]"
+ 1299 05f1 61 70 70 5F 	...
+ 1299      70 61 6E 69 
+ 1299      63 5F 64 65 
+ 1299      6C 65 74 65 
+ 1299      5F 77 68 69 

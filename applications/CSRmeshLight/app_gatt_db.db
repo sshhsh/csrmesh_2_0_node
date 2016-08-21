@@ -1,0 +1,20 @@
+/******************************************************************************
+ *  Copyright 2015 Qualcomm Technologies International, Ltd.
+ *  Bluetooth Low Energy CSRmesh 2.0
+ *  Application version 2.0
+ *
+ *  FILE
+ *      app_gatt_db.db
+ *
+ *  DESCRIPTION
+ *      This file defines the application ATT data base in JSON format.
+ *      This file is taken as input by gattdbgen tool to produce ATT 
+ *      flat data base. 
+ *
+ *****************************************************************************/
+#include "user_config.h"
+
+#include "gatt_service_db.db"
+#include "gap_service_db.db"
+#include "csr_ota_db.db"
+#include "mesh_control_service_db.db"

@@ -1,0 +1,1834 @@
+   1                 		.file	"iot_hw.c"
+   2                 		.variant xap2+
+   3                 	
+   4                 		.small
+   5                 	
+   6                 		.section	.debug_abbrev,"",@progbits
+   7                 	.Ldebug_abbrev0:
+   8                 		.section	.debug_info,"",@progbits
+   9                 	.Ldebug_info0:
+  10                 		.section	.debug_line,"",@progbits
+  11                 	.Ldebug_line0:
+  12 0000 00 00 00 00 		.text
+  12      00 02 00 00 
+  12      00 00 01 01 
+  12      FB 0E 0D 00 
+  12      01 01 01 01 
+  13                 	.Ltext0:
+  14                 		.section	.text.IOTSwitchInit,"ax",@progbits
+  15                 		.global	IOTSwitchInit
+  16                 		.type	IOTSwitchInit, @function
+  17                 	IOTSwitchInit:
+  18                 	.LFB7:
+  19                 		.file 1 "iot_hw.c"
+   0:iot_hw.c      **** /******************************************************************************
+   1:iot_hw.c      ****  *  Copyright 2015 Qualcomm Technologies International, Ltd.
+   2:iot_hw.c      ****  *  Bluetooth Low Energy CSRmesh 2.0
+   3:iot_hw.c      ****  *  Application version 2.0
+   4:iot_hw.c      ****  *
+   5:iot_hw.c      ****  *  FILE
+   6:iot_hw.c      ****  *      iot_hw.c
+   7:iot_hw.c      ****  *
+   8:iot_hw.c      ****  *  DESCRIPTION
+   9:iot_hw.c      ****  *      This file implements the LED Controller of IOT hardware
+  10:iot_hw.c      ****  *
+  11:iot_hw.c      ****  *****************************************************************************/
+  12:iot_hw.c      **** 
+  13:iot_hw.c      **** 
+  14:iot_hw.c      **** 
+  15:iot_hw.c      **** /*============================================================================*
+  16:iot_hw.c      ****  *  Local Header Files
+  17:iot_hw.c      ****  *============================================================================*/
+  18:iot_hw.c      **** #include "user_config.h"
+  19:iot_hw.c      **** #include "iot_hw.h"
+  20:iot_hw.c      **** #include "fast_pwm.h"
+  21:iot_hw.c      **** 
+  22:iot_hw.c      **** /*============================================================================*
+  23:iot_hw.c      ****  *  Private data
+  24:iot_hw.c      ****  *============================================================================*/
+  25:iot_hw.c      **** /* Colour depth in bits, as passed by application. */
+  26:iot_hw.c      **** #define LIGHT_INPUT_COLOR_DEPTH  (8)
+  27:iot_hw.c      **** /* Colour depth in bits, mapped to actual hardware. */
+  28:iot_hw.c      **** #define LIGHT_MAPPED_COLOR_DEPTH (6)
+  29:iot_hw.c      **** /* Colour depth lost due to re-quantization of levels. */
+  30:iot_hw.c      **** #define QUANTIZATION_ERROR       (LIGHT_INPUT_COLOR_DEPTH -\
+  31:iot_hw.c      ****                                   LIGHT_MAPPED_COLOR_DEPTH)
+  32:iot_hw.c      **** /* Maximum colour level supported by mapped colour depth bits. */
+  33:iot_hw.c      **** #define COLOR_MAX_VALUE          ((0x1 << LIGHT_MAPPED_COLOR_DEPTH) - 1)
+  34:iot_hw.c      **** 
+  35:iot_hw.c      **** /*============================================================================*
+  36:iot_hw.c      ****  *  Public Function Implementations
+  37:iot_hw.c      ****  *============================================================================*/
+  38:iot_hw.c      **** 
+  39:iot_hw.c      **** /*----------------------------------------------------------------------------*
+  40:iot_hw.c      ****  *  NAME
+  41:iot_hw.c      ****  *      IOTLightControlDeviceInit
+  42:iot_hw.c      ****  *
+  43:iot_hw.c      ****  *  DESCRIPTION
+  44:iot_hw.c      ****  *      This function initialises the Red, Green and Blue LED lines.
+  45:iot_hw.c      ****  *      Configure the IO lines connected to Switch as inputs.
+  46:iot_hw.c      ****  *
+  47:iot_hw.c      ****  *  RETURNS
+  48:iot_hw.c      ****  *      Nothing.
+  49:iot_hw.c      ****  *
+  50:iot_hw.c      ****  *---------------------------------------------------------------------------*/
+  51:iot_hw.c      **** extern void IOTLightControlDeviceInit(void)
+  52:iot_hw.c      **** {
+  53:iot_hw.c      **** #ifdef ENABLE_FAST_PWM
+  54:iot_hw.c      ****     PioFastPwmConfig(PIO_BIT_MASK(LED_PIO_RED) | \
+  55:iot_hw.c      ****                      PIO_BIT_MASK(LED_PIO_GREEN) | \
+  56:iot_hw.c      ****                      PIO_BIT_MASK(LED_PIO_BLUE) | \
+  57:iot_hw.c      ****                      PIO_BIT_MASK(LED_PIO_W));
+  58:iot_hw.c      ****     PioSetModes(1UL << LED_PIO_EN, pio_mode_user);
+  59:iot_hw.c      ****     PioSetDir(LED_PIO_EN, PIO_DIRECTION_OUTPUT);  
+  60:iot_hw.c      **** 
+  61:iot_hw.c      ****     
+  62:iot_hw.c      **** 
+  63:iot_hw.c      **** #else
+  64:iot_hw.c      ****     /* Configure the LED_PIO_RED PIO as output PIO */
+  65:iot_hw.c      ****     PioSetDir(LED_PIO_RED, PIO_DIRECTION_OUTPUT);
+  66:iot_hw.c      **** 
+  67:iot_hw.c      ****     /* Configure the LED_PIO_GREEN PIO as output PIO */
+  68:iot_hw.c      ****     PioSetDir(LED_PIO_GREEN, PIO_DIRECTION_OUTPUT);
+  69:iot_hw.c      **** 
+  70:iot_hw.c      ****     /* Configure the LED_PIO_BLUE PIO as output PIO */
+  71:iot_hw.c      ****     PioSetDir(LED_PIO_BLUE, PIO_DIRECTION_OUTPUT);
+  72:iot_hw.c      **** #endif /* ENABLE_FAST_PWM */
+  73:iot_hw.c      **** }
+  74:iot_hw.c      **** 
+  75:iot_hw.c      **** /*----------------------------------------------------------------------------*
+  76:iot_hw.c      ****  *  NAME
+  77:iot_hw.c      ****  *      IOTLightControlDevicePower
+  78:iot_hw.c      ****  *
+  79:iot_hw.c      ****  *  DESCRIPTION
+  80:iot_hw.c      ****  *      This function sets power state of LED.
+  81:iot_hw.c      ****  *
+  82:iot_hw.c      ****  *  RETURNS
+  83:iot_hw.c      ****  *      Nothing.
+  84:iot_hw.c      ****  *
+  85:iot_hw.c      ****  *---------------------------------------------------------------------------*/
+  86:iot_hw.c      **** extern void IOTLightControlDevicePower(bool power_on)
+  87:iot_hw.c      **** {
+  88:iot_hw.c      **** #ifdef ENABLE_FAST_PWM
+  89:iot_hw.c      ****     PioFastPwmEnable(power_on);
+  90:iot_hw.c      **** #else
+  91:iot_hw.c      ****     if (power_on == TRUE)
+  92:iot_hw.c      ****     {
+  93:iot_hw.c      ****         /* Configure the LED's */
+  94:iot_hw.c      **** 
+  95:iot_hw.c      ****         /* Connect PWM0 output to LED_PIO_RED */
+  96:iot_hw.c      ****         PioSetMode(LED_PIO_RED, pio_mode_pwm0);
+  97:iot_hw.c      **** 
+  98:iot_hw.c      ****         /* Connect PWM1 output to LED_PIO_GREEN */
+  99:iot_hw.c      ****         PioSetMode(LED_PIO_GREEN, pio_mode_pwm1);
+ 100:iot_hw.c      **** 
+ 101:iot_hw.c      ****          /* Connect PWM2 output to LED_PIO_BLUE */
+ 102:iot_hw.c      ****         PioSetMode(LED_PIO_BLUE, pio_mode_pwm2);
+ 103:iot_hw.c      **** 
+ 104:iot_hw.c      ****         /* Enable the PIO's */
+ 105:iot_hw.c      ****         PioEnablePWM(LED_PWM_RED, TRUE);
+ 106:iot_hw.c      ****         PioEnablePWM(LED_PWM_GREEN, TRUE);
+ 107:iot_hw.c      ****         PioEnablePWM(LED_PWM_BLUE, TRUE);
+ 108:iot_hw.c      ****     }
+ 109:iot_hw.c      ****     else
+ 110:iot_hw.c      ****     {
+ 111:iot_hw.c      ****          /* When power off is selected, disable all PWMs and
+ 112:iot_hw.c      ****           * set all PIOs to HIGH, as IOT board uses common anode LED.
+ 113:iot_hw.c      ****           */
+ 114:iot_hw.c      ****          PioSetMode(LED_PIO_RED, pio_mode_user);
+ 115:iot_hw.c      ****          PioSetMode(LED_PIO_GREEN, pio_mode_user);
+ 116:iot_hw.c      ****          PioSetMode(LED_PIO_BLUE, pio_mode_user);
+ 117:iot_hw.c      **** 
+ 118:iot_hw.c      ****          PioSet(LED_PIO_RED, 1);
+ 119:iot_hw.c      ****          PioSet(LED_PIO_GREEN, 1);
+ 120:iot_hw.c      ****          PioSet(LED_PIO_BLUE, 1);
+ 121:iot_hw.c      ****     }
+ 122:iot_hw.c      **** #endif
+ 123:iot_hw.c      **** }
+ 124:iot_hw.c      **** 
+ 125:iot_hw.c      **** /*----------------------------------------------------------------------------*
+ 126:iot_hw.c      ****  *  NAME
+ 127:iot_hw.c      ****  *      IOTLightControlDeviceSetLevel
+ 128:iot_hw.c      ****  *
+ 129:iot_hw.c      ****  *  DESCRIPTION
+ 130:iot_hw.c      ****  *      This function sets the brightness level.
+ 131:iot_hw.c      ****  *      Convert Level to equal values of RGB.
+ 132:iot_hw.c      ****  *      Note that linear translation has been assumed for now.
+ 133:iot_hw.c      ****  *
+ 134:iot_hw.c      ****  *  RETURNS
+ 135:iot_hw.c      ****  *      Nothing.
+ 136:iot_hw.c      ****  *
+ 137:iot_hw.c      ****  *---------------------------------------------------------------------------*/
+ 138:iot_hw.c      **** extern void IOTLightControlDeviceSetLevel(uint8 level)
+ 139:iot_hw.c      **** {
+ 140:iot_hw.c      ****     /* Maps level to equal values of Red, Green and Blue */
+ 141:iot_hw.c      ****     IOTLightControlDeviceSetColor(level, level, level);
+ 142:iot_hw.c      **** }
+ 143:iot_hw.c      **** 
+ 144:iot_hw.c      **** /*----------------------------------------------------------------------------*
+ 145:iot_hw.c      ****  *  NAME
+ 146:iot_hw.c      ****  *      IOTLightControlDeviceSetColor
+ 147:iot_hw.c      ****  *
+ 148:iot_hw.c      ****  *  DESCRIPTION
+ 149:iot_hw.c      ****  *      This function sets the colour as passed in argument values.
+ 150:iot_hw.c      ****  *
+ 151:iot_hw.c      ****  *  RETURNS
+ 152:iot_hw.c      ****  *      Nothing.
+ 153:iot_hw.c      ****  *
+ 154:iot_hw.c      ****  *---------------------------------------------------------------------------*/
+ 155:iot_hw.c      **** extern void IOTLightControlDeviceSetColor(uint8 red, uint8 green, uint8 blue)
+ 156:iot_hw.c      **** {
+ 157:iot_hw.c      **** #ifdef ENABLE_FAST_PWM
+ 158:iot_hw.c      ****    // PioFastPwmSetWidth(LED_PIO_RED, red, 0xFF - red, TRUE);
+ 159:iot_hw.c      ****    // PioFastPwmSetWidth(LED_PIO_GREEN, green, 0xFF - green, TRUE);
+ 160:iot_hw.c      ****    // PioFastPwmSetWidth(LED_PIO_BLUE, blue, 0xFF - blue, TRUE);
+ 161:iot_hw.c      **** 	uint8 white = 0;
+ 162:iot_hw.c      **** 
+ 163:iot_hw.c      **** 	if(red<=green&&red<=blue)white = red;
+ 164:iot_hw.c      **** 	if(green<=red&&green<=blue)white = green;
+ 165:iot_hw.c      **** 	if(blue<=red&&blue<=green)white = blue;
+ 166:iot_hw.c      **** 
+ 167:iot_hw.c      ****     PioFastPwmSetWidth(LED_PIO_RED, 0xff-red,  red, TRUE);
+ 168:iot_hw.c      ****     PioFastPwmSetWidth(LED_PIO_GREEN, 0xff-green, green, TRUE);
+ 169:iot_hw.c      ****     PioFastPwmSetWidth(LED_PIO_BLUE, 0xff-blue, blue, TRUE);   
+ 170:iot_hw.c      **** 	PioFastPwmSetWidth(LED_PIO_W, 0xff-white, white, TRUE);
+ 171:iot_hw.c      ****     PioFastPwmSetPeriods(1, 0);
+ 172:iot_hw.c      ****     PioFastPwmEnable(TRUE);
+ 173:iot_hw.c      **** #else
+ 174:iot_hw.c      ****     /* When level is Lowest (0-3) simply disable PWM to avoid flicker */
+ 175:iot_hw.c      ****     if ((red >> QUANTIZATION_ERROR) == 0)
+ 176:iot_hw.c      ****     {
+ 177:iot_hw.c      ****          PioSetMode(LED_PIO_RED, pio_mode_user);
+ 178:iot_hw.c      ****          PioSet(LED_PIO_RED, 1);
+ 179:iot_hw.c      ****     }
+ 180:iot_hw.c      ****     else
+ 181:iot_hw.c      ****     {
+ 182:iot_hw.c      ****         PioSetMode(LED_PIO_RED, pio_mode_pwm0);
+ 183:iot_hw.c      ****     }
+ 184:iot_hw.c      **** 
+ 185:iot_hw.c      ****     if ((green >> QUANTIZATION_ERROR) == 0)
+ 186:iot_hw.c      ****     {
+ 187:iot_hw.c      ****          PioSetMode(LED_PIO_GREEN, pio_mode_user);
+ 188:iot_hw.c      ****          PioSet(LED_PIO_GREEN, 1);
+ 189:iot_hw.c      ****     }
+ 190:iot_hw.c      ****     else
+ 191:iot_hw.c      ****     {
+ 192:iot_hw.c      ****         PioSetMode(LED_PIO_GREEN, pio_mode_pwm1);
+ 193:iot_hw.c      ****     }
+ 194:iot_hw.c      **** 
+ 195:iot_hw.c      ****     if ((blue >> QUANTIZATION_ERROR) == 0)
+ 196:iot_hw.c      ****     {
+ 197:iot_hw.c      ****          PioSetMode(LED_PIO_BLUE, pio_mode_user);
+ 198:iot_hw.c      ****          PioSet(LED_PIO_BLUE, 1);
+ 199:iot_hw.c      ****     }
+ 200:iot_hw.c      ****     else
+ 201:iot_hw.c      ****     {
+ 202:iot_hw.c      ****         PioSetMode(LED_PIO_BLUE, pio_mode_pwm2);
+ 203:iot_hw.c      ****     }
+ 204:iot_hw.c      **** 
+ 205:iot_hw.c      ****     /* Invert values as its a pull down */
+ 206:iot_hw.c      ****     red   = COLOR_MAX_VALUE - (red >> QUANTIZATION_ERROR);
+ 207:iot_hw.c      ****     green = COLOR_MAX_VALUE - (green >> QUANTIZATION_ERROR);
+ 208:iot_hw.c      ****     blue  = COLOR_MAX_VALUE - (blue >> QUANTIZATION_ERROR);
+ 209:iot_hw.c      **** 
+ 210:iot_hw.c      ****     PioConfigPWM(LED_PWM_RED, pio_pwm_mode_push_pull,
+ 211:iot_hw.c      ****                  red, (COLOR_MAX_VALUE - red), 1U,
+ 212:iot_hw.c      ****                  red, (COLOR_MAX_VALUE - red), 1U, 0U);
+ 213:iot_hw.c      ****     PioConfigPWM(LED_PWM_GREEN, pio_pwm_mode_push_pull,
+ 214:iot_hw.c      ****                  green, (COLOR_MAX_VALUE - green), 1U,
+ 215:iot_hw.c      ****                  green, (COLOR_MAX_VALUE - green), 1U, 0U);
+ 216:iot_hw.c      ****     PioConfigPWM(LED_PWM_BLUE, pio_pwm_mode_push_pull,
+ 217:iot_hw.c      ****                  blue, (COLOR_MAX_VALUE - blue), 1U,
+ 218:iot_hw.c      ****                  blue, (COLOR_MAX_VALUE - blue), 1U, 0U);
+ 219:iot_hw.c      **** #endif /* ENABLE_FAST_PWM */
+ 220:iot_hw.c      **** }
+ 221:iot_hw.c      **** 
+ 222:iot_hw.c      **** /*----------------------------------------------------------------------------*
+ 223:iot_hw.c      ****  *  NAME
+ 224:iot_hw.c      ****  *      IOTLightControlDeviceBlink
+ 225:iot_hw.c      ****  *
+ 226:iot_hw.c      ****  *  DESCRIPTION
+ 227:iot_hw.c      ****  *      This function sets colour and blink time for LEDs.
+ 228:iot_hw.c      ****  *
+ 229:iot_hw.c      ****  *  RETURNS
+ 230:iot_hw.c      ****  *      Nothing.
+ 231:iot_hw.c      ****  *
+ 232:iot_hw.c      ****  *---------------------------------------------------------------------------*/
+ 233:iot_hw.c      **** extern void IOTLightControlDeviceBlink(uint8 red, uint8 green, uint8 blue,
+ 234:iot_hw.c      ****                                        uint8 on_time, uint8 off_time)
+ 235:iot_hw.c      **** {
+ 236:iot_hw.c      **** #ifdef ENABLE_FAST_PWM    
+ 237:iot_hw.c      ****     PioSet(LED_PIO_EN,1);    
+ 238:iot_hw.c      ****     PioFastPwmSetWidth(LED_PIO_RED, 255, red, TRUE);
+ 239:iot_hw.c      ****     PioFastPwmSetWidth(LED_PIO_GREEN, 255, green, TRUE);
+ 240:iot_hw.c      ****     PioFastPwmSetWidth(LED_PIO_BLUE, 255, blue, TRUE);
+ 241:iot_hw.c      ****     PioFastPwmSetPeriods((on_time << 4), (off_time << 4));
+ 242:iot_hw.c      ****     PioFastPwmEnable(TRUE);  
+ 243:iot_hw.c      **** 
+ 244:iot_hw.c      **** #else
+ 245:iot_hw.c      ****     IOTLightControlDevicePower(TRUE);
+ 246:iot_hw.c      **** 
+ 247:iot_hw.c      ****     IOTLightControlDeviceSetColor(red, green, blue);
+ 248:iot_hw.c      **** 
+ 249:iot_hw.c      ****     /* Invert the On and Off times as LEDs on
+ 250:iot_hw.c      ****      * IOT board are Common-Anode type
+ 251:iot_hw.c      ****      */
+ 252:iot_hw.c      ****     PioConfigPWM(LED_PWM_RED, pio_pwm_mode_push_pull,
+ 253:iot_hw.c      ****                  red, 0, off_time, 0, red, on_time, 0U);
+ 254:iot_hw.c      **** 
+ 255:iot_hw.c      ****     PioConfigPWM(LED_PWM_GREEN, pio_pwm_mode_push_pull,
+ 256:iot_hw.c      ****                  green, 0, off_time, 0, green, on_time, 0U);
+ 257:iot_hw.c      **** 
+ 258:iot_hw.c      ****     PioConfigPWM(LED_PWM_BLUE, pio_pwm_mode_push_pull,
+ 259:iot_hw.c      ****                  blue, 0, off_time, 0, blue, on_time, 0U);
+ 260:iot_hw.c      **** #endif
+ 261:iot_hw.c      **** }
+ 262:iot_hw.c      **** 
+ 263:iot_hw.c      **** /*----------------------------------------------------------------------------*
+ 264:iot_hw.c      ****  *  NAME
+ 265:iot_hw.c      ****  *      IOTSwitchInit
+ 266:iot_hw.c      ****  *
+ 267:iot_hw.c      ****  *  DESCRIPTION
+ 268:iot_hw.c      ****  *      This function sets GPIO to switch mode.
+ 269:iot_hw.c      ****  *
+ 270:iot_hw.c      ****  *  RETURNS
+ 271:iot_hw.c      ****  *      Nothing.
+ 272:iot_hw.c      ****  *
+ 273:iot_hw.c      ****  *---------------------------------------------------------------------------*/
+ 274:iot_hw.c      **** extern void IOTSwitchInit(void)
+ 275:iot_hw.c      **** {
+  20                 	r	#0x0002
+  21 0000 02 0B       	.LCFI0:
+  22                 		.loc 1 278 0
+ 276:iot_hw.c      **** chInit(void)
+ 277:iot_hw.c      **** {
+  23                 		AL,#0x0001
+  24 0001 01 14       		ld	AH,#0x0000
+  25 0002 00 10       		bsr	PioSetDir
+  26 0003 00 00 00 00 		.loc 1 279 0
+  26      00 9C 
+ 278:iot_hw.c      **** chInit(void)
+  27                 	AL,#0x0001
+  28 0006 01 14       		ld	AH,#0x0000
+  29 0007 00 10       		bsr	PioSetMode
+  30 0008 00 00 00 00 		.loc 1 281 0
+  30      00 9C 
+ 279:iot_hw.c      **** witchInit(void)
+ 280:iot_hw.c      **** {
+  31                 	AL,#0x0000
+  32 000b 00 14       		ld	AH,#0x0000
+  33 000c 00 10       		bsr	PioSetDir
+  34 000d 00 00 00 00 		.loc 1 282 0
+  34      00 9C 
+ 281:iot_hw.c      **** chInit(void)
+  35                 	AL,#0x0000
+  36 0010 00 14       		ld	AH,#0x0000
+  37 0011 00 10       		bsr	PioSetMode
+  38 0012 00 00 00 00 		.loc 1 284 0
+  38      00 9C 
+ 282:iot_hw.c      **** witchInit(void)
+ 283:iot_hw.c      **** {
+  39                 	AL,#0x0004
+  40 0015 04 14       		ld	AH,#0x0000
+  41 0016 00 10       		bsr	PioSetDir
+  42 0017 00 00 00 00 		.loc 1 285 0
+  42      00 9C 
+ 284:iot_hw.c      **** chInit(void)
+  43                 	AL,#0x0004
+  44 001a 04 14       		ld	AH,#0x0000
+  45 001b 00 10       		bsr	PioSetMode
+  46 001c 00 00 00 00 		.loc 1 287 0
+  46      00 9C 
+ 285:iot_hw.c      **** witchInit(void)
+ 286:iot_hw.c      **** {
+  47                 	AL,#0x0007
+  48 001f 07 14       		st	AL,@(0,Y)
+  49 0020 00 27       		ld	AH,#0x0000
+  50 0021 00 10       		ld	AL,#0x0013
+  51 0022 13 14       		bsr	PioSetPullModes
+  52 0023 00 00 00 00 		.loc 1 289 0
+  52      00 9C 
+ 287:iot_hw.c      **** chInit(void)
+ 288:iot_hw.c      **** {
+  53                 	,#0x0003
+  54 0026 03 14       		st	AL,@(0,Y)
+  55 0027 00 27       		ld	AH,#0x0000
+  56 0028 00 10       		ld	AL,#0x0013
+  57 0029 13 14       		bsr	PioSetEventMask
+  58 002a 00 00 00 00 		.loc 1 290 0
+  58      00 9C 
+ 289:iot_hw.c      **** chInit(void)
+  59                 		#0x0002
+  60 002d 02 0F       	.LFE7:
+  61                 		.size	IOTSwitchInit, .-IOTSwitchInit
+  62                 		.global	__size_of_IOTSwitchInit
+  63                 		.equ	__size_of_IOTSwitchInit,. - IOTSwitchInit
+  64                 		.section	.text.IOTLightControlDeviceBlink,"ax",@progbits
+  65                 		.global	IOTLightControlDeviceBlink
+  66                 		.type	IOTLightControlDeviceBlink, @function
+  67                 	IOTLightControlDeviceBlink:
+  68                 	.LFB6:
+  69                 		.loc 1 236 0
+ 236:iot_hw.c      **** {
+  70                 	er	#0x0005
+  71                 	.LCFI1:
+  72 0000 05 0B       		st	AL,@(0x0002,Y)
+  73                 		st	AH,@(0x0003,Y)
+  74 0001 02 27       		.loc 1 238 0
+  75 0002 03 23       		ld	AL,#0x0003
+ 238:iot_hw.c      ****     PioSet(LED_PIO_EN,1);    
+  76                 	
+  77 0003 03 14       		ld	AH,#0x0001
+  78                 	.LVL2:
+  79 0004 01 10       		bsr	PioSet
+  80                 		.loc 1 239 0
+  81 0005 00 00 00 00 		ld	AL,@(0x0002,Y)
+  81      00 9C 
+ 239:iot_hw.c      ****     PioFastPwmSetWidth(LED_PIO_RED, 255, red, TRUE);
+  82                 	L,@(0,Y)
+  83 0008 02 17       		ld	AL,#0x0001
+  84 0009 00 27       		st	AL,@(0x0001,Y)
+  85 000a 01 14       		ld	AL,#0x000b
+  86 000b 01 27       		ld	AH,#0x00ff
+  87 000c 0B 14       		bsr	PioFastPwmSetWidth
+  88 000d 01 00 FF 10 		.loc 1 240 0
+  89 000f 00 00 00 00 		ld	AL,@(0x0003,Y)
+  89      00 9C 
+ 240:iot_hw.c      ****     PioFastPwmSetWidth(LED_PIO_GREEN, 255, green, TRUE);
+  90                 	(0,Y)
+  91 0012 03 17       		ld	AL,#0x0001
+  92 0013 00 27       		st	AL,@(0x0001,Y)
+  93 0014 01 14       		ld	AL,#0x000a
+  94 0015 01 27       		ld	AH,#0x00ff
+  95 0016 0A 14       		bsr	PioFastPwmSetWidth
+  96 0017 01 00 FF 10 		.loc 1 241 0
+  97 0019 00 00 00 00 		ld	AL,@(0x0005,Y)
+  97      00 9C 
+ 241:iot_hw.c      ****     PioFastPwmSetWidth(LED_PIO_BLUE, 255, blue, TRUE);
+  98                 	(0,Y)
+  99 001c 05 17       		ld	AL,#0x0001
+ 100 001d 00 27       		st	AL,@(0x0001,Y)
+ 101 001e 01 14       		ld	AL,#0x0009
+ 102 001f 01 27       		ld	AH,#0x00ff
+ 103 0020 09 14       		bsr	PioFastPwmSetWidth
+ 104 0021 01 00 FF 10 		.loc 1 242 0
+ 105 0023 00 00 00 00 		ld	AL,@(0x0006,Y)
+ 105      00 9C 
+ 242:iot_hw.c      ****     PioFastPwmSetPeriods((on_time << 4), (off_time << 4));
+ 106                 	0004
+ 107 0026 06 17       		ld	X,@$XAP_AL
+ 108 0027 04 A0       		ld	AL,@(0x0007,Y)
+ 109 0028 00 00 00 19 		asl	#0x0004
+ 110 002a 07 17       		ld	AH,@$XAP_AL
+ 111 002b 04 A0       		ld	AL,@$XAP_UXL
+ 112 002c 00 00 00 11 		bsr	PioFastPwmSetPeriods
+ 113 002e 00 00 00 15 		.loc 1 243 0
+ 114 0030 00 00 00 00 		ld	AL,#0x0001
+ 114      00 9C 
+ 243:iot_hw.c      ****     PioFastPwmEnable(TRUE);  
+ 115                 	astPwmEnable
+ 116 0033 01 14       		.loc 1 262 0
+ 117 0034 00 00 00 00 		leave	#0x0005
+ 117      00 9C 
+ 262:iot_hw.c      **** }
+ 118                 	E6:
+ 119 0037 05 0F       		.size	IOTLightControlDeviceBlink, .-IOTLightControlDeviceBlink
+ 120                 		.global	__size_of_IOTLightControlDeviceBlink
+ 121                 		.equ	__size_of_IOTLightControlDeviceBlink,. - IOTLightControlDeviceBlink
+ 122                 		.section	.text.IOTLightControlDeviceSetColor,"ax",@progbits
+ 123                 		.global	IOTLightControlDeviceSetColor
+ 124                 		.type	IOTLightControlDeviceSetColor, @function
+ 125                 	IOTLightControlDeviceSetColor:
+ 126                 	.LFB5:
+ 127                 		.loc 1 157 0
+ 128                 	.LVL3:
+ 157:iot_hw.c      **** {
+ 129                 	005
+ 130                 	.LCFI2:
+ 131 0000 05 0B       		st	AH,@(0x0003,Y)
+ 132                 		.loc 1 164 0
+ 133 0001 03 23       		cmp	AL,@$XAP_AH
+ 164:iot_hw.c      **** 	if(red<=green&&red<=blue)white = red;
+ 134                 	:
+ 135 0002 00 00 00 85 		bcz	.L17
+ 136                 		bra	.L6
+ 137 0004 00 00 00 00 	.L17:
+ 137      00 2C 
+ 138 0007 00 00 00 00 		cmp	AL,@(0x0005,Y)
+ 138      00 E0 
+ 139                 		bcz	.L18
+ 140 000a 05 87       	.LVL5:
+ 141 000b 00 00 00 00 		bra	.L6
+ 141      00 2C 
+ 142                 	.L18:
+ 143 000e 00 00 00 00 		st	AL,@(0x0002,Y)
+ 143      00 E0 
+ 144                 	.LVL6:
+ 145 0011 02 27       		bra	.L9
+ 146                 	.LVL7:
+ 147 0012 00 00 00 00 	.L6:
+ 147      00 E0 
+ 148                 		ld	X,#0x0000
+ 149                 		st	X,@(0x0002,Y)
+ 150 0015 00 18       	.LVL8:
+ 151 0016 02 2B       	.L9:
+ 152                 		.loc 1 165 0
+ 153                 		ld	X,@(0x0003,Y)
+ 165:iot_hw.c      **** 	if(green<=red&&green<=blue)white = green;
+ 154                 		.L19
+ 155 0017 03 1B       		bra	.L10
+ 156 0018 00 00 00 89 	.L19:
+ 157 001a 00 00 00 00 		ld	X,@(0x0003,Y)
+ 157      00 2C 
+ 158 001d 00 00 00 00 		cmp	X,@(0x0005,Y)
+ 158      00 E0 
+ 159                 		bcz	.L20
+ 160 0020 03 1B       	.LVL9:
+ 161 0021 05 8B       		bra	.L10
+ 162 0022 00 00 00 00 	.L20:
+ 162      00 2C 
+ 163                 		ld	X,@(0x0003,Y)
+ 164 0025 00 00 00 00 		st	X,@(0x0002,Y)
+ 164      00 E0 
+ 165                 	.LVL10:
+ 166 0028 03 1B       	.L10:
+ 167 0029 02 2B       		.loc 1 166 0
+ 168                 		ld	X,@(0x0005,Y)
+ 169                 		cmp	X,@$XAP_AL
+ 166:iot_hw.c      **** 	if(blue<=red&&blue<=green)white = blue;
+ 170                 	L13
+ 171 002a 05 1B       	.L21:
+ 172 002b 00 00 00 89 		ld	X,@(0x0005,Y)
+ 173 002d 00 00 00 00 		cmp	X,@(0x0003,Y)
+ 173      00 2C 
+ 174 0030 00 00 00 00 		bcz	.L22
+ 174      00 E0 
+ 175                 		bra	.L13
+ 176 0033 05 1B       	.L22:
+ 177 0034 03 8B       		ld	X,@(0x0005,Y)
+ 178 0035 00 00 00 00 		st	X,@(0x0002,Y)
+ 178      00 2C 
+ 179 0038 00 00 00 00 	.LVL11:
+ 179      00 E0 
+ 180                 	.L13:
+ 181 003b 05 1B       		.loc 1 168 0
+ 182 003c 02 2B       		ld	AH,#0x00ff
+ 183                 		sub	AH,@$XAP_AL
+ 184                 		st	AL,@(0,Y)
+ 168:iot_hw.c      ****     PioFastPwmSetWidth(LED_PIO_RED, 0xff-red,  red, TRUE);
+ 185                 	.LVL12:
+ 186 003d 01 00 FF 10 		st	AL,@(0x0001,Y)
+ 187 003f 00 00 00 51 		ld	AL,#0x000b
+ 188 0041 00 27       		bsr	PioFastPwmSetWidth
+ 189 0042 01 14       		.loc 1 169 0
+ 190                 		ld	AH,#0x00ff
+ 191 0043 01 27       		sub	AH,@(0x0003,Y)
+ 192 0044 0B 14       		ld	X,@(0x0003,Y)
+ 193 0045 00 00 00 00 		st	X,@(0,Y)
+ 193      00 9C 
+ 169:iot_hw.c      ****     PioFastPwmSetWidth(LED_PIO_GREEN, 0xff-green, green, TRUE);
+ 194                 	x0001
+ 195 0048 01 00 FF 10 		st	AL,@(0x0001,Y)
+ 196 004a 03 53       		ld	AL,#0x000a
+ 197 004b 03 1B       		bsr	PioFastPwmSetWidth
+ 198 004c 00 2B       		.loc 1 170 0
+ 199 004d 01 14       		ld	AH,#0x00ff
+ 200 004e 01 27       		sub	AH,@(0x0005,Y)
+ 201 004f 0A 14       		ld	X,@(0x0005,Y)
+ 202 0050 00 00 00 00 		st	X,@(0,Y)
+ 202      00 9C 
+ 170:iot_hw.c      ****     PioFastPwmSetWidth(LED_PIO_BLUE, 0xff-blue, blue, TRUE);   
+ 203                 	x0001
+ 204 0053 01 00 FF 10 		st	AL,@(0x0001,Y)
+ 205 0055 05 53       		ld	AL,#0x0009
+ 206 0056 05 1B       		bsr	PioFastPwmSetWidth
+ 207 0057 00 2B       		.loc 1 171 0
+ 208 0058 01 14       		ld	AH,#0x00ff
+ 209 0059 01 27       		sub	AH,@(0x0002,Y)
+ 210 005a 09 14       		ld	X,@(0x0002,Y)
+ 211 005b 00 00 00 00 		st	X,@(0,Y)
+ 211      00 9C 
+ 171:iot_hw.c      **** 	PioFastPwmSetWidth(LED_PIO_W, 0xff-white, white, TRUE);
+ 212                 	x0001
+ 213 005e 01 00 FF 10 		st	AL,@(0x0001,Y)
+ 214 0060 02 53       		ld	AL,#0x0008
+ 215 0061 02 1B       		bsr	PioFastPwmSetWidth
+ 216 0062 00 2B       		.loc 1 172 0
+ 217 0063 01 14       		ld	AL,#0x0001
+ 218 0064 01 27       		ld	AH,#0x0000
+ 219 0065 08 14       		bsr	PioFastPwmSetPeriods
+ 220 0066 00 00 00 00 		.loc 1 173 0
+ 220      00 9C 
+ 172:iot_hw.c      ****     PioFastPwmSetPeriods(1, 0);
+ 221                 	x0001
+ 222 0069 01 14       		bsr	PioFastPwmEnable
+ 223 006a 00 10       		.loc 1 221 0
+ 224 006b 00 00 00 00 		leave	#0x0005
+ 224      00 9C 
+ 173:iot_hw.c      ****     PioFastPwmEnable(TRUE);
+ 225                 	5:
+ 226 006e 01 14       		.size	IOTLightControlDeviceSetColor, .-IOTLightControlDeviceSetColor
+ 227 006f 00 00 00 00 		.global	__size_of_IOTLightControlDeviceSetColor
+ 227      00 9C 
+ 221:iot_hw.c      **** }
+ 228                 	qu	__size_of_IOTLightControlDeviceSetColor,. - IOTLightControlDeviceSetColor
+ 229 0072 05 0F       		.section	.text.IOTLightControlDeviceSetLevel,"ax",@progbits
+ 230                 		.global	IOTLightControlDeviceSetLevel
+ 231                 		.type	IOTLightControlDeviceSetLevel, @function
+ 232                 	IOTLightControlDeviceSetLevel:
+ 233                 	.LFB4:
+ 234                 		.loc 1 140 0
+ 235                 	.LVL13:
+ 236                 		enter	#0x0002
+ 237                 	.LCFI3:
+ 238                 		.loc 1 142 0
+ 140:iot_hw.c      **** {
+ 239                 	Y)
+ 240                 		ld	AH,@$XAP_AL
+ 241 0000 02 0B       	.LVL14:
+ 242                 		bsr	IOTLightControlDeviceSetColor
+ 142:iot_hw.c      ****     IOTLightControlDeviceSetColor(level, level, level);
+ 243                 	c 1 143 0
+ 244 0001 00 27       		leave	#0x0002
+ 245 0002 00 00 00 11 	.LFE4:
+ 246                 		.size	IOTLightControlDeviceSetLevel, .-IOTLightControlDeviceSetLevel
+ 247 0004 00 00 00 00 		.global	__size_of_IOTLightControlDeviceSetLevel
+ 247      00 9C 
+ 143:iot_hw.c      **** }
+ 248                 		__size_of_IOTLightControlDeviceSetLevel,. - IOTLightControlDeviceSetLevel
+ 249 0007 02 0F       		.section	.text.IOTLightControlDevicePower,"ax",@progbits
+ 250                 		.global	IOTLightControlDevicePower
+ 251                 		.type	IOTLightControlDevicePower, @function
+ 252                 	IOTLightControlDevicePower:
+ 253                 	.LFB3:
+ 254                 		.loc 1 88 0
+ 255                 	.LVL15:
+ 256                 		.loc 1 90 0
+ 257                 		bra	PioFastPwmEnable
+ 258                 	.LVL16:
+  88:iot_hw.c      **** {
+ 259                 	ze	IOTLightControlDevicePower, .-IOTLightControlDevicePower
+ 260                 		.global	__size_of_IOTLightControlDevicePower
+  90:iot_hw.c      ****     PioFastPwmEnable(power_on);
+ 261                 	equ	__size_of_IOTLightControlDevicePower,. - IOTLightControlDevicePower
+ 262 0000 00 00 00 00 		.section	.text.IOTLightControlDeviceInit,"ax",@progbits
+ 262      00 E0 
+ 263                 		.global	IOTLightControlDeviceInit
+ 264                 		.type	IOTLightControlDeviceInit, @function
+ 265                 	IOTLightControlDeviceInit:
+ 266                 	.LFB2:
+ 267                 		.loc 1 53 0
+ 268                 		enter	#0x0002
+ 269                 	.LCFI4:
+ 270                 		.loc 1 55 0
+ 271                 		ld	AH,#0x0000
+ 272                 		ld	AL,#0x0f00
+  53:iot_hw.c      **** {
+ 273                 	PwmConfig
+ 274 0000 02 0B       		.loc 1 59 0
+ 275                 		ld	AL,#0x0000
+  55:iot_hw.c      ****     PioFastPwmConfig(PIO_BIT_MASK(LED_PIO_RED) | \
+ 276                 		AL,@(0,Y)
+ 277 0001 00 10       		ld	AH,#0x0000
+ 278 0002 0F 00 00 14 		ld	AL,#0x0008
+ 279 0004 00 00 00 00 		bsr	PioSetModes
+ 279      00 9C 
+  59:iot_hw.c      ****     PioSetModes(1UL << LED_PIO_EN, pio_mode_user);
+ 280                 	c 1 60 0
+ 281 0007 00 14       		ld	AL,#0x0003
+ 282 0008 00 27       		ld	AH,#0x0001
+ 283 0009 00 10       		bsr	PioSetDir
+ 284 000a 08 14       		.loc 1 74 0
+ 285 000b 00 00 00 00 		leave	#0x0002
+ 285      00 9C 
+  60:iot_hw.c      ****     PioSetDir(LED_PIO_EN, PIO_DIRECTION_OUTPUT);  
+ 286                 	
+ 287 000e 03 14       		.size	IOTLightControlDeviceInit, .-IOTLightControlDeviceInit
+ 288 000f 01 10       		.global	__size_of_IOTLightControlDeviceInit
+ 289 0010 00 00 00 00 		.equ	__size_of_IOTLightControlDeviceInit,. - IOTLightControlDeviceInit
+ 289      00 9C 
+  74:iot_hw.c      **** }
+ 290                 	ection	.debug_frame,"",@progbits
+ 291 0013 02 0F       	.Lframe0:
+ 292                 		.4byte	.LECIE0-.LSCIE0
+ 293                 	.LSCIE0:
+ 294                 		.4byte	0xffffffff
+ 295                 		.1byte	0x1
+ 296                 		.ascii "\000"
+ 297                 		.1byte	0x1
+ 298 0000 00 00 00 00 		.1byte	0x7f
+ 299                 		.1byte	0x3
+ 300 0002 FF FF FF FF 		.1byte	0xc
+ 301 0004 01          		.1byte	0x5
+ 302 0004 00          		.1byte	0x0
+ 303 0005 01          		.p2align	2
+ 304 0005 7F          	.LECIE0:
+ 305 0006 03          	.LSFDE0:
+ 306 0006 0C          		.4byte	.LEFDE0-.LASFDE0
+ 307 0007 05          	.LASFDE0:
+ 308 0007 00          		.4byte	.Lframe0
+ 309                 		.4byte	.LFB7
+ 310                 		.4byte	.LFE7-.LFB7
+ 311                 		.1byte	0x4
+ 312 0008 00 00 00 00 		.4byte	.LCFI0-.LFB7
+ 313                 		.1byte	0xe
+ 314 000a 00 00 00 00 		.1byte	0x2
+ 315 000c 00 00 00 00 		.1byte	0x83
+ 316 000e 00 00 00 00 		.1byte	0x1
+ 317 0010 41          		.p2align	2
+ 318                 	.LEFDE0:
+ 319 0010 0E          	.LSFDE2:
+ 320 0011 02          		.4byte	.LEFDE2-.LASFDE2
+ 321 0011 83          	.LASFDE2:
+ 322 0012 01          		.4byte	.Lframe0
+ 323 0012 00 00 00    		.4byte	.LFB6
+ 324                 		.4byte	.LFE6-.LFB6
+ 325                 		.1byte	0x4
+ 326 0014 00 00 00 00 		.4byte	.LCFI1-.LFB6
+ 327                 		.1byte	0xe
+ 328 0016 00 00 00 00 		.1byte	0x5
+ 329 0018 00 00 00 00 		.1byte	0x83
+ 330 001a 00 00 00 00 		.1byte	0x1
+ 331 001c 41          		.p2align	2
+ 332                 	.LEFDE2:
+ 333 001c 0E          	.LSFDE4:
+ 334 001d 05          		.4byte	.LEFDE4-.LASFDE4
+ 335 001d 83          	.LASFDE4:
+ 336 001e 01          		.4byte	.Lframe0
+ 337 001e 00 00 00    		.4byte	.LFB5
+ 338                 		.4byte	.LFE5-.LFB5
+ 339                 		.1byte	0x4
+ 340 0020 00 00 00 00 		.4byte	.LCFI2-.LFB5
+ 341                 		.1byte	0xe
+ 342 0022 00 00 00 00 		.1byte	0x5
+ 343 0024 00 00 00 00 		.1byte	0x83
+ 344 0026 00 00 00 00 		.1byte	0x1
+ 345 0028 41          		.p2align	2
+ 346                 	.LEFDE4:
+ 347 0028 0E          	.LSFDE6:
+ 348 0029 05          		.4byte	.LEFDE6-.LASFDE6
+ 349 0029 83          	.LASFDE6:
+ 350 002a 01          		.4byte	.Lframe0
+ 351 002a 00 00 00    		.4byte	.LFB4
+ 352                 		.4byte	.LFE4-.LFB4
+ 353                 		.1byte	0x4
+ 354 002c 00 00 00 00 		.4byte	.LCFI3-.LFB4
+ 355                 		.1byte	0xe
+ 356 002e 00 00 00 00 		.1byte	0x2
+ 357 0030 00 00 00 00 		.1byte	0x83
+ 358 0032 00 00 00 00 		.1byte	0x1
+ 359 0034 41          		.p2align	2
+ 360                 	.LEFDE6:
+ 361 0034 0E          	.LSFDE8:
+ 362 0035 02          		.4byte	.LEFDE8-.LASFDE8
+ 363 0035 83          	.LASFDE8:
+ 364 0036 01          		.4byte	.Lframe0
+ 365 0036 00 00 00    		.4byte	.LFB3
+ 366                 		.4byte	.LFE3-.LFB3
+ 367                 		.p2align	2
+ 368 0038 00 00 00 00 	.LEFDE8:
+ 369                 	.LSFDE10:
+ 370 003a 00 00 00 00 		.4byte	.LEFDE10-.LASFDE10
+ 371 003c 00 00 00 00 	.LASFDE10:
+ 372 003e 00 00 00 00 		.4byte	.Lframe0
+ 373                 		.4byte	.LFB2
+ 374                 		.4byte	.LFE2-.LFB2
+ 375                 		.1byte	0x4
+ 376 0040 00 00 00 00 		.4byte	.LCFI4-.LFB2
+ 377                 		.1byte	0xe
+ 378 0042 00 00 00 00 		.1byte	0x2
+ 379 0044 00 00 00 00 		.1byte	0x83
+ 380 0046 00 00 00 00 		.1byte	0x1
+ 381 0048 41          		.p2align	2
+ 382                 	.LEFDE10:
+ 383 0048 0E          		.text
+ 384 0049 02          	.Letext0:
+ 385 0049 83          		.section	.debug_loc,"",@progbits
+ 386 004a 01          	.Ldebug_loc0:
+ 387 004a 00 00 00    	.LLST0:
+ 388                 		.4byte	.LFB7
+ 389                 		.4byte	.LCFI0
+ 390                 		.2byte	0x1
+ 391                 		.1byte	0x55
+ 392                 		.4byte	.LCFI0
+ 393                 		.4byte	.LFE7
+ 394 0000 00 00 00 00 		.2byte	0x2
+ 395 0002 00 00 00 00 		.1byte	0x75
+ 396 0004 00 01       		.1byte	0x2
+ 397 0005 55          		.4byte	0x0
+ 398 0005 00 00 00 00 		.4byte	0x0
+ 399 0007 00 00 00 00 	.LLST1:
+ 400 0009 00 02       		.4byte	.LFB6
+ 401 000a 75          		.4byte	.LCFI1
+ 402 000b 02          		.2byte	0x1
+ 403 000b 00 00 00 00 		.1byte	0x55
+ 404 000d 00 00 00 00 		.4byte	.LCFI1
+ 405                 		.4byte	.LFE6
+ 406 000f 00 00 00 00 		.2byte	0x2
+ 407 0011 00 00 00 00 		.1byte	0x75
+ 408 0013 00 01       		.1byte	0x5
+ 409 0014 55          		.4byte	0x0
+ 410 0015 00 00 00 00 		.4byte	0x0
+ 411 0017 00 00 00 00 	.LLST2:
+ 412 0019 00 02       		.4byte	.LVL0
+ 413 001a 75          		.4byte	.LVL1
+ 414 001a 05          		.2byte	0x1
+ 415 001b 00 00 00 00 		.1byte	0x51
+ 416 001d 00 00 00 00 		.4byte	.LVL1
+ 417                 		.4byte	.LFE6
+ 418 001f 00 00 00 00 		.2byte	0x2
+ 419 0021 00 00 00 00 		.1byte	0x76
+ 420 0023 00 01       		.1byte	0x2
+ 421 0024 51          		.4byte	0x0
+ 422 0024 00 00 00 00 		.4byte	0x0
+ 423 0026 00 00 00 00 	.LLST3:
+ 424 0028 00 02       		.4byte	.LVL0
+ 425 0029 76          		.4byte	.LVL2
+ 426 002a 02          		.2byte	0x1
+ 427 002a 00 00 00 00 		.1byte	0x50
+ 428 002c 00 00 00 00 		.4byte	.LVL2
+ 429                 		.4byte	.LFE6
+ 430 002e 00 00 00 00 		.2byte	0x2
+ 431 0030 00 00 00 00 		.1byte	0x76
+ 432 0032 00 01       		.1byte	0x3
+ 433 0033 50          		.4byte	0x0
+ 434 0034 00 00 00 00 		.4byte	0x0
+ 435 0036 00 00 00 00 	.LLST4:
+ 436 0038 00 02       		.4byte	.LFB5
+ 437 0039 76          		.4byte	.LCFI2
+ 438 0039 03          		.2byte	0x1
+ 439 003a 00 00 00 00 		.1byte	0x55
+ 440 003c 00 00 00 00 		.4byte	.LCFI2
+ 441                 		.4byte	.LFE5
+ 442 003e 00 00 00 00 		.2byte	0x2
+ 443 0040 00 00 00 00 		.1byte	0x75
+ 444 0042 00 01       		.1byte	0x5
+ 445 0043 55          		.4byte	0x0
+ 446 0043 00 00 00 00 		.4byte	0x0
+ 447 0045 00 00 00 00 	.LLST5:
+ 448 0047 00 02       		.4byte	.LVL3
+ 449 0048 75          		.4byte	.LVL12
+ 450 0049 05          		.2byte	0x1
+ 451 0049 00 00 00 00 		.1byte	0x51
+ 452 004b 00 00 00 00 		.4byte	0x0
+ 453                 		.4byte	0x0
+ 454 004d 00 00 00 00 	.LLST6:
+ 455 004f 00 00 00 00 		.4byte	.LVL3
+ 456 0051 00 01       		.4byte	.LVL4
+ 457 0052 51          		.2byte	0x1
+ 458 0053 00 00 00 00 		.1byte	0x50
+ 459 0055 00 00 00 00 		.4byte	.LVL4
+ 460                 		.4byte	.LFE5
+ 461 0057 00 00 00 00 		.2byte	0x2
+ 462 0059 00 00 00 00 		.1byte	0x76
+ 463 005b 00 01       		.1byte	0x3
+ 464 005c 50          		.4byte	0x0
+ 465 005c 00 00 00 00 		.4byte	0x0
+ 466 005e 00 00 00 00 	.LLST7:
+ 467 0060 00 02       		.4byte	.LVL3
+ 468 0061 76          		.4byte	.LVL5
+ 469 0062 03          		.2byte	0x2
+ 470 0062 00 00 00 00 		.1byte	0x91
+ 471 0064 00 00 00 00 		.1byte	0x0
+ 472                 		.4byte	.LVL5
+ 473 0066 00 00 00 00 		.4byte	.LVL7
+ 474 0068 00 00 00 00 		.2byte	0x2
+ 475 006a 00 02       		.1byte	0x76
+ 476 006b 91          		.1byte	0x5
+ 477 006c 00          		.4byte	.LVL7
+ 478 006c 00 00 00 00 		.4byte	.LVL9
+ 479 006e 00 00 00 00 		.2byte	0x2
+ 480 0070 00 02       		.1byte	0x91
+ 481 0071 76          		.1byte	0x0
+ 482 0072 05          		.4byte	.LVL9
+ 483 0072 00 00 00 00 		.4byte	.LFE5
+ 484 0074 00 00 00 00 		.2byte	0x2
+ 485 0076 00 02       		.1byte	0x76
+ 486 0077 91          		.1byte	0x5
+ 487 0078 00          		.4byte	0x0
+ 488 0078 00 00 00 00 		.4byte	0x0
+ 489 007a 00 00 00 00 	.LLST8:
+ 490 007c 00 02       		.4byte	.LVL6
+ 491 007d 76          		.4byte	.LVL7
+ 492 007e 05          		.2byte	0x2
+ 493 007e 00 00 00 00 		.1byte	0x76
+ 494 0080 00 00 00 00 		.1byte	0x2
+ 495                 		.4byte	.LVL8
+ 496 0082 00 00 00 00 		.4byte	.LFE5
+ 497 0084 00 00 00 00 		.2byte	0x2
+ 498 0086 00 02       		.1byte	0x76
+ 499 0087 76          		.1byte	0x2
+ 500 0088 02          		.4byte	0x0
+ 501 0088 00 00 00 00 		.4byte	0x0
+ 502 008a 00 00 00 00 	.LLST9:
+ 503 008c 00 02       		.4byte	.LFB4
+ 504 008d 76          		.4byte	.LCFI3
+ 505 008e 02          		.2byte	0x1
+ 506 008e 00 00 00 00 		.1byte	0x55
+ 507 0090 00 00 00 00 		.4byte	.LCFI3
+ 508                 		.4byte	.LFE4
+ 509 0092 00 00 00 00 		.2byte	0x2
+ 510 0094 00 00 00 00 		.1byte	0x75
+ 511 0096 00 01       		.1byte	0x2
+ 512 0097 55          		.4byte	0x0
+ 513 0098 00 00 00 00 		.4byte	0x0
+ 514 009a 00 00 00 00 	.LLST10:
+ 515 009c 00 02       		.4byte	.LVL13
+ 516 009d 75          		.4byte	.LVL14
+ 517 009d 02          		.2byte	0x1
+ 518 009e 00 00 00 00 		.1byte	0x51
+ 519 00a0 00 00 00 00 		.4byte	0x0
+ 520                 		.4byte	0x0
+ 521 00a2 00 00 00 00 	.LLST12:
+ 522 00a4 00 00 00 00 		.4byte	.LVL15
+ 523 00a6 00 01       		.4byte	.LVL16
+ 524 00a7 51          		.2byte	0x1
+ 525 00a7 00 00 00 00 		.1byte	0x51
+ 526 00a9 00 00 00 00 		.4byte	0x0
+ 527                 		.4byte	0x0
+ 528 00ab 00 00 00 00 	.LLST13:
+ 529 00ad 00 00 00 00 		.4byte	.LFB2
+ 530 00af 00 01       		.4byte	.LCFI4
+ 531 00b0 51          		.2byte	0x1
+ 532 00b1 00 00 00 00 		.1byte	0x55
+ 533 00b3 00 00 00 00 		.4byte	.LCFI4
+ 534                 		.4byte	.LFE2
+ 535 00b5 00 00 00 00 		.2byte	0x2
+ 536 00b7 00 00 00 00 		.1byte	0x75
+ 537 00b9 00 01       		.1byte	0x2
+ 538 00ba 55          		.4byte	0x0
+ 539 00ba 00 00 00 00 		.4byte	0x0
+ 540 00bc 00 00 00 00 		.file 2 "C:/CSR_uEnergy_SDK-2.5.1/tools/include/CSR101x_A05/types.h"
+ 541 00be 00 02       		.file 3 "C:/CSR_uEnergy_SDK-2.5.1/tools/include/CSR101x_A05/pio.h"
+ 542 00bf 75          		.section	.debug_info
+ 543 00c0 02          		.4byte	0x293
+ 544 00c0 00 00 00 00 		.2byte	0x2
+ 545 00c2 00 00 00 00 		.4byte	.Ldebug_abbrev0
+ 546                 		.1byte	0x4
+ 547                 		.1byte	0x1
+ 548                 		.4byte	.LASF57
+ 549 0000 00 00 02 93 		.1byte	0x1
+ 550 0002 00 02       		.4byte	.LASF58
+ 551 0003 00 00 00 00 		.4byte	.LASF59
+ 552 0005 04          		.4byte	0x0
+ 553 0005 01          		.4byte	0x0
+ 554 0006 00 00 00 00 		.4byte	.Ldebug_ranges0+0x0
+ 555 0008 01          		.4byte	.Ldebug_line0
+ 556 0008 00 00 00 00 		.1byte	0x2
+ 557 000a 00 00 00 00 		.4byte	.LASF6
+ 558 000c 00 00 00 00 		.1byte	0x2
+ 559 000e 00 00 00 00 		.1byte	0x1e
+ 560 0010 00 00 00 00 		.4byte	0x34
+ 561 0012 00 00 00 00 		.1byte	0x3
+ 562 0014 02          		.1byte	0x2
+ 563 0015 00 00 00 00 		.1byte	0x8
+ 564 0017 02          		.4byte	.LASF0
+ 565 0017 1E          		.1byte	0x3
+ 566 0018 00 00 00 34 		.1byte	0x2
+ 567 001a 03          		.1byte	0x7
+ 568 001a 02          		.4byte	.LASF1
+ 569 001b 08          		.1byte	0x3
+ 570 001b 00 00 00 00 		.1byte	0x4
+ 571 001d 03          		.1byte	0x7
+ 572 001e 02          		.4byte	.LASF2
+ 573 001e 07          		.1byte	0x3
+ 574 001f 00 00 00 00 		.1byte	0x2
+ 575 0021 03          		.1byte	0x6
+ 576 0021 04          		.4byte	.LASF3
+ 577 0022 07          		.1byte	0x3
+ 578 0022 00 00 00 00 		.1byte	0x2
+ 579 0024 03          		.1byte	0x5
+ 580 0025 02          		.4byte	.LASF4
+ 581 0025 06          		.1byte	0x3
+ 582 0026 00 00 00 00 		.1byte	0x4
+ 583 0028 03          		.1byte	0x5
+ 584 0028 02          		.4byte	.LASF5
+ 585 0029 05          		.1byte	0x2
+ 586 0029 00 00 00 00 		.4byte	.LASF7
+ 587 002b 03          		.1byte	0x2
+ 588 002c 04          		.1byte	0x2a
+ 589 002c 05          		.4byte	0x69
+ 590 002d 00 00 00 00 		.1byte	0x3
+ 591 002f 02          		.1byte	0x2
+ 592 002f 00 00 00 00 		.1byte	0x7
+ 593 0031 02          		.4byte	.LASF8
+ 594 0032 2A          		.1byte	0x4
+ 595 0032 00 00 00 69 		.1byte	0x2
+ 596 0034 03          		.1byte	0x3
+ 597 0035 02          		.1byte	0x1b
+ 598 0035 07          		.4byte	0x10f
+ 599 0036 00 00 00 00 		.1byte	0x5
+ 600 0038 04          		.4byte	.LASF9
+ 601 0038 02          		.1byte	0x0
+ 602 0039 03          		.1byte	0x5
+ 603 0039 1B          		.4byte	.LASF10
+ 604 003a 00 00 01 0F 		.1byte	0x1
+ 605 003c 05          		.1byte	0x5
+ 606 003c 00 00 00 00 		.4byte	.LASF11
+ 607 003e 00          		.1byte	0x3
+ 608 003f 05          		.1byte	0x5
+ 609 003f 00 00 00 00 		.4byte	.LASF12
+ 610 0041 01          		.1byte	0x4
+ 611 0042 05          		.1byte	0x5
+ 612 0042 00 00 00 00 		.4byte	.LASF13
+ 613 0044 03          		.1byte	0x5
+ 614 0045 05          		.1byte	0x5
+ 615 0045 00 00 00 00 		.4byte	.LASF14
+ 616 0047 04          		.1byte	0x6
+ 617 0048 05          		.1byte	0x5
+ 618 0048 00 00 00 00 		.4byte	.LASF15
+ 619 004a 05          		.1byte	0x7
+ 620 004b 05          		.1byte	0x5
+ 621 004b 00 00 00 00 		.4byte	.LASF16
+ 622 004d 06          		.1byte	0x8
+ 623 004e 05          		.1byte	0x5
+ 624 004e 00 00 00 00 		.4byte	.LASF17
+ 625 0050 07          		.1byte	0x9
+ 626 0051 05          		.1byte	0x5
+ 627 0051 00 00 00 00 		.4byte	.LASF18
+ 628 0053 08          		.1byte	0xa
+ 629 0054 05          		.1byte	0x5
+ 630 0054 00 00 00 00 		.4byte	.LASF19
+ 631 0056 09          		.1byte	0xb
+ 632 0057 05          		.1byte	0x5
+ 633 0057 00 00 00 00 		.4byte	.LASF20
+ 634 0059 0A          		.1byte	0xc
+ 635 005a 05          		.1byte	0x5
+ 636 005a 00 00 00 00 		.4byte	.LASF21
+ 637 005c 0B          		.1byte	0xd
+ 638 005d 05          		.1byte	0x5
+ 639 005d 00 00 00 00 		.4byte	.LASF22
+ 640 005f 0C          		.1byte	0xe
+ 641 0060 05          		.1byte	0x5
+ 642 0060 00 00 00 00 		.4byte	.LASF23
+ 643 0062 0D          		.1byte	0xf
+ 644 0063 05          		.1byte	0x5
+ 645 0063 00 00 00 00 		.4byte	.LASF24
+ 646 0065 0E          		.1byte	0x10
+ 647 0066 05          		.1byte	0x5
+ 648 0066 00 00 00 00 		.4byte	.LASF25
+ 649 0068 0F          		.1byte	0x11
+ 650 0069 05          		.1byte	0x5
+ 651 0069 00 00 00 00 		.4byte	.LASF26
+ 652 006b 10          		.1byte	0x12
+ 653 006c 05          		.1byte	0x5
+ 654 006c 00 00 00 00 		.4byte	.LASF27
+ 655 006e 11          		.1byte	0x13
+ 656 006f 05          		.1byte	0x5
+ 657 006f 00 00 00 00 		.4byte	.LASF28
+ 658 0071 12          		.1byte	0x14
+ 659 0072 05          		.1byte	0x5
+ 660 0072 00 00 00 00 		.4byte	.LASF29
+ 661 0074 13          		.1byte	0x15
+ 662 0075 05          		.1byte	0x5
+ 663 0075 00 00 00 00 		.4byte	.LASF30
+ 664 0077 14          		.1byte	0x16
+ 665 0078 05          		.1byte	0x5
+ 666 0078 00 00 00 00 		.4byte	.LASF31
+ 667 007a 15          		.1byte	0x17
+ 668 007b 05          		.1byte	0x5
+ 669 007b 00 00 00 00 		.4byte	.LASF32
+ 670 007d 16          		.1byte	0x18
+ 671 007e 05          		.1byte	0x5
+ 672 007e 00 00 00 00 		.4byte	.LASF33
+ 673 0080 17          		.1byte	0x19
+ 674 0081 05          		.1byte	0x0
+ 675 0081 00 00 00 00 		.1byte	0x4
+ 676 0083 18          		.1byte	0x2
+ 677 0084 05          		.1byte	0x3
+ 678 0084 00 00 00 00 		.1byte	0x90
+ 679 0086 19          		.4byte	0x142
+ 680 0087 00          		.1byte	0x5
+ 681 0087 04          		.4byte	.LASF34
+ 682 0088 02          		.1byte	0x0
+ 683 0088 03          		.1byte	0x5
+ 684 0089 90          		.4byte	.LASF35
+ 685 0089 00 00 01 42 		.1byte	0x1
+ 686 008b 05          		.1byte	0x5
+ 687 008c 00 00 00 00 		.4byte	.LASF36
+ 688 008e 00          		.1byte	0x3
+ 689 008e 05          		.1byte	0x5
+ 690 008f 00 00 00 00 		.4byte	.LASF37
+ 691 0091 01          		.1byte	0x5
+ 692 0091 05          		.1byte	0x5
+ 693 0092 00 00 00 00 		.4byte	.LASF38
+ 694 0094 03          		.1byte	0x7
+ 695 0094 05          		.1byte	0x5
+ 696 0095 00 00 00 00 		.4byte	.LASF39
+ 697 0097 05          		.1byte	0x9
+ 698 0097 05          		.1byte	0x5
+ 699 0098 00 00 00 00 		.4byte	.LASF40
+ 700 009a 07          		.1byte	0xd
+ 701 009a 05          		.1byte	0x0
+ 702 009b 00 00 00 00 		.1byte	0x4
+ 703 009d 09          		.1byte	0x2
+ 704 009d 05          		.1byte	0x3
+ 705 009e 00 00 00 00 		.1byte	0xb9
+ 706 00a0 0D          		.4byte	0x163
+ 707 00a0 00          		.1byte	0x5
+ 708 00a1 04          		.4byte	.LASF41
+ 709 00a1 02          		.1byte	0x0
+ 710 00a2 03          		.1byte	0x5
+ 711 00a2 B9          		.4byte	.LASF42
+ 712 00a3 00 00 01 63 		.1byte	0x1
+ 713 00a5 05          		.1byte	0x5
+ 714 00a5 00 00 00 00 		.4byte	.LASF43
+ 715 00a7 00          		.1byte	0x2
+ 716 00a8 05          		.1byte	0x5
+ 717 00a8 00 00 00 00 		.4byte	.LASF44
+ 718 00aa 01          		.1byte	0x3
+ 719 00ab 05          		.1byte	0x0
+ 720 00ab 00 00 00 00 		.1byte	0x6
+ 721 00ad 02          		.1byte	0x1
+ 722 00ae 05          		.4byte	.LASF55
+ 723 00ae 00 00 00 00 		.1byte	0x1
+ 724 00b0 03          		.2byte	0x114
+ 725 00b1 00          		.1byte	0x1
+ 726 00b1 06          		.4byte	.LFB7
+ 727 00b2 01          		.4byte	.LFE7
+ 728 00b2 00 00 00 00 		.4byte	.LLST0
+ 729 00b4 01          		.1byte	0x7
+ 730 00b5 01 14       		.1byte	0x1
+ 731 00b6 01          		.4byte	.LASF49
+ 732 00b6 00 00 00 00 		.1byte	0x1
+ 733 00b8 00 00 00 00 		.1byte	0xec
+ 734 00ba 00 00 00 00 		.1byte	0x1
+ 735 00bc 07          		.4byte	.LFB6
+ 736 00bd 01          		.4byte	.LFE6
+ 737 00bd 00 00 00 00 		.4byte	.LLST1
+ 738 00bf 01          		.4byte	0x1db
+ 739 00c0 EC          		.1byte	0x8
+ 740 00c0 01          		.ascii "red\000"
+ 741 00c1 00 00 00 00 		.1byte	0x1
+ 742 00c3 00 00 00 00 		.1byte	0xea
+ 743 00c5 00 00 00 00 		.4byte	0x29
+ 744 00c7 00 00 01 DB 		.4byte	.LLST2
+ 745 00c9 08          		.1byte	0x9
+ 746 00c9 72 65 64 00 		.4byte	.LASF45
+ 747 00cb 01          		.1byte	0x1
+ 748 00cc EA          		.1byte	0xea
+ 749 00cc 00 00 00 29 		.4byte	0x29
+ 750 00ce 00 00 00 00 		.4byte	.LLST3
+ 751 00d0 09          		.1byte	0xa
+ 752 00d1 00 00 00 00 		.4byte	.LASF46
+ 753 00d3 01          		.1byte	0x1
+ 754 00d3 EA          		.1byte	0xea
+ 755 00d4 00 00 00 29 		.4byte	0x29
+ 756 00d6 00 00 00 00 		.1byte	0x2
+ 757 00d8 0A          		.1byte	0x91
+ 758 00d8 00 00 00 00 		.1byte	0x0
+ 759 00da 01          		.1byte	0xa
+ 760 00db EA          		.4byte	.LASF47
+ 761 00db 00 00 00 29 		.1byte	0x1
+ 762 00dd 02          		.1byte	0xeb
+ 763 00de 91          		.4byte	0x29
+ 764 00de 00          		.1byte	0x2
+ 765 00df 0A          		.1byte	0x91
+ 766 00df 00 00 00 00 		.1byte	0x1
+ 767 00e1 01          		.1byte	0xa
+ 768 00e2 EB          		.4byte	.LASF48
+ 769 00e2 00 00 00 29 		.1byte	0x1
+ 770 00e4 02          		.1byte	0xeb
+ 771 00e5 91          		.4byte	0x29
+ 772 00e5 01          		.1byte	0x2
+ 773 00e6 0A          		.1byte	0x91
+ 774 00e6 00 00 00 00 		.1byte	0x2
+ 775 00e8 01          		.1byte	0x0
+ 776 00e9 EB          		.1byte	0x7
+ 777 00e9 00 00 00 29 		.1byte	0x1
+ 778 00eb 02          		.4byte	.LASF50
+ 779 00ec 91          		.1byte	0x1
+ 780 00ec 02          		.1byte	0x9d
+ 781 00ed 00          		.1byte	0x1
+ 782 00ed 07          		.4byte	.LFB5
+ 783 00ee 01          		.4byte	.LFE5
+ 784 00ee 00 00 00 00 		.4byte	.LLST4
+ 785 00f0 01          		.4byte	0x231
+ 786 00f1 9D          		.1byte	0x8
+ 787 00f1 01          		.ascii "red\000"
+ 788 00f2 00 00 00 00 		.1byte	0x1
+ 789 00f4 00 00 00 00 		.1byte	0x9c
+ 790 00f6 00 00 00 00 		.4byte	0x29
+ 791 00f8 00 00 02 31 		.4byte	.LLST5
+ 792 00fa 08          		.1byte	0x9
+ 793 00fa 72 65 64 00 		.4byte	.LASF45
+ 794 00fc 01          		.1byte	0x1
+ 795 00fd 9C          		.1byte	0x9c
+ 796 00fd 00 00 00 29 		.4byte	0x29
+ 797 00ff 00 00 00 00 		.4byte	.LLST6
+ 798 0101 09          		.1byte	0x9
+ 799 0102 00 00 00 00 		.4byte	.LASF46
+ 800 0104 01          		.1byte	0x1
+ 801 0104 9C          		.1byte	0x9c
+ 802 0105 00 00 00 29 		.4byte	0x29
+ 803 0107 00 00 00 00 		.4byte	.LLST7
+ 804 0109 09          		.1byte	0xb
+ 805 0109 00 00 00 00 		.4byte	.LASF60
+ 806 010b 01          		.1byte	0x1
+ 807 010c 9C          		.1byte	0xa2
+ 808 010c 00 00 00 29 		.4byte	0x29
+ 809 010e 00 00 00 00 		.4byte	.LLST8
+ 810 0110 0B          		.1byte	0x0
+ 811 0111 00 00 00 00 		.1byte	0x7
+ 812 0113 01          		.1byte	0x1
+ 813 0113 A2          		.4byte	.LASF51
+ 814 0114 00 00 00 29 		.1byte	0x1
+ 815 0116 00 00 00 00 		.1byte	0x8c
+ 816 0118 00          		.1byte	0x1
+ 817 0118 07          		.4byte	.LFB4
+ 818 0119 01          		.4byte	.LFE4
+ 819 0119 00 00 00 00 		.4byte	.LLST9
+ 820 011b 01          		.4byte	0x25a
+ 821 011c 8C          		.1byte	0x9
+ 822 011c 01          		.4byte	.LASF52
+ 823 011d 00 00 00 00 		.1byte	0x1
+ 824 011f 00 00 00 00 		.1byte	0x8b
+ 825 0121 00 00 00 00 		.4byte	0x29
+ 826 0123 00 00 02 5A 		.4byte	.LLST10
+ 827 0125 09          		.1byte	0x0
+ 828 0125 00 00 00 00 		.1byte	0xc
+ 829 0127 01          		.1byte	0x1
+ 830 0128 8B          		.4byte	.LASF53
+ 831 0128 00 00 00 29 		.1byte	0x1
+ 832 012a 00 00 00 00 		.1byte	0x58
+ 833 012c 00          		.1byte	0x1
+ 834 012d 0C          		.4byte	.LFB3
+ 835 012d 01          		.4byte	.LFE3
+ 836 012e 00 00 00 00 		.1byte	0x1
+ 837 0130 01          		.1byte	0x55
+ 838 0130 58          		.4byte	0x281
+ 839 0131 01          		.1byte	0x9
+ 840 0131 00 00 00 00 		.4byte	.LASF54
+ 841 0133 00 00 00 00 		.1byte	0x1
+ 842 0135 01          		.1byte	0x57
+ 843 0136 55          		.4byte	0x5e
+ 844 0136 00 00 02 81 		.4byte	.LLST12
+ 845 0138 09          		.1byte	0x0
+ 846 0139 00 00 00 00 		.1byte	0xd
+ 847 013b 01          		.1byte	0x1
+ 848 013b 57          		.4byte	.LASF56
+ 849 013c 00 00 00 5E 		.1byte	0x1
+ 850 013e 00 00 00 00 		.1byte	0x35
+ 851 0140 00          		.1byte	0x1
+ 852 0140 0D          		.4byte	.LFB2
+ 853 0141 01          		.4byte	.LFE2
+ 854 0141 00 00 00 00 		.4byte	.LLST13
+ 855 0143 01          		.1byte	0x0
+ 856 0144 35          		.section	.debug_abbrev
+ 857 0144 01          		.1byte	0x1
+ 858 0145 00 00 00 00 		.1byte	0x11
+ 859 0147 00 00 00 00 		.1byte	0x1
+ 860 0149 00 00 00 00 		.1byte	0x25
+ 861 014b 00          		.1byte	0xe
+ 862                 		.1byte	0x13
+ 863 0000 01          		.1byte	0xb
+ 864 0000 11          		.1byte	0x3
+ 865 0001 01          		.1byte	0xe
+ 866 0001 25          		.1byte	0x1b
+ 867 0002 0E          		.1byte	0xe
+ 868 0002 13          		.1byte	0x11
+ 869 0003 0B          		.1byte	0x1
+ 870 0003 03          		.1byte	0x52
+ 871 0004 0E          		.1byte	0x1
+ 872 0004 1B          		.1byte	0x55
+ 873 0005 0E          		.1byte	0x6
+ 874 0005 11          		.1byte	0x10
+ 875 0006 01          		.1byte	0x6
+ 876 0006 52          		.1byte	0x0
+ 877 0007 01          		.1byte	0x0
+ 878 0007 55          		.1byte	0x2
+ 879 0008 06          		.1byte	0x16
+ 880 0008 10          		.1byte	0x0
+ 881 0009 06          		.1byte	0x3
+ 882 0009 00          		.1byte	0xe
+ 883 000a 00          		.1byte	0x3a
+ 884 000a 02          		.1byte	0xb
+ 885 000b 16          		.1byte	0x3b
+ 886 000b 00          		.1byte	0xb
+ 887 000c 03          		.1byte	0x49
+ 888 000c 0E          		.1byte	0x13
+ 889 000d 3A          		.1byte	0x0
+ 890 000d 0B          		.1byte	0x0
+ 891 000e 3B          		.1byte	0x3
+ 892 000e 0B          		.1byte	0x24
+ 893 000f 49          		.1byte	0x0
+ 894 000f 13          		.1byte	0xb
+ 895 0010 00          		.1byte	0xb
+ 896 0010 00          		.1byte	0x3e
+ 897 0011 03          		.1byte	0xb
+ 898 0011 24          		.1byte	0x3
+ 899 0012 00          		.1byte	0xe
+ 900 0012 0B          		.1byte	0x0
+ 901 0013 0B          		.1byte	0x0
+ 902 0013 3E          		.1byte	0x4
+ 903 0014 0B          		.1byte	0x4
+ 904 0014 03          		.1byte	0x1
+ 905 0015 0E          		.1byte	0xb
+ 906 0015 00          		.1byte	0xb
+ 907 0016 00          		.1byte	0x3a
+ 908 0016 04          		.1byte	0xb
+ 909 0017 04          		.1byte	0x3b
+ 910 0017 01          		.1byte	0xb
+ 911 0018 0B          		.1byte	0x1
+ 912 0018 0B          		.1byte	0x13
+ 913 0019 3A          		.1byte	0x0
+ 914 0019 0B          		.1byte	0x0
+ 915 001a 3B          		.1byte	0x5
+ 916 001a 0B          		.1byte	0x28
+ 917 001b 01          		.1byte	0x0
+ 918 001b 13          		.1byte	0x3
+ 919 001c 00          		.1byte	0xe
+ 920 001c 00          		.1byte	0x1c
+ 921 001d 05          		.1byte	0xd
+ 922 001d 28          		.1byte	0x0
+ 923 001e 00          		.1byte	0x0
+ 924 001e 03          		.1byte	0x6
+ 925 001f 0E          		.1byte	0x2e
+ 926 001f 1C          		.1byte	0x0
+ 927 0020 0D          		.1byte	0x3f
+ 928 0020 00          		.1byte	0xc
+ 929 0021 00          		.1byte	0x3
+ 930 0021 06          		.1byte	0xe
+ 931 0022 2E          		.1byte	0x3a
+ 932 0022 00          		.1byte	0xb
+ 933 0023 3F          		.1byte	0x3b
+ 934 0023 0C          		.1byte	0x5
+ 935 0024 03          		.1byte	0x27
+ 936 0024 0E          		.1byte	0xc
+ 937 0025 3A          		.1byte	0x11
+ 938 0025 0B          		.1byte	0x1
+ 939 0026 3B          		.1byte	0x12
+ 940 0026 05          		.1byte	0x1
+ 941 0027 27          		.1byte	0x40
+ 942 0027 0C          		.1byte	0x6
+ 943 0028 11          		.1byte	0x0
+ 944 0028 01          		.1byte	0x0
+ 945 0029 12          		.1byte	0x7
+ 946 0029 01          		.1byte	0x2e
+ 947 002a 40          		.1byte	0x1
+ 948 002a 06          		.1byte	0x3f
+ 949 002b 00          		.1byte	0xc
+ 950 002b 00          		.1byte	0x3
+ 951 002c 07          		.1byte	0xe
+ 952 002c 2E          		.1byte	0x3a
+ 953 002d 01          		.1byte	0xb
+ 954 002d 3F          		.1byte	0x3b
+ 955 002e 0C          		.1byte	0xb
+ 956 002e 03          		.1byte	0x27
+ 957 002f 0E          		.1byte	0xc
+ 958 002f 3A          		.1byte	0x11
+ 959 0030 0B          		.1byte	0x1
+ 960 0030 3B          		.1byte	0x12
+ 961 0031 0B          		.1byte	0x1
+ 962 0031 27          		.1byte	0x40
+ 963 0032 0C          		.1byte	0x6
+ 964 0032 11          		.1byte	0x1
+ 965 0033 01          		.1byte	0x13
+ 966 0033 12          		.1byte	0x0
+ 967 0034 01          		.1byte	0x0
+ 968 0034 40          		.1byte	0x8
+ 969 0035 06          		.1byte	0x5
+ 970 0035 01          		.1byte	0x0
+ 971 0036 13          		.1byte	0x3
+ 972 0036 00          		.1byte	0x8
+ 973 0037 00          		.1byte	0x3a
+ 974 0037 08          		.1byte	0xb
+ 975 0038 05          		.1byte	0x3b
+ 976 0038 00          		.1byte	0xb
+ 977 0039 03          		.1byte	0x49
+ 978 0039 08          		.1byte	0x13
+ 979 003a 3A          		.1byte	0x2
+ 980 003a 0B          		.1byte	0x6
+ 981 003b 3B          		.1byte	0x0
+ 982 003b 0B          		.1byte	0x0
+ 983 003c 49          		.1byte	0x9
+ 984 003c 13          		.1byte	0x5
+ 985 003d 02          		.1byte	0x0
+ 986 003d 06          		.1byte	0x3
+ 987 003e 00          		.1byte	0xe
+ 988 003e 00          		.1byte	0x3a
+ 989 003f 09          		.1byte	0xb
+ 990 003f 05          		.1byte	0x3b
+ 991 0040 00          		.1byte	0xb
+ 992 0040 03          		.1byte	0x49
+ 993 0041 0E          		.1byte	0x13
+ 994 0041 3A          		.1byte	0x2
+ 995 0042 0B          		.1byte	0x6
+ 996 0042 3B          		.1byte	0x0
+ 997 0043 0B          		.1byte	0x0
+ 998 0043 49          		.1byte	0xa
+ 999 0044 13          		.1byte	0x5
+ 1000 0044 02          		.1byte	0x0
+ 1001 0045 06          		.1byte	0x3
+ 1002 0045 00          		.1byte	0xe
+ 1003 0046 00          		.1byte	0x3a
+ 1004 0046 0A          		.1byte	0xb
+ 1005 0047 05          		.1byte	0x3b
+ 1006 0047 00          		.1byte	0xb
+ 1007 0048 03          		.1byte	0x49
+ 1008 0048 0E          		.1byte	0x13
+ 1009 0049 3A          		.1byte	0x2
+ 1010 0049 0B          		.1byte	0xa
+ 1011 004a 3B          		.1byte	0x0
+ 1012 004a 0B          		.1byte	0x0
+ 1013 004b 49          		.1byte	0xb
+ 1014 004b 13          		.1byte	0x34
+ 1015 004c 02          		.1byte	0x0
+ 1016 004c 0A          		.1byte	0x3
+ 1017 004d 00          		.1byte	0xe
+ 1018 004d 00          		.1byte	0x3a
+ 1019 004e 0B          		.1byte	0xb
+ 1020 004e 34          		.1byte	0x3b
+ 1021 004f 00          		.1byte	0xb
+ 1022 004f 03          		.1byte	0x49
+ 1023 0050 0E          		.1byte	0x13
+ 1024 0050 3A          		.1byte	0x2
+ 1025 0051 0B          		.1byte	0x6
+ 1026 0051 3B          		.1byte	0x0
+ 1027 0052 0B          		.1byte	0x0
+ 1028 0052 49          		.1byte	0xc
+ 1029 0053 13          		.1byte	0x2e
+ 1030 0053 02          		.1byte	0x1
+ 1031 0054 06          		.1byte	0x3f
+ 1032 0054 00          		.1byte	0xc
+ 1033 0055 00          		.1byte	0x3
+ 1034 0055 0C          		.1byte	0xe
+ 1035 0056 2E          		.1byte	0x3a
+ 1036 0056 01          		.1byte	0xb
+ 1037 0057 3F          		.1byte	0x3b
+ 1038 0057 0C          		.1byte	0xb
+ 1039 0058 03          		.1byte	0x27
+ 1040 0058 0E          		.1byte	0xc
+ 1041 0059 3A          		.1byte	0x11
+ 1042 0059 0B          		.1byte	0x1
+ 1043 005a 3B          		.1byte	0x12
+ 1044 005a 0B          		.1byte	0x1
+ 1045 005b 27          		.1byte	0x40
+ 1046 005b 0C          		.1byte	0xa
+ 1047 005c 11          		.1byte	0x1
+ 1048 005c 01          		.1byte	0x13
+ 1049 005d 12          		.1byte	0x0
+ 1050 005d 01          		.1byte	0x0
+ 1051 005e 40          		.1byte	0xd
+ 1052 005e 0A          		.1byte	0x2e
+ 1053 005f 01          		.1byte	0x0
+ 1054 005f 13          		.1byte	0x3f
+ 1055 0060 00          		.1byte	0xc
+ 1056 0060 00          		.1byte	0x3
+ 1057 0061 0D          		.1byte	0xe
+ 1058 0061 2E          		.1byte	0x3a
+ 1059 0062 00          		.1byte	0xb
+ 1060 0062 3F          		.1byte	0x3b
+ 1061 0063 0C          		.1byte	0xb
+ 1062 0063 03          		.1byte	0x27
+ 1063 0064 0E          		.1byte	0xc
+ 1064 0064 3A          		.1byte	0x11
+ 1065 0065 0B          		.1byte	0x1
+ 1066 0065 3B          		.1byte	0x12
+ 1067 0066 0B          		.1byte	0x1
+ 1068 0066 27          		.1byte	0x40
+ 1069 0067 0C          		.1byte	0x6
+ 1070 0067 11          		.1byte	0x0
+ 1071 0068 01          		.1byte	0x0
+ 1072 0068 12          		.1byte	0x0
+ 1073 0069 01          		.section	.debug_pubnames,"",@progbits
+ 1074 0069 40          		.4byte	0xc0
+ 1075 006a 06          		.2byte	0x2
+ 1076 006a 00          		.4byte	.Ldebug_info0
+ 1077 006b 00          		.4byte	0x297
+ 1078 006b 00          		.4byte	0x163
+ 1079                 		.ascii "IOTSwitchInit\000"
+ 1080 0000 00 00 00 C0 		.4byte	0x179
+ 1081 0002 00 02       		.ascii "IOTLightControlDeviceBlink\000"
+ 1082 0003 00 00 00 00 		.4byte	0x1db
+ 1083 0005 00 00 02 97 		.ascii "IOTLightControlDeviceSetColor\000"
+ 1084 0007 00 00 01 63 		.4byte	0x231
+ 1085 0009 49 4F 54 53 		.ascii "IOTLightControlDeviceSetLevel\000"
+ 1085      77 69 74 63 
+ 1085      68 49 6E 69 
+ 1085      74 00 
+ 1086 0010 00 00 01 79 		.4byte	0x25a
+ 1087 0012 49 4F 54 4C 		.ascii "IOTLightControlDevicePower\000"
+ 1087      69 67 68 74 
+ 1087      43 6F 6E 74 
+ 1087      72 6F 6C 44 
+ 1087      65 76 69 63 
+ 1088 001f 00 00 01 DB 		.4byte	0x281
+ 1089 0021 49 4F 54 4C 		.ascii "IOTLightControlDeviceInit\000"
+ 1089      69 67 68 74 
+ 1089      43 6F 6E 74 
+ 1089      72 6F 6C 44 
+ 1089      65 76 69 63 
+ 1090 0030 00 00 02 31 		.4byte	0x0
+ 1091 0032 49 4F 54 4C 		.section	.debug_aranges,"",@progbits
+ 1091      69 67 68 74 
+ 1091      43 6F 6E 74 
+ 1091      72 6F 6C 44 
+ 1091      65 76 69 63 
+ 1092 0041 00 00 02 5A 		.4byte	0x44
+ 1093 0043 49 4F 54 4C 		.2byte	0x2
+ 1093      69 67 68 74 
+ 1093      43 6F 6E 74 
+ 1093      72 6F 6C 44 
+ 1093      65 76 69 63 
+ 1094 0051 00 00 02 81 		.4byte	.Ldebug_info0
+ 1095 0053 49 4F 54 4C 		.1byte	0x4
+ 1095      69 67 68 74 
+ 1095      43 6F 6E 74 
+ 1095      72 6F 6C 44 
+ 1095      65 76 69 63 
+ 1096 0060 00 00 00 00 		.1byte	0x0
+ 1097                 		.2byte	0x0
+ 1098 0000 00 00 00 44 		.2byte	0x0
+ 1099 0002 00 02       		.4byte	.LFB7
+ 1100 0003 00 00 00 00 		.4byte	.LFE7-.LFB7
+ 1101 0005 04          		.4byte	.LFB6
+ 1102 0005 00          		.4byte	.LFE6-.LFB6
+ 1103 0006 00 00       		.4byte	.LFB5
+ 1104 0007 00 00       		.4byte	.LFE5-.LFB5
+ 1105 0008 00 00 00 00 		.4byte	.LFB4
+ 1106 000a 00 00 00 00 		.4byte	.LFE4-.LFB4
+ 1107 000c 00 00 00 00 		.4byte	.LFB3
+ 1108 000e 00 00 00 00 		.4byte	.LFE3-.LFB3
+ 1109 0010 00 00 00 00 		.4byte	.LFB2
+ 1110 0012 00 00 00 00 		.4byte	.LFE2-.LFB2
+ 1111 0014 00 00 00 00 		.4byte	0x0
+ 1112 0016 00 00 00 00 		.4byte	0x0
+ 1113 0018 00 00 00 00 		.section	.debug_ranges,"",@progbits
+ 1114 001a 00 00 00 00 	.Ldebug_ranges0:
+ 1115 001c 00 00 00 00 		.4byte	.Ltext0
+ 1116 001e 00 00 00 00 		.4byte	.Letext0
+ 1117 0020 00 00 00 00 		.4byte	.LFB7
+ 1118 0022 00 00 00 00 		.4byte	.LFE7
+ 1119                 		.4byte	.LFB6
+ 1120                 		.4byte	.LFE6
+ 1121 0000 00 00 00 00 		.4byte	.LFB5
+ 1122 0002 00 00 00 00 		.4byte	.LFE5
+ 1123 0004 00 00 00 00 		.4byte	.LFB4
+ 1124 0006 00 00 00 00 		.4byte	.LFE4
+ 1125 0008 00 00 00 00 		.4byte	.LFB3
+ 1126 000a 00 00 00 00 		.4byte	.LFE3
+ 1127 000c 00 00 00 00 		.4byte	.LFB2
+ 1128 000e 00 00 00 00 		.4byte	.LFE2
+ 1129 0010 00 00 00 00 		.4byte	0x0
+ 1130 0012 00 00 00 00 		.4byte	0x0
+ 1131 0014 00 00 00 00 		.section	.debug_str,"MS",@progbits,1
+ 1132 0016 00 00 00 00 	.LASF33:
+ 1133 0018 00 00 00 00 		.ascii "pio_mode_ana_mon_clk_pio\000"
+ 1134 001a 00 00 00 00 	.LASF21:
+ 1135 001c 00 00 00 00 		.ascii "pio_mode_radio_rx_en\000"
+ 1136 001e 00 00 00 00 	.LASF42:
+ 1137                 		.ascii "pio_event_mode_rising\000"
+ 1138                 	.LASF50:
+ 1139 0000 70 69 6F 5F 		.ascii "IOTLightControlDeviceSetColor\000"
+ 1139      6D 6F 64 65 
+ 1139      5F 61 6E 61 
+ 1139      5F 6D 6F 6E 
+ 1139      5F 63 6C 6B 
+ 1140                 	.LASF29:
+ 1141 000c 70 69 6F 5F 		.ascii "pio_mode_i2c_data\000"
+ 1141      6D 6F 64 65 
+ 1141      5F 72 61 64 
+ 1141      69 6F 5F 72 
+ 1141      78 5F 65 6E 
+ 1142                 	.LASF4:
+ 1143 0017 70 69 6F 5F 		.ascii "short int\000"
+ 1143      65 76 65 6E 
+ 1143      74 5F 6D 6F 
+ 1143      64 65 5F 72 
+ 1143      69 73 69 6E 
+ 1144                 	.LASF54:
+ 1145 0022 49 4F 54 4C 		.ascii "power_on\000"
+ 1145      69 67 68 74 
+ 1145      43 6F 6E 74 
+ 1145      72 6F 6C 44 
+ 1145      65 76 69 63 
+ 1146                 	.LASF28:
+ 1147 0031 70 69 6F 5F 		.ascii "pio_mode_ser_flash_csb\000"
+ 1147      6D 6F 64 65 
+ 1147      5F 69 32 63 
+ 1147      5F 64 61 74 
+ 1147      61 00 
+ 1148                 	.LASF26:
+ 1149 003a 73 68 6F 72 		.ascii "pio_mode_pio_control_rxd\000"
+ 1149      74 20 69 6E 
+ 1149      74 00 
+ 1150                 	.LASF56:
+ 1151 003f 70 6F 77 65 		.ascii "IOTLightControlDeviceInit\000"
+ 1151      72 5F 6F 6E 
+ 1151      00 
+ 1152                 	.LASF46:
+ 1153 0043 70 69 6F 5F 		.ascii "blue\000"
+ 1153      6D 6F 64 65 
+ 1153      5F 73 65 72 
+ 1153      5F 66 6C 61 
+ 1153      73 68 5F 63 
+ 1154                 	.LASF23:
+ 1155 004f 70 69 6F 5F 		.ascii "pio_mode_nvm_power_en\000"
+ 1155      6D 6F 64 65 
+ 1155      5F 70 69 6F 
+ 1155      5F 63 6F 6E 
+ 1155      74 72 6F 6C 
+ 1156                 	.LASF6:
+ 1157 005b 49 4F 54 4C 		.ascii "uint8\000"
+ 1157      69 67 68 74 
+ 1157      43 6F 6E 74 
+ 1157      72 6F 6C 44 
+ 1157      65 76 69 63 
+ 1158                 	.LASF41:
+ 1159 0068 62 6C 75 65 		.ascii "pio_event_mode_disable\000"
+ 1159      00 
+ 1160                 	.LASF7:
+ 1161 006b 70 69 6F 5F 		.ascii "bool\000"
+ 1161      6D 6F 64 65 
+ 1161      5F 6E 76 6D 
+ 1161      5F 70 6F 77 
+ 1161      65 72 5F 65 
+ 1162                 	.LASF53:
+ 1163 0076 75 69 6E 74 		.ascii "IOTLightControlDevicePower\000"
+ 1163      38 00 
+ 1164                 	.LASF30:
+ 1165 0079 70 69 6F 5F 		.ascii "pio_mode_i2c_clock\000"
+ 1165      65 76 65 6E 
+ 1165      74 5F 6D 6F 
+ 1165      64 65 5F 64 
+ 1165      69 73 61 62 
+ 1166                 	.LASF31:
+ 1167 0084 62 6F 6F 6C 		.ascii "pio_mode_uart_flow_ctrl\000"
+ 1167      00 
+ 1168                 	.LASF57:
+ 1169 0087 49 4F 54 4C 		.ascii "GNU C 4.3.4 CSR version 28 for xap [2131110]\000"
+ 1169      69 67 68 74 
+ 1169      43 6F 6E 74 
+ 1169      72 6F 6C 44 
+ 1169      65 76 69 63 
+ 1170                 	.LASF55:
+ 1171 0094 70 69 6F 5F 		.ascii "IOTSwitchInit\000"
+ 1171      6D 6F 64 65 
+ 1171      5F 69 32 63 
+ 1171      5F 63 6C 6F 
+ 1171      63 6B 00 
+ 1172                 	.LASF34:
+ 1173 009e 70 69 6F 5F 		.ascii "pio_mode_no_pulls\000"
+ 1173      6D 6F 64 65 
+ 1173      5F 75 61 72 
+ 1173      74 5F 66 6C 
+ 1173      6F 77 5F 63 
+ 1174                 	.LASF5:
+ 1175 00aa 47 4E 55 20 		.ascii "long int\000"
+ 1175      43 20 34 2E 
+ 1175      33 2E 34 20 
+ 1175      43 53 52 20 
+ 1175      76 65 72 73 
+ 1176                 	.LASF59:
+ 1177 00c0 49 4F 54 53 		.ascii "C:\\csrmesh_2_0_node\\applications\\CSRmeshLight7-25\000"
+ 1177      77 69 74 63 
+ 1177      68 49 6E 69 
+ 1177      74 00 
+ 1178                 	.LASF45:
+ 1179 00c7 70 69 6F 5F 		.ascii "green\000"
+ 1179      6D 6F 64 65 
+ 1179      5F 6E 6F 5F 
+ 1179      70 75 6C 6C 
+ 1179      73 00 
+ 1180                 	.LASF9:
+ 1181 00d0 6C 6F 6E 67 		.ascii "pio_mode_user\000"
+ 1181      20 69 6E 74 
+ 1181      00 
+ 1182                 	.LASF39:
+ 1183 00d5 43 3A 5C 63 		.ascii "pio_mode_weak_sticky\000"
+ 1183      73 72 6D 65 
+ 1183      73 68 5F 32 
+ 1183      5F 30 5F 6E 
+ 1183      6F 64 65 5C 
+ 1184                 	.LASF16:
+ 1185 00ee 67 72 65 65 		.ascii "pio_mode_quadrature0\000"
+ 1185      6E 00 
+ 1186                 	.LASF17:
+ 1187 00f1 70 69 6F 5F 		.ascii "pio_mode_quadrature1\000"
+ 1187      6D 6F 64 65 
+ 1187      5F 75 73 65 
+ 1187      72 00 
+ 1188                 	.LASF18:
+ 1189 00f8 70 69 6F 5F 		.ascii "pio_mode_quadrature2\000"
+ 1189      6D 6F 64 65 
+ 1189      5F 77 65 61 
+ 1189      6B 5F 73 74 
+ 1189      69 63 6B 79 
+ 1190                 	.LASF19:
+ 1191 0102 70 69 6F 5F 		.ascii "pio_mode_quadrature3\000"
+ 1191      6D 6F 64 65 
+ 1191      5F 71 75 61 
+ 1191      64 72 61 74 
+ 1191      75 72 65 30 
+ 1192                 	.LASF60:
+ 1193 010d 70 69 6F 5F 		.ascii "white\000"
+ 1193      6D 6F 64 65 
+ 1193      5F 71 75 61 
+ 1193      64 72 61 74 
+ 1193      75 72 65 31 
+ 1194                 	.LASF0:
+ 1195 0117 70 69 6F 5F 		.ascii "unsigned char\000"
+ 1195      6D 6F 64 65 
+ 1195      5F 71 75 61 
+ 1195      64 72 61 74 
+ 1195      75 72 65 32 
+ 1196                 	.LASF3:
+ 1197 0122 70 69 6F 5F 		.ascii "signed char\000"
+ 1197      6D 6F 64 65 
+ 1197      5F 71 75 61 
+ 1197      64 72 61 74 
+ 1197      75 72 65 33 
+ 1198                 	.LASF12:
+ 1199 012c 77 68 69 74 		.ascii "pio_mode_pwm0\000"
+ 1199      65 00 
+ 1200                 	.LASF13:
+ 1201 012f 75 6E 73 69 		.ascii "pio_mode_pwm1\000"
+ 1201      67 6E 65 64 
+ 1201      20 63 68 61 
+ 1201      72 00 
+ 1202                 	.LASF14:
+ 1203 0136 73 69 67 6E 		.ascii "pio_mode_pwm2\000"
+ 1203      65 64 20 63 
+ 1203      68 61 72 00 
+ 1204                 	.LASF15:
+ 1205 013c 70 69 6F 5F 		.ascii "pio_mode_pwm3\000"
+ 1205      6D 6F 64 65 
+ 1205      5F 70 77 6D 
+ 1205      30 00 
+ 1206                 	.LASF8:
+ 1207 0143 70 69 6F 5F 		.ascii "unsigned int\000"
+ 1207      6D 6F 64 65 
+ 1207      5F 70 77 6D 
+ 1207      31 00 
+ 1208                 	.LASF1:
+ 1209 014a 70 69 6F 5F 		.ascii "short unsigned int\000"
+ 1209      6D 6F 64 65 
+ 1209      5F 70 77 6D 
+ 1209      32 00 
+ 1210                 	.LASF37:
+ 1211 0151 70 69 6F 5F 		.ascii "pio_mode_strong_pull_down\000"
+ 1211      6D 6F 64 65 
+ 1211      5F 70 77 6D 
+ 1211      33 00 
+ 1212                 	.LASF36:
+ 1213 0158 75 6E 73 69 		.ascii "pio_mode_weak_pull_up\000"
+ 1213      67 6E 65 64 
+ 1213      20 69 6E 74 
+ 1213      00 
+ 1214                 	.LASF43:
+ 1215 015f 73 68 6F 72 		.ascii "pio_event_mode_falling\000"
+ 1215      74 20 75 6E 
+ 1215      73 69 67 6E 
+ 1215      65 64 20 69 
+ 1215      6E 74 00 
+ 1216                 	.LASF48:
+ 1217 0168 70 69 6F 5F 		.ascii "off_time\000"
+ 1217      6D 6F 64 65 
+ 1217      5F 73 74 72 
+ 1217      6F 6E 67 5F 
+ 1217      70 75 6C 6C 
+ 1218                 	.LASF47:
+ 1219 0175 70 69 6F 5F 		.ascii "on_time\000"
+ 1219      6D 6F 64 65 
+ 1219      5F 77 65 61 
+ 1219      6B 5F 70 75 
+ 1219      6C 6C 5F 75 
+ 1220                 	.LASF22:
+ 1221 0180 70 69 6F 5F 		.ascii "pio_mode_radio_tx_en\000"
+ 1221      65 76 65 6E 
+ 1221      74 5F 6D 6F 
+ 1221      64 65 5F 66 
+ 1221      61 6C 6C 69 
+ 1222                 	.LASF2:
+ 1223 018c 6F 66 66 5F 		.ascii "long unsigned int\000"
+ 1223      74 69 6D 65 
+ 1223      00 
+ 1224                 	.LASF27:
+ 1225 0190 6F 6E 5F 74 		.ascii "pio_mode_ser_flash_dout\000"
+ 1225      69 6D 65 00 
+ 1226                 	.LASF32:
+ 1227 0194 70 69 6F 5F 		.ascii "pio_mode_pio_control_timer\000"
+ 1227      6D 6F 64 65 
+ 1227      5F 72 61 64 
+ 1227      69 6F 5F 74 
+ 1227      78 5F 65 6E 
+ 1228                 	.LASF51:
+ 1229 019f 6C 6F 6E 67 		.ascii "IOTLightControlDeviceSetLevel\000"
+ 1229      20 75 6E 73 
+ 1229      69 67 6E 65 
+ 1229      64 20 69 6E 
+ 1229      74 00 
+ 1230                 	.LASF40:
+ 1231 01a8 70 69 6F 5F 		.ascii "pio_mode_strong_sticky\000"
+ 1231      6D 6F 64 65 
+ 1231      5F 73 65 72 
+ 1231      5F 66 6C 61 
+ 1231      73 68 5F 64 
+ 1232                 	.LASF52:
+ 1233 01b4 70 69 6F 5F 		.ascii "level\000"
+ 1233      6D 6F 64 65 
+ 1233      5F 70 69 6F 
+ 1233      5F 63 6F 6E 
+ 1233      74 72 6F 6C 
+ 1234                 	.LASF24:
+ 1235 01c1 49 4F 54 4C 		.ascii "pio_mode_pio_controller\000"
+ 1235      69 67 68 74 
+ 1235      43 6F 6E 74 
+ 1235      72 6F 6C 44 
+ 1235      65 76 69 63 
+ 1236                 	.LASF49:
+ 1237 01d0 70 69 6F 5F 		.ascii "IOTLightControlDeviceBlink\000"
+ 1237      6D 6F 64 65 
+ 1237      5F 73 74 72 
+ 1237      6F 6E 67 5F 
+ 1237      73 74 69 63 
+ 1238                 	.LASF58:
+ 1239 01dc 6C 65 76 65 		.ascii "iot_hw.c\000"
+ 1239      6C 00 
+ 1240                 	.LASF10:
+ 1241 01df 70 69 6F 5F 		.ascii "pio_mode_edge_capture\000"
+ 1241      6D 6F 64 65 
+ 1241      5F 70 69 6F 
+ 1241      5F 63 6F 6E 
+ 1241      74 72 6F 6C 
+ 1242                 	.LASF38:
+ 1243 01eb 49 4F 54 4C 		.ascii "pio_mode_strong_pull_up\000"
+ 1243      69 67 68 74 
+ 1243      43 6F 6E 74 
+ 1243      72 6F 6C 44 
+ 1243      65 76 69 63 
+ 1244                 	.LASF11:
+ 1245 01f8 69 6F 74 5F 		.ascii "pio_mode_clk_req\000"
+ 1245      68 77 2E 63 
+ 1245      00 
+ 1246                 	.LASF35:
+ 1247 01fd 70 69 6F 5F 		.ascii "pio_mode_weak_pull_down\000"
+ 1247      6D 6F 64 65 
+ 1247      5F 65 64 67 
+ 1247      65 5F 63 61 
+ 1247      70 74 75 72 
+ 1248                 	.LASF25:
+ 1249 0208 70 69 6F 5F 		.ascii "pio_mode_pio_control_txd\000"
+ 1249      6D 6F 64 65 
+ 1249      5F 73 74 72 
+ 1249      6F 6E 67 5F 
+ 1249      70 75 6C 6C 
+ 1250                 	.LASF44:
+ 1251 0214 70 69 6F 5F 		.ascii "pio_event_mode_both\000"
+ 1251      6D 6F 64 65 
+ 1251      5F 63 6C 6B 
+ 1251      5F 72 65 71 
+ 1251      00 
+ 1252                 	.LASF20:
+ 1253 021c 70 69 6F 5F 		.ascii "pio_mode_uart\000"
+ 1253      6D 6F 64 65 
+ 1253      5F 77 65 61 
+ 1253      6B 5F 70 75 
+ 1253      6C 6C 5F 64 
+ 1254                 		.ident	"GCC: (GNU) 4.3.4 CSR version 28 for xap [2131110]"
+ 1255 0228 70 69 6F 5F 	...
+ 1255      6D 6F 64 65 
+ 1255      5F 70 69 6F 
+ 1255      5F 63 6F 6E 
+ 1255      74 72 6F 6C 

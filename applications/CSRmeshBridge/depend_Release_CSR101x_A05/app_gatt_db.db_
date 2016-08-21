@@ -1,0 +1,223 @@
+# 1 "app_gatt_db.db"
+# 1 "<built-in>"
+# 1 "<command-line>"
+# 1 "app_gatt_db.db"
+# 15 "app_gatt_db.db"
+# 1 "user_config.h" 1
+# 16 "app_gatt_db.db" 2
+
+# 1 "gatt_service_db.db" 1
+# 20 "gatt_service_db.db"
+# 1 "gatt_service_uuids.h" 1
+# 21 "gatt_service_db.db" 2
+
+
+
+
+
+
+primary_service {
+    uuid : 0x1801,
+    name : "GATT_SERVICE",
+    characteristic {
+        uuid : 0x2A05,
+        name : "SERVICE_CHANGED",
+        properties : [indicate],
+
+        client_config {
+                    flags : [FLAG_IRQ],
+                    name : "SERVICE_CHANGED_CLIENT_CONFIG"
+                }
+    }
+},
+# 18 "app_gatt_db.db" 2
+# 1 "gap_service_db.db" 1
+# 18 "gap_service_db.db"
+# 1 "gap_uuids.h" 1
+# 19 "gap_service_db.db" 2
+# 1 "appearance.h" 1
+# 20 "gap_service_db.db" 2
+# 1 "gap_conn_params.h" 1
+# 21 "gap_service_db.db" 2
+
+
+
+
+
+
+primary_service {
+    uuid : 0x1800,
+    name : "GAP_SERVICE",
+# 38 "gap_service_db.db"
+    characteristic {
+        uuid : 0x2A00,
+        name : "DEVICE_NAME",
+        properties : [read, write],
+        flags : [FLAG_IRQ, FLAG_ENCR_W],
+
+
+
+
+        value : 0x00
+    },
+
+
+    characteristic {
+        uuid : 0x2A01,
+        name : "DEVICE_APPEARANCE",
+        properties : read,
+        value : 0x0000
+    },
+
+
+    characteristic {
+        uuid : 0x2A04,
+        name : "PREFERRED_PARAMS",
+        properties : read,
+        value : [72, 96,
+                 0x0000, 0x0258]
+    }
+},
+# 19 "app_gatt_db.db" 2
+# 1 "csr_ota_db.db" 1
+# 20 "csr_ota_db.db"
+# 1 "csr_ota_uuids.h" 1
+# 21 "csr_ota_db.db" 2
+
+primary_service {
+    uuid : 0x00001016d10211e19b2300025b00a5a5,
+    name : "CSR_OTA_SERVICE",
+
+
+
+
+
+    characteristic {
+        uuid : 0x00001013d10211e19b2300025b00a5a5,
+        name : "CSR_OTA_CURRENT_APP",
+        flags : [FLAG_IRQ, FLAG_ENCR_R, FLAG_ENCR_W],
+        properties : [read, write],
+        value : 0
+    },
+
+
+
+
+   characteristic {
+        uuid : 0x00001018d10211e19b2300025b00a5a5,
+        name : "CSR_OTA_READ_CS_BLOCK",
+        flags : [FLAG_IRQ, FLAG_ENCR_W],
+        properties : [write],
+        value : 0
+    },
+
+
+
+
+    characteristic {
+        uuid : 0x00001014d10211e19b2300025b00a5a5,
+        name : "CSR_OTA_DATA_TRANSFER",
+        flags : [FLAG_IRQ, FLAG_ENCR_R],
+        properties : [read, notify],
+        size_value : 20,
+
+        client_config {
+            flags : [FLAG_IRQ],
+            name : "CSR_OTA_DATA_TRANSFER_CLIENT_CONFIG"
+            }
+    },
+
+
+    characteristic {
+        uuid : 0x00001011d10211e19b2300025b00a5a5,
+        name : "CSR_OTA_VERSION",
+        flags : [FLAG_IRQ, FLAG_ENCR_R],
+        properties : [read],
+        value : 6
+    }
+},
+# 20 "app_gatt_db.db" 2
+# 1 "mesh_control_service_db.db" 1
+# 19 "mesh_control_service_db.db"
+# 1 "mesh_control_service_uuids.h" 1
+# 20 "mesh_control_service_db.db" 2
+
+
+primary_service {
+    uuid : 0xFEF1,
+    name : "MESH_CONTROL_SERVICE",
+
+
+    characteristic {
+        uuid : 0xC4EDC0009DAF11E3800000025B000B00,
+        name : "NETWORK_KEY",
+        flags : [FLAG_IRQ, FLAG_ENCR_W],
+        properties : [write],
+        value : 0x00
+    },
+
+
+    characteristic {
+        uuid : 0xC4EDC0009DAF11E3800100025B000B00,
+        name : "DEVICE_UUID",
+        properties : [read],
+
+        size_value : 16
+    },
+
+
+
+
+    characteristic {
+        uuid : 0xC4EDC0009DAF11E3800200025B000B00,
+        name : "DEVICE_ID",
+        flags : [FLAG_IRQ ],
+        properties : [read, write],
+        value : 0x00
+    },
+
+
+    characteristic {
+        uuid : 0xC4EDC0009DAF11E3800300025B000B00,
+        name : "MTL_CONTINUATION_CP",
+        flags : [FLAG_IRQ ],
+        properties : [write_cmd, write, notify],
+        value : 0x00,
+        client_config {
+            flags : FLAG_IRQ,
+            name : "MTL_CP_CLIENT_CONFIG",
+        }
+    },
+
+
+    characteristic {
+        uuid : 0xC4EDC0009DAF11E3800400025B000B00,
+        name : "MTL_COMPLETE_CP",
+        flags : [FLAG_IRQ ],
+        properties : [write_cmd, write, notify],
+        value : 0x00,
+        client_config {
+            flags : FLAG_IRQ,
+            name : "MTL_CP2_CLIENT_CONFIG",
+        }
+    },
+
+
+    characteristic {
+        uuid : 0xC4EDC0009DAF11E3800500025B000B00,
+        name : "MTL_TTL",
+        flags : [FLAG_IRQ ],
+        properties : [read, write],
+        value : 0x00
+    },
+
+
+    characteristic {
+        uuid : 0xC4EDC0009DAF11E3800600025B000B00,
+        name : "MESH_APPEARANCE",
+        flags : [FLAG_IRQ ],
+        properties : [read, write],
+        value : 0x00
+    }
+}
+# 20 "app_gatt_db.db" 2

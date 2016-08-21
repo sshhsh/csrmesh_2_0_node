@@ -1,0 +1,99 @@
+/*******************************************************************************
+ *  Copyright 2015 Qualcomm Technologies International, Ltd.
+ *  Bluetooth Low Energy CSRmesh 2.0
+ *  %%appversion
+ *
+ *  FILE
+ *    mesh_control_service_db.db
+ *
+ *  DESCRIPTION
+ *    This file defines the Mesh control Service in JSON format, which 
+ *    is fairly human readable. This file is included in the main 
+ *    application data base file which is used to produce ATT
+ *    flat data base.
+ *
+ ******************************************************************************/
+#ifndef __MESH_CONTROL_SERVICE_DB__
+#define __MESH_CONTROL_SERVICE_DB__
+
+#include "mesh_control_service_uuids.h" 
+
+/* Primary service declaration of CSRmesh Control service. */
+primary_service {
+    uuid : MESH_CONTROL_SERVICE_UUID,
+    name : "MESH_CONTROL_SERVICE",
+
+    /* NetworkKey (writeable when authenticated) [Optional]*/
+    characteristic {
+        uuid : NETWORK_KEY_UUID,
+        name : "NETWORK_KEY",
+        flags : [FLAG_IRQ, FLAG_ENCR_W],
+        properties : [write],
+        value : 0x00 /* Network key is 128 bits */
+    },
+
+    /* DeviceUUID Characteristic :(readable) [Optional] */
+    characteristic {
+        uuid : DEVICE_UUID_UUID,
+        name : "DEVICE_UUID",
+        properties : [read],
+
+        size_value : 16
+    },
+
+    /* DeviceID (readable when authenticated, writeable when authenticated) 
+     * [Optional]
+     */
+    characteristic {
+        uuid : DEVICE_ID_UUID,
+        name : "DEVICE_ID",
+        flags : [FLAG_IRQ /* , FLAG_ENCR_R, FLAG_ENCR_W */],
+        properties : [read, write],
+        value : 0x00
+    },
+
+     /* MTL_CONTINUATION_CP (command-able when authenticated, notified when authenticated) */
+    characteristic {
+        uuid : MTL_CONTINUATION_CP_UUID,
+        name : "MTL_CONTINUATION_CP",
+        flags : [FLAG_IRQ /* ,FLAG_ENCR_W */],
+        properties : [write_cmd, write, notify],
+        value : 0x00,        
+        client_config {
+            flags : FLAG_IRQ,
+            name : "MTL_CP_CLIENT_CONFIG",
+        }
+    },
+
+    /* MTL_COMPLETE_CP (command-able when authenticated, notified when authenticated) */
+    characteristic {
+        uuid : MTL_COMPLETE_CP_UUID,
+        name : "MTL_COMPLETE_CP",
+        flags : [FLAG_IRQ /* ,FLAG_ENCR_W */],
+        properties : [write_cmd, write, notify],
+        value : 0x00,        
+        client_config {
+            flags : FLAG_IRQ,
+            name : "MTL_CP2_CLIENT_CONFIG",
+        }
+    },
+
+    /* TTL (readable when authenticated, writeable when authenticated) */
+    characteristic {
+        uuid : MTL_TTL_UUID,
+        name : "MTL_TTL",
+        flags : [FLAG_IRQ /* ,FLAG_ENCR_R, FLAG_ENCR_W */],
+        properties : [read, write],
+        value : 0x00
+    },
+
+    /* CSRmesh Appearance (readable, writeable when authenticated) [Optional] */
+    characteristic {
+        uuid : MESH_APPEARANCE_UUID,
+        name : "MESH_APPEARANCE",
+        flags : [FLAG_IRQ /* ,FLAG_ENCR_W */],
+        properties : [read, write],
+        value : 0x00
+    }
+}
+#endif /* __MESH_CONTROL_SERVICE_DB__ */

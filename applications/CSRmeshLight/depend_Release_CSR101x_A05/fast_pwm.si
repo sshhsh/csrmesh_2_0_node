@@ -1,0 +1,1518 @@
+   1                 		.file	"fast_pwm.c"
+   2                 		.variant xap2+
+   3                 	
+   4                 		.small
+   5                 	
+   6                 		.section	.debug_abbrev,"",@progbits
+   7                 	.Ldebug_abbrev0:
+   8                 		.section	.debug_info,"",@progbits
+   9                 	.Ldebug_info0:
+  10                 		.section	.debug_line,"",@progbits
+  11                 	.Ldebug_line0:
+  12 0000 00 00 00 00 		.text
+  12      00 02 00 00 
+  12      00 00 01 01 
+  12      FB 0E 0D 00 
+  12      01 01 01 01 
+  13                 	.Ltext0:
+  14                 		.section	.text.PioFastPwmSetWidth,"ax",@progbits
+  15                 		.global	PioFastPwmSetWidth
+  16                 		.type	PioFastPwmSetWidth, @function
+  17                 	PioFastPwmSetWidth:
+  18                 	.LFB2:
+  19                 		.file 1 "fast_pwm.c"
+   0:fast_pwm.c    **** /******************************************************************************
+   1:fast_pwm.c    ****  *  Copyright 2015 Qualcomm Technologies International, Ltd.
+   2:fast_pwm.c    ****  *  Bluetooth Low Energy CSRmesh 2.0
+   3:fast_pwm.c    ****  *  Application version 2.0
+   4:fast_pwm.c    ****  *
+   5:fast_pwm.c    ****  *  FILE
+   6:fast_pwm.c    ****  *      fast_pwm.c
+   7:fast_pwm.c    ****  *
+   8:fast_pwm.c    ****  *  DESCRIPTION
+   9:fast_pwm.c    ****  *      This file illustrates how to use the PIO controller to produce fast
+  10:fast_pwm.c    ****  *      PWM output. The PWM output has approx. 1 ms intervals, and
+  11:fast_pwm.c    ****  *      the pulse widths adjustable with 4 microsecond steps. PIOs 8~15 can
+  12:fast_pwm.c    ****  *      be used as output. And the user can use other PIOs by chaining
+  13:fast_pwm.c    ****  *      the PIO controller code, as long as they are in the same port.
+  14:fast_pwm.c    ****  *
+  15:fast_pwm.c    ****  *****************************************************************************/
+  16:fast_pwm.c    **** 
+  17:fast_pwm.c    **** /*============================================================================*
+  18:fast_pwm.c    ****  *  SDK Header Files
+  19:fast_pwm.c    ****  *============================================================================*/
+  20:fast_pwm.c    **** #include <pio.h>
+  21:fast_pwm.c    **** #include <pio_ctrlr.h>
+  22:fast_pwm.c    **** #include <sleep.h>
+  23:fast_pwm.c    **** 
+  24:fast_pwm.c    **** /*============================================================================*
+  25:fast_pwm.c    ****  *  Local Header Files
+  26:fast_pwm.c    ****  *============================================================================*/
+  27:fast_pwm.c    **** #include "user_config.h"
+  28:fast_pwm.c    **** #include "fast_pwm.h"
+  29:fast_pwm.c    **** 
+  30:fast_pwm.c    **** #ifdef ENABLE_FAST_PWM
+  31:fast_pwm.c    **** 
+  32:fast_pwm.c    **** /* Included externally in PIO controller code.*/
+  33:fast_pwm.c    **** void pio_ctrlr_code(void);
+  34:fast_pwm.c    **** /*============================================================================*
+  35:fast_pwm.c    ****  *  Public Function Implementations
+  36:fast_pwm.c    ****  *============================================================================*/
+  37:fast_pwm.c    **** /*----------------------------------------------------------------------------*
+  38:fast_pwm.c    ****  *  NAME
+  39:fast_pwm.c    ****  *      PioFastPwmSetWidth
+  40:fast_pwm.c    ****  *
+  41:fast_pwm.c    ****  *  DESCRIPTION
+  42:fast_pwm.c    ****  *      This function sets the required pulse width in multiples of 4us
+  43:fast_pwm.c    ****  *      on a PWM port.
+  44:fast_pwm.c    ****  *
+  45:fast_pwm.c    ****  *  RETURNS
+  46:fast_pwm.c    ****  *      Nothing.
+  47:fast_pwm.c    ****  *
+  48:fast_pwm.c    ****  *----------------------------------------------------------------------------*/
+  49:fast_pwm.c    ****  bool PioFastPwmSetWidth(uint8 pwm_port, uint8 bright_width, uint8 dull_width,
+  50:fast_pwm.c    ****                         bool inverted)
+  51:fast_pwm.c    **** {
+  20                 	
+  21                 		enter	#0x0001
+  22 0000 01 0B       	.LCFI0:
+  23                 		st	AL,@0xfff8
+  24 0001 F8 25       		st	AH,@0xfff9
+  25 0002 F9 21       		ld	AL,@(0x0001,Y)
+  26 0003 01 17       	.LVL1:
+  27                 		st	AL,@0xfffb
+  28 0004 FB 25       	.LVL2:
+  29                 		.loc 1 53 0
+  52:fast_pwm.c    **** ||
+  30                 	xfff8
+  31 0005 F8 15       		add	AL,#0xfff8
+  32 0006 F8 34       		st	AL,@0xfffa
+  33 0007 FA 25       		cmp	AL,#0x0008
+  34 0008 08 84       		bcc	.L2
+  35 0009 00 00 00 00 	.LVL3:
+  35      00 F8 
+  36                 		cmp	AH,#0x0100
+  37 000c 01 00 00 80 		bcc	.L2
+  38 000e 00 00 00 00 	.LVL4:
+  38      00 F8 
+  39                 		ld	AL,@0xfffb
+  40 0011 FB 15       		cmp	AL,#0x0100
+  41 0012 01 00 00 84 		bcc	.L2
+  42 0014 00 00 00 00 		.loc 1 57 0
+  42      00 F8 
+  53:fast_pwm.c    ****                       bool inverted)
+  54:fast_pwm.c    **** {
+  55:fast_pwm.c    ****     if(pwm_port < PWM0_PORT || pwm_port > PWM7_PORT ||
+  56:fast_pwm.c    ****        bright_width > 255 || dull_width > 255)
+  43                 	a
+  44 0017 FA 11       	.LVL5:
+  45                 		lsr	#0x0001
+  46 0018 00 09 01 A4 		ld	X,@$XAP_AH
+  47 001a 00 00 00 19 	.LVL6:
+  48                 		add	X,#0xe820
+  49 001c E8 00 20 38 		.loc 1 59 0
+  57:fast_pwm.c    **** m_port < PWM0_PORT || pwm_port > PWM7_PORT ||
+  58:fast_pwm.c    ****        bright_width > 255 || dull_width > 255)
+  50                 	@0xfff8
+  51 001e F8 15       		and	AL,#0x0001
+  52 001f 01 C4       		beq	.L3
+  53 0020 00 00 00 00 	.LVL7:
+  53      00 F4 
+  54                 		.loc 1 62 0
+  59:fast_pwm.c    **** m_port < PWM0_PORT || pwm_port > PWM7_PORT ||
+  60:fast_pwm.c    ****        bright_width > 255 || dull_width > 255)
+  61:fast_pwm.c    ****         return FALSE;
+  55                 	L,@(0,X)
+  56 0023 00 16       	.LVL8:
+  57                 		and	AL,#0x00ff
+  58 0024 01 00 FF C4 		st	AL,@0xfff8
+  59 0026 F8 25       	.LVL9:
+  60                 		ld	AL,@0xfff9
+  61 0027 F9 15       		asl	#0x0008
+  62 0028 08 A0       		or	AL,@0xfff8
+  63 0029 F8 B5       		st	AL,@(0,X)
+  64 002a 00 26       		.loc 1 65 0
+  62:fast_pwm.c    **** wm_port > PWM7_PORT ||
+  63:fast_pwm.c    ****        bright_width > 255 || dull_width > 255)
+  64:fast_pwm.c    ****         return FALSE;
+  65                 	x0004,X)
+  66 002b 04 16       		and	AL,#0x00ff
+  67 002c 01 00 FF C4 		st	AL,@0xfff8
+  68 002e F8 25       		ld	AL,@0xfffb
+  69 002f FB 15       		asl	#0x0008
+  70 0030 08 A0       		or	AL,@0xfff8
+  71 0031 F8 B5       		bra	.L8
+  72 0032 00 00 00 00 	.LVL10:
+  72      00 E0 
+  73                 	.L3:
+  74                 		.loc 1 70 0
+  65:fast_pwm.c    **** wm_port > PWM7_PORT ||
+  66:fast_pwm.c    ****        bright_width > 255 || dull_width > 255)
+  67:fast_pwm.c    ****         return FALSE;
+  68:fast_pwm.c    **** 
+  69:fast_pwm.c    ****     uint16*address=PIO_CONTROLLER_DATA_WORD+((pwm_port-PWM0_PORT)>>1);
+  75                 	,X)
+  76 0035 00 16       	.LVL11:
+  77                 		and	AL,#0xff00
+  78 0036 FF 00 00 C4 		or	AL,@0xfff9
+  79 0038 F9 B5       		st	AL,@(0,X)
+  80 0039 00 26       		.loc 1 73 0
+  70:fast_pwm.c    ****     return FALSE;
+  71:fast_pwm.c    **** 
+  72:fast_pwm.c    ****     uint16*address=PIO_CONTROLLER_DATA_WORD+((pwm_port-PWM0_PORT)>>1);
+  81                 	,@(0x0004,X)
+  82 003a 04 16       		and	AL,#0xff00
+  83 003b FF 00 00 C4 		or	AL,@0xfffb
+  84 003d FB B5       	.L8:
+  85                 		st	AL,@(0x0004,X)
+  86 003e 04 26       		.loc 1 78 0
+  73:fast_pwm.c    ****     return FALSE;
+  74:fast_pwm.c    **** 
+  75:fast_pwm.c    ****     uint16*address=PIO_CONTROLLER_DATA_WORD+((pwm_port-PWM0_PORT)>>1);
+  76:fast_pwm.c    **** 
+  77:fast_pwm.c    ****     if(pwm_port&1)
+  87                 	(0x0002,Y)
+  88 003f 02 9B       		beq	.L5
+  89 0040 00 00 00 00 	.LVL12:
+  89      00 F4 
+  90                 		.loc 1 79 0
+  78:fast_pwm.c    ****  uint16*address=PIO_CONTROLLER_DATA_WORD+((pwm_port-PWM0_PORT)>>1);
+  91                 	AL,#0x0001
+  92 0043 01 14       		asl	@0xfffa
+  93 0044 FA A1       		xor	AL,#0xffff
+  94 0045 FF D4       		and	AL,@0xe828
+  95 0046 E8 00 28 C5 		bra	.L9
+  96 0048 00 00 00 00 	.L5:
+  96      00 E0 
+  97                 		.loc 1 81 0
+  79:fast_pwm.c    ****     return FALSE;
+  80:fast_pwm.c    **** 
+  98                 	#0x0001
+  99 004b 01 14       		asl	@0xfffa
+ 100 004c FA A1       		or	AL,@0xe828
+ 101 004d E8 00 28 B5 	.L9:
+ 102                 		st	AL,@0xe828
+ 103 004f E8 00 28 25 		ld	AL,#0x0001
+ 104 0051 01 14       		bra	.L6
+ 105 0052 00 00 00 00 	.LVL13:
+ 105      00 E0 
+ 106                 	.L2:
+ 107                 		ld	AL,#0x0000
+ 108 0055 00 14       	.LVL14:
+ 109                 	.L6:
+ 110                 		.loc 1 83 0
+  81:fast_pwm.c    **** _port > PWM7_PORT ||
+  82:fast_pwm.c    ****        bright_width > 255 || dull_width > 255)
+ 111                 	1
+ 112 0056 01 0F       	.LVL15:
+ 113                 	.LFE2:
+ 114                 		.size	PioFastPwmSetWidth, .-PioFastPwmSetWidth
+ 115                 		.global	__size_of_PioFastPwmSetWidth
+ 116                 		.equ	__size_of_PioFastPwmSetWidth,. - PioFastPwmSetWidth
+ 117                 		.section	.text.PioFastPwmSetPeriods,"ax",@progbits
+ 118                 		.global	PioFastPwmSetPeriods
+ 119                 		.type	PioFastPwmSetPeriods, @function
+ 120                 	PioFastPwmSetPeriods:
+ 121                 	.LFB3:
+ 122                 		.loc 1 98 0
+  83:fast_pwm.c    **** m_port < PWM0_PORT || pwm_port > PWM7_PORT ||
+  84:fast_pwm.c    ****        bright_width > 255 || dull_width > 255)
+  85:fast_pwm.c    ****         return FALSE;
+  86:fast_pwm.c    **** 
+  87:fast_pwm.c    ****     uint16*address=PIO_CONTROLLER_DATA_WORD+((pwm_port-PWM0_PORT)>>1);
+  88:fast_pwm.c    **** 
+  89:fast_pwm.c    ****     if(pwm_port&1)
+  90:fast_pwm.c    ****     {
+  91:fast_pwm.c    ****         *address&=0x00ff;
+  92:fast_pwm.c    ****         *address|=(bright_width<<8);
+  93:fast_pwm.c    ****         address+=4;
+  94:fast_pwm.c    ****         *address&=0x00ff;
+  95:fast_pwm.c    ****         *address|=(dull_width<<8);
+  96:fast_pwm.c    ****     }
+  97:fast_pwm.c    ****     else
+ 123                 	c 1 99 0
+ 124                 		st	AL,@0xe829
+  98:fast_pwm.c    **** =4;
+ 125                 	loc 1 100 0
+ 126 0000 E8 00 29 25 		st	AH,@0xe82a
+  99:fast_pwm.c    **** 
+ 127                 	loc 1 101 0
+ 128 0002 E8 00 2A 21 		ld	AL,#0x0001
+ 100:fast_pwm.c    **** *address=PIO_CONTROLLER_DATA_WORD+((pwm_port-PWM0_PORT)>>1);
+ 129                 	VL17:
+ 130 0004 01 14       		st	AL,@0xe82b
+ 131                 		.loc 1 102 0
+ 132 0005 E8 00 2B 25 		bra	0,X
+ 101:fast_pwm.c    ****     return FALSE;
+ 133                 	3:
+ 134 0007 00 E2       		.size	PioFastPwmSetPeriods, .-PioFastPwmSetPeriods
+ 135                 		.global	__size_of_PioFastPwmSetPeriods
+ 136                 		.equ	__size_of_PioFastPwmSetPeriods,. - PioFastPwmSetPeriods
+ 137                 		.section	.text.PioFastPwmEnable,"ax",@progbits
+ 138                 		.global	PioFastPwmEnable
+ 139                 		.type	PioFastPwmEnable, @function
+ 140                 	PioFastPwmEnable:
+ 141                 	.LFB5:
+ 142                 		.loc 1 136 0
+ 143                 	.LVL18:
+ 102:fast_pwm.c    **** wm_port > PWM7_PORT ||
+ 103:fast_pwm.c    ****        bright_width > 255 || dull_width > 255)
+ 104:fast_pwm.c    ****         return FALSE;
+ 105:fast_pwm.c    **** 
+ 106:fast_pwm.c    ****     uint16*address=PIO_CONTROLLER_DATA_WORD+((pwm_port-PWM0_PORT)>>1);
+ 107:fast_pwm.c    **** 
+ 108:fast_pwm.c    ****     if(pwm_port&1)
+ 109:fast_pwm.c    ****     {
+ 110:fast_pwm.c    ****         *address&=0x00ff;
+ 111:fast_pwm.c    ****         *address|=(bright_width<<8);
+ 112:fast_pwm.c    ****         address+=4;
+ 113:fast_pwm.c    ****         *address&=0x00ff;
+ 114:fast_pwm.c    ****         *address|=(dull_width<<8);
+ 115:fast_pwm.c    ****     }
+ 116:fast_pwm.c    ****     else
+ 117:fast_pwm.c    ****     {
+ 118:fast_pwm.c    ****         *address&=0xff00;
+ 119:fast_pwm.c    ****         *address|=bright_width;
+ 120:fast_pwm.c    ****         address+=4;
+ 121:fast_pwm.c    ****         *address&=0xff00;
+ 122:fast_pwm.c    ****         *address|=dull_width;
+ 123:fast_pwm.c    ****     }
+ 124:fast_pwm.c    **** 
+ 125:fast_pwm.c    ****     address=PIO_CONTROLLER_DATA_WORD+8;
+ 126:fast_pwm.c    **** 
+ 127:fast_pwm.c    ****     if(inverted)
+ 128:fast_pwm.c    ****         *address&=~(1<<(pwm_port-PWM0_PORT));
+ 129:fast_pwm.c    ****     else
+ 130:fast_pwm.c    ****         *address|=1<<(pwm_port-PWM0_PORT);
+ 131:fast_pwm.c    ****     return TRUE;
+ 132:fast_pwm.c    **** }
+ 133:fast_pwm.c    **** 
+ 134:fast_pwm.c    **** /*----------------------------------------------------------------------------*
+ 135:fast_pwm.c    ****  *  NAME
+ 144                 	001
+ 145                 	.LCFI1:
+ 146 0000 01 0B       		.loc 1 137 0
+ 147                 		tst	@$XAP_AL
+ 136:fast_pwm.c    **** --------------------------------------------------*
+ 148                 		.L13
+ 149 0001 00 00 00 99 		.loc 1 139 0
+ 150 0003 00 00 00 00 		ld	AL,#0x0002
+ 150      00 F4 
+ 137:fast_pwm.c    **** ------------------------------------------------------------*
+ 138:fast_pwm.c    ****  *  NAME
+ 151                 	L19:
+ 152 0006 02 14       		bsr	SleepModeChange
+ 153                 		.loc 1 140 0
+ 154 0007 00 00 00 00 		bsr	PioCtrlrStart
+ 154      00 9C 
+ 139:fast_pwm.c    **** --------------------------------------------------*
+ 155                 		.L15
+ 156 000a 00 00 00 00 	.LVL20:
+ 156      00 9C 
+ 157 000d 00 00 00 00 	.L13:
+ 157      00 E0 
+ 158                 		.loc 1 144 0
+ 159                 		bsr	PioCtrlrStop
+ 140:fast_pwm.c    **** ------------------------------------------------------------*
+ 141:fast_pwm.c    ****  *  NAME
+ 142:fast_pwm.c    ****  *      PioFastPwmSetPeriods
+ 143:fast_pwm.c    ****  *
+ 160                 	1:
+ 161 0010 00 00 00 00 		.loc 1 145 0
+ 161      00 9C 
+ 162                 		ld	AL,#0x0001
+ 144:fast_pwm.c    **** ----------------*
+ 163                 	r	SleepModeChange
+ 164 0013 01 14       	.L15:
+ 165 0014 00 00 00 00 		.loc 1 147 0
+ 165      00 9C 
+ 166                 		leave	#0x0001
+ 145:fast_pwm.c    **** ------------------------------------------------------------*
+ 146:fast_pwm.c    ****  *  NAME
+ 167                 	5:
+ 168 0017 01 0F       		.size	PioFastPwmEnable, .-PioFastPwmEnable
+ 169                 		.global	__size_of_PioFastPwmEnable
+ 170                 		.equ	__size_of_PioFastPwmEnable,. - PioFastPwmEnable
+ 171                 		.section	.text.PioFastPwmConfig,"ax",@progbits
+ 172                 		.global	PioFastPwmConfig
+ 173                 		.type	PioFastPwmConfig, @function
+ 174                 	PioFastPwmConfig:
+ 175                 	.LFB4:
+ 176                 		.loc 1 116 0
+ 177                 	.LVL22:
+ 116:fast_pwm.c    **** {
+ 178                 	004
+ 179                 	.LCFI2:
+ 180 0000 04 0B       		st	AL,@(0x0002,Y)
+ 181                 	.LVL23:
+ 182 0001 02 27       		st	AH,@(0x0001,Y)
+ 183                 		.loc 1 117 0
+ 184 0002 01 23       		ld	AL,#0x0010
+ 117:fast_pwm.c    ****     PioSetModes(pio_mask,  pio_mode_pio_controller);
+ 185                 	
+ 186 0003 10 14       		st	AL,@(0,Y)
+ 187                 		ld	AL,@(0x0002,Y)
+ 188 0004 00 27       		bsr	PioSetModes
+ 189 0005 02 17       	.LVL25:
+ 190 0006 00 00 00 00 		.loc 1 118 0
+ 190      00 9C 
+ 191                 		ld	AL,#0x0000
+ 118:fast_pwm.c    ****     PioSetPullModes(pio_mask, pio_mode_no_pulls);
+ 192                 	,@(0,Y)
+ 193 0009 00 14       		ld	AL,@(0x0002,Y)
+ 194 000a 00 27       		ld	AH,@(0x0001,Y)
+ 195 000b 02 17       		bsr	PioSetPullModes
+ 196 000c 01 13       		.loc 1 120 0
+ 197 000d 00 00 00 00 		ld	AL,#pio_ctrlr_code
+ 197      00 9C 
+ 120:fast_pwm.c    ****     PioCtrlrInit((uint16*)&pio_ctrlr_code);
+ 198                 	ioCtrlrInit
+ 199 0010 00 00 00 14 		.loc 1 121 0
+ 200 0012 00 00 00 00 		ld	AL,#0x0001
+ 200      00 9C 
+ 121:fast_pwm.c    ****     PioCtrlrClock(TRUE);
+ 201                 	r	PioCtrlrClock
+ 202 0015 01 14       		.loc 1 122 0
+ 203 0016 00 00 00 00 		leave	#0x0004
+ 203      00 9C 
+ 122:fast_pwm.c    **** }
+ 204                 	E4:
+ 205 0019 04 0F       		.size	PioFastPwmConfig, .-PioFastPwmConfig
+ 206                 		.global	__size_of_PioFastPwmConfig
+ 207                 		.equ	__size_of_PioFastPwmConfig,. - PioFastPwmConfig
+ 208                 		.section	.debug_frame,"",@progbits
+ 209                 	.Lframe0:
+ 210                 		.4byte	.LECIE0-.LSCIE0
+ 211                 	.LSCIE0:
+ 212 0000 00 00 00 00 		.4byte	0xffffffff
+ 213                 		.1byte	0x1
+ 214 0002 FF FF FF FF 		.ascii "\000"
+ 215 0004 01          		.1byte	0x1
+ 216 0004 00          		.1byte	0x7f
+ 217 0005 01          		.1byte	0x3
+ 218 0005 7F          		.1byte	0xc
+ 219 0006 03          		.1byte	0x5
+ 220 0006 0C          		.1byte	0x0
+ 221 0007 05          		.p2align	2
+ 222 0007 00          	.LECIE0:
+ 223                 	.LSFDE0:
+ 224                 		.4byte	.LEFDE0-.LASFDE0
+ 225                 	.LASFDE0:
+ 226 0008 00 00 00 00 		.4byte	.Lframe0
+ 227                 		.4byte	.LFB2
+ 228 000a 00 00 00 00 		.4byte	.LFE2-.LFB2
+ 229 000c 00 00 00 00 		.1byte	0x4
+ 230 000e 00 00 00 00 		.4byte	.LCFI0-.LFB2
+ 231 0010 41          		.1byte	0xe
+ 232                 		.1byte	0x1
+ 233 0010 0E          		.1byte	0x83
+ 234 0011 01          		.1byte	0x1
+ 235 0011 83          		.p2align	2
+ 236 0012 01          	.LEFDE0:
+ 237 0012 00 00 00    	.LSFDE2:
+ 238                 		.4byte	.LEFDE2-.LASFDE2
+ 239                 	.LASFDE2:
+ 240 0014 00 00 00 00 		.4byte	.Lframe0
+ 241                 		.4byte	.LFB3
+ 242 0016 00 00 00 00 		.4byte	.LFE3-.LFB3
+ 243 0018 00 00 00 00 		.p2align	2
+ 244 001a 00 00 00 08 	.LEFDE2:
+ 245                 	.LSFDE4:
+ 246                 		.4byte	.LEFDE4-.LASFDE4
+ 247                 	.LASFDE4:
+ 248 001c 00 00 00 00 		.4byte	.Lframe0
+ 249                 		.4byte	.LFB5
+ 250 001e 00 00 00 00 		.4byte	.LFE5-.LFB5
+ 251 0020 00 00 00 00 		.1byte	0x4
+ 252 0022 00 00 00 00 		.4byte	.LCFI1-.LFB5
+ 253 0024 41          		.1byte	0xe
+ 254                 		.1byte	0x1
+ 255 0024 0E          		.1byte	0x83
+ 256 0025 01          		.1byte	0x1
+ 257 0025 83          		.p2align	2
+ 258 0026 01          	.LEFDE4:
+ 259 0026 00 00 00    	.LSFDE6:
+ 260                 		.4byte	.LEFDE6-.LASFDE6
+ 261                 	.LASFDE6:
+ 262 0028 00 00 00 00 		.4byte	.Lframe0
+ 263                 		.4byte	.LFB4
+ 264 002a 00 00 00 00 		.4byte	.LFE4-.LFB4
+ 265 002c 00 00 00 00 		.1byte	0x4
+ 266 002e 00 00 00 00 		.4byte	.LCFI2-.LFB4
+ 267 0030 41          		.1byte	0xe
+ 268                 		.1byte	0x4
+ 269 0030 0E          		.1byte	0x83
+ 270 0031 04          		.1byte	0x1
+ 271 0031 83          		.p2align	2
+ 272 0032 01          	.LEFDE6:
+ 273 0032 00 00 00    		.text
+ 274                 	.Letext0:
+ 275                 		.section	.debug_loc,"",@progbits
+ 276                 	.Ldebug_loc0:
+ 277                 	.LLST0:
+ 278                 		.4byte	.LFB2
+ 279                 		.4byte	.LCFI0
+ 280 0000 00 00 00 00 		.2byte	0x1
+ 281 0002 00 00 00 00 		.1byte	0x55
+ 282 0004 00 01       		.4byte	.LCFI0
+ 283 0005 55          		.4byte	.LFE2
+ 284 0005 00 00 00 00 		.2byte	0x2
+ 285 0007 00 00 00 00 		.1byte	0x75
+ 286 0009 00 02       		.1byte	0x1
+ 287 000a 75          		.4byte	0x0
+ 288 000b 01          		.4byte	0x0
+ 289 000b 00 00 00 00 	.LLST1:
+ 290 000d 00 00 00 00 		.4byte	.LVL0
+ 291                 		.4byte	.LVL1
+ 292 000f 00 00 00 00 		.2byte	0x1
+ 293 0011 00 00 00 00 		.1byte	0x51
+ 294 0013 00 01       		.4byte	.LVL1
+ 295 0014 51          		.4byte	.LVL7
+ 296 0015 00 00 00 00 		.2byte	0x1
+ 297 0017 00 00 00 00 		.1byte	0x57
+ 298 0019 00 01       		.4byte	.LVL7
+ 299 001a 57          		.4byte	.LVL8
+ 300 001a 00 00 00 00 		.2byte	0x1
+ 301 001c 00 00 00 00 		.1byte	0x51
+ 302 001e 00 01       		.4byte	.LVL8
+ 303 001f 51          		.4byte	.LVL9
+ 304 0020 00 00 00 00 		.2byte	0x1
+ 305 0022 00 00 00 00 		.1byte	0x57
+ 306 0024 00 01       		.4byte	.LVL10
+ 307 0025 57          		.4byte	.LVL11
+ 308 0025 00 00 00 00 		.2byte	0x1
+ 309 0027 00 00 00 00 		.1byte	0x51
+ 310 0029 00 01       		.4byte	.LVL11
+ 311 002a 51          		.4byte	.LFE2
+ 312 002b 00 00 00 00 		.2byte	0x1
+ 313 002d 00 00 00 00 		.1byte	0x57
+ 314 002f 00 01       		.4byte	0x0
+ 315 0030 57          		.4byte	0x0
+ 316 0030 00 00 00 00 	.LLST2:
+ 317 0032 00 00 00 00 		.4byte	.LVL0
+ 318                 		.4byte	.LVL3
+ 319 0034 00 00 00 00 		.2byte	0x1
+ 320 0036 00 00 00 00 		.1byte	0x50
+ 321 0038 00 01       		.4byte	.LVL3
+ 322 0039 50          		.4byte	.LVL4
+ 323 003a 00 00 00 00 		.2byte	0x1
+ 324 003c 00 00 00 00 		.1byte	0x58
+ 325 003e 00 01       		.4byte	.LVL4
+ 326 003f 58          		.4byte	.LVL5
+ 327 003f 00 00 00 00 		.2byte	0x1
+ 328 0041 00 00 00 00 		.1byte	0x50
+ 329 0043 00 01       		.4byte	.LVL5
+ 330 0044 50          		.4byte	.LVL13
+ 331 0045 00 00 00 00 		.2byte	0x1
+ 332 0047 00 00 00 00 		.1byte	0x58
+ 333 0049 00 01       		.4byte	.LVL13
+ 334 004a 58          		.4byte	.LVL14
+ 335 004a 00 00 00 00 		.2byte	0x1
+ 336 004c 00 00 00 00 		.1byte	0x50
+ 337 004e 00 01       		.4byte	.LVL14
+ 338 004f 50          		.4byte	.LFE2
+ 339 0050 00 00 00 00 		.2byte	0x1
+ 340 0052 00 00 00 00 		.1byte	0x58
+ 341 0054 00 01       		.4byte	0x0
+ 342 0055 58          		.4byte	0x0
+ 343 0055 00 00 00 00 	.LLST3:
+ 344 0057 00 00 00 00 		.4byte	.LVL0
+ 345                 		.4byte	.LVL2
+ 346 0059 00 00 00 00 		.2byte	0x2
+ 347 005b 00 00 00 00 		.1byte	0x91
+ 348 005d 00 02       		.1byte	0x0
+ 349 005e 91          		.4byte	.LVL2
+ 350 005f 00          		.4byte	.LFE2
+ 351 005f 00 00 00 00 		.2byte	0x1
+ 352 0061 00 00 00 00 		.1byte	0x5a
+ 353 0063 00 01       		.4byte	0x0
+ 354 0064 5A          		.4byte	0x0
+ 355 0065 00 00 00 00 	.LLST4:
+ 356 0067 00 00 00 00 		.4byte	.LVL0
+ 357                 		.4byte	.LVL12
+ 358 0069 00 00 00 00 		.2byte	0x2
+ 359 006b 00 00 00 00 		.1byte	0x91
+ 360 006d 00 02       		.1byte	0x1
+ 361 006e 91          		.4byte	.LVL12
+ 362 006e 01          		.4byte	.LVL13
+ 363 006f 00 00 00 00 		.2byte	0x2
+ 364 0071 00 00 00 00 		.1byte	0x76
+ 365 0073 00 02       		.1byte	0x2
+ 366 0074 76          		.4byte	.LVL13
+ 367 0074 02          		.4byte	.LFE2
+ 368 0075 00 00 00 00 		.2byte	0x2
+ 369 0077 00 00 00 00 		.1byte	0x91
+ 370 0079 00 02       		.1byte	0x1
+ 371 007a 91          		.4byte	0x0
+ 372 007a 01          		.4byte	0x0
+ 373 007b 00 00 00 00 	.LLST5:
+ 374 007d 00 00 00 00 		.4byte	.LVL6
+ 375                 		.4byte	.LVL13
+ 376 007f 00 00 00 00 		.2byte	0x1
+ 377 0081 00 00 00 00 		.1byte	0x53
+ 378 0083 00 01       		.4byte	.LVL14
+ 379 0084 53          		.4byte	.LVL15
+ 380 0084 00 00 00 00 		.2byte	0x1
+ 381 0086 00 00 00 00 		.1byte	0x53
+ 382 0088 00 01       		.4byte	0x0
+ 383 0089 53          		.4byte	0x0
+ 384 008a 00 00 00 00 	.LLST7:
+ 385 008c 00 00 00 00 		.4byte	.LVL16
+ 386                 		.4byte	.LVL17
+ 387 008e 00 00 00 00 		.2byte	0x1
+ 388 0090 00 00 00 00 		.1byte	0x51
+ 389 0092 00 01       		.4byte	0x0
+ 390 0093 51          		.4byte	0x0
+ 391 0093 00 00 00 00 	.LLST8:
+ 392 0095 00 00 00 00 		.4byte	.LFB5
+ 393                 		.4byte	.LCFI1
+ 394 0097 00 00 00 00 		.2byte	0x1
+ 395 0099 00 00 00 00 		.1byte	0x55
+ 396 009b 00 01       		.4byte	.LCFI1
+ 397 009c 55          		.4byte	.LFE5
+ 398 009d 00 00 00 00 		.2byte	0x2
+ 399 009f 00 00 00 00 		.1byte	0x75
+ 400 00a1 00 02       		.1byte	0x1
+ 401 00a2 75          		.4byte	0x0
+ 402 00a2 01          		.4byte	0x0
+ 403 00a3 00 00 00 00 	.LLST9:
+ 404 00a5 00 00 00 00 		.4byte	.LVL18
+ 405                 		.4byte	.LVL19
+ 406 00a7 00 00 00 00 		.2byte	0x1
+ 407 00a9 00 00 00 00 		.1byte	0x51
+ 408 00ab 00 01       		.4byte	.LVL20
+ 409 00ac 51          		.4byte	.LVL21
+ 410 00ac 00 00 00 00 		.2byte	0x1
+ 411 00ae 00 00 00 00 		.1byte	0x51
+ 412 00b0 00 01       		.4byte	0x0
+ 413 00b1 51          		.4byte	0x0
+ 414 00b2 00 00 00 00 	.LLST10:
+ 415 00b4 00 00 00 00 		.4byte	.LFB4
+ 416                 		.4byte	.LCFI2
+ 417 00b6 00 00 00 00 		.2byte	0x1
+ 418 00b8 00 00 00 00 		.1byte	0x55
+ 419 00ba 00 01       		.4byte	.LCFI2
+ 420 00bb 55          		.4byte	.LFE4
+ 421 00bb 00 00 00 00 		.2byte	0x2
+ 422 00bd 00 00 00 00 		.1byte	0x75
+ 423 00bf 00 02       		.1byte	0x4
+ 424 00c0 75          		.4byte	0x0
+ 425 00c1 04          		.4byte	0x0
+ 426 00c1 00 00 00 00 	.LLST11:
+ 427 00c3 00 00 00 00 		.4byte	.LVL22
+ 428                 		.4byte	.LVL25
+ 429 00c5 00 00 00 00 		.2byte	0x6
+ 430 00c7 00 00 00 00 		.1byte	0x50
+ 431 00c9 00 06       		.1byte	0x93
+ 432 00ca 50          		.1byte	0x2
+ 433 00cb 93          		.1byte	0x51
+ 434 00cb 02          		.1byte	0x93
+ 435 00cc 51          		.1byte	0x2
+ 436 00cc 93          		.4byte	0x0
+ 437 00cd 02          		.4byte	0x0
+ 438 00cd 00 00 00 00 		.file 2 "C:/CSR_uEnergy_SDK-2.5.1/tools/include/CSR101x_A05/types.h"
+ 439 00cf 00 00 00 00 		.file 3 "C:/CSR_uEnergy_SDK-2.5.1/tools/include/CSR101x_A05/pio.h"
+ 440                 		.file 4 "C:/CSR_uEnergy_SDK-2.5.1/tools/include/CSR101x_A05/sleep.h"
+ 441                 		.section	.debug_info
+ 442                 		.4byte	0x264
+ 443                 		.2byte	0x2
+ 444 0000 00 00 02 64 		.4byte	.Ldebug_abbrev0
+ 445 0002 00 02       		.1byte	0x4
+ 446 0003 00 00 00 00 		.1byte	0x1
+ 447 0005 04          		.4byte	.LASF56
+ 448 0005 01          		.1byte	0x1
+ 449 0006 00 00 00 00 		.4byte	.LASF57
+ 450 0008 01          		.4byte	.LASF58
+ 451 0008 00 00 00 00 		.4byte	0x0
+ 452 000a 00 00 00 00 		.4byte	0x0
+ 453 000c 00 00 00 00 		.4byte	.Ldebug_ranges0+0x0
+ 454 000e 00 00 00 00 		.4byte	.Ldebug_line0
+ 455 0010 00 00 00 00 		.1byte	0x2
+ 456 0012 00 00 00 00 		.4byte	.LASF0
+ 457 0014 02          		.1byte	0x2
+ 458 0015 00 00 00 00 		.1byte	0x1e
+ 459 0017 02          		.4byte	0x34
+ 460 0017 1E          		.1byte	0x3
+ 461 0018 00 00 00 34 		.1byte	0x2
+ 462 001a 03          		.1byte	0x8
+ 463 001a 02          		.4byte	.LASF2
+ 464 001b 08          		.1byte	0x2
+ 465 001b 00 00 00 00 		.4byte	.LASF1
+ 466 001d 02          		.1byte	0x2
+ 467 001e 00 00 00 00 		.1byte	0x1f
+ 468 0020 02          		.4byte	0x46
+ 469 0020 1F          		.1byte	0x3
+ 470 0021 00 00 00 46 		.1byte	0x2
+ 471 0023 03          		.1byte	0x7
+ 472 0023 02          		.4byte	.LASF3
+ 473 0024 07          		.1byte	0x2
+ 474 0024 00 00 00 00 		.4byte	.LASF4
+ 475 0026 02          		.1byte	0x2
+ 476 0027 00 00 00 00 		.1byte	0x20
+ 477 0029 02          		.4byte	0x58
+ 478 0029 20          		.1byte	0x3
+ 479 002a 00 00 00 58 		.1byte	0x4
+ 480 002c 03          		.1byte	0x7
+ 481 002c 04          		.4byte	.LASF5
+ 482 002d 07          		.1byte	0x3
+ 483 002d 00 00 00 00 		.1byte	0x2
+ 484 002f 03          		.1byte	0x6
+ 485 0030 02          		.4byte	.LASF6
+ 486 0030 06          		.1byte	0x3
+ 487 0031 00 00 00 00 		.1byte	0x2
+ 488 0033 03          		.1byte	0x5
+ 489 0033 02          		.4byte	.LASF7
+ 490 0034 05          		.1byte	0x3
+ 491 0034 00 00 00 00 		.1byte	0x4
+ 492 0036 03          		.1byte	0x5
+ 493 0037 04          		.4byte	.LASF8
+ 494 0037 05          		.1byte	0x2
+ 495 0038 00 00 00 00 		.4byte	.LASF9
+ 496 003a 02          		.1byte	0x2
+ 497 003a 00 00 00 00 		.1byte	0x2a
+ 498 003c 02          		.4byte	0x7f
+ 499 003d 2A          		.1byte	0x3
+ 500 003d 00 00 00 7F 		.1byte	0x2
+ 501 003f 03          		.1byte	0x7
+ 502 0040 02          		.4byte	.LASF10
+ 503 0040 07          		.1byte	0x4
+ 504 0041 00 00 00 00 		.1byte	0x2
+ 505 0043 04          		.1byte	0x3
+ 506 0043 02          		.1byte	0x1b
+ 507 0044 03          		.4byte	0x125
+ 508 0044 1B          		.1byte	0x5
+ 509 0045 00 00 01 25 		.4byte	.LASF11
+ 510 0047 05          		.1byte	0x0
+ 511 0047 00 00 00 00 		.1byte	0x5
+ 512 0049 00          		.4byte	.LASF12
+ 513 004a 05          		.1byte	0x1
+ 514 004a 00 00 00 00 		.1byte	0x5
+ 515 004c 01          		.4byte	.LASF13
+ 516 004d 05          		.1byte	0x3
+ 517 004d 00 00 00 00 		.1byte	0x5
+ 518 004f 03          		.4byte	.LASF14
+ 519 0050 05          		.1byte	0x4
+ 520 0050 00 00 00 00 		.1byte	0x5
+ 521 0052 04          		.4byte	.LASF15
+ 522 0053 05          		.1byte	0x5
+ 523 0053 00 00 00 00 		.1byte	0x5
+ 524 0055 05          		.4byte	.LASF16
+ 525 0056 05          		.1byte	0x6
+ 526 0056 00 00 00 00 		.1byte	0x5
+ 527 0058 06          		.4byte	.LASF17
+ 528 0059 05          		.1byte	0x7
+ 529 0059 00 00 00 00 		.1byte	0x5
+ 530 005b 07          		.4byte	.LASF18
+ 531 005c 05          		.1byte	0x8
+ 532 005c 00 00 00 00 		.1byte	0x5
+ 533 005e 08          		.4byte	.LASF19
+ 534 005f 05          		.1byte	0x9
+ 535 005f 00 00 00 00 		.1byte	0x5
+ 536 0061 09          		.4byte	.LASF20
+ 537 0062 05          		.1byte	0xa
+ 538 0062 00 00 00 00 		.1byte	0x5
+ 539 0064 0A          		.4byte	.LASF21
+ 540 0065 05          		.1byte	0xb
+ 541 0065 00 00 00 00 		.1byte	0x5
+ 542 0067 0B          		.4byte	.LASF22
+ 543 0068 05          		.1byte	0xc
+ 544 0068 00 00 00 00 		.1byte	0x5
+ 545 006a 0C          		.4byte	.LASF23
+ 546 006b 05          		.1byte	0xd
+ 547 006b 00 00 00 00 		.1byte	0x5
+ 548 006d 0D          		.4byte	.LASF24
+ 549 006e 05          		.1byte	0xe
+ 550 006e 00 00 00 00 		.1byte	0x5
+ 551 0070 0E          		.4byte	.LASF25
+ 552 0071 05          		.1byte	0xf
+ 553 0071 00 00 00 00 		.1byte	0x5
+ 554 0073 0F          		.4byte	.LASF26
+ 555 0074 05          		.1byte	0x10
+ 556 0074 00 00 00 00 		.1byte	0x5
+ 557 0076 10          		.4byte	.LASF27
+ 558 0077 05          		.1byte	0x11
+ 559 0077 00 00 00 00 		.1byte	0x5
+ 560 0079 11          		.4byte	.LASF28
+ 561 007a 05          		.1byte	0x12
+ 562 007a 00 00 00 00 		.1byte	0x5
+ 563 007c 12          		.4byte	.LASF29
+ 564 007d 05          		.1byte	0x13
+ 565 007d 00 00 00 00 		.1byte	0x5
+ 566 007f 13          		.4byte	.LASF30
+ 567 0080 05          		.1byte	0x14
+ 568 0080 00 00 00 00 		.1byte	0x5
+ 569 0082 14          		.4byte	.LASF31
+ 570 0083 05          		.1byte	0x15
+ 571 0083 00 00 00 00 		.1byte	0x5
+ 572 0085 15          		.4byte	.LASF32
+ 573 0086 05          		.1byte	0x16
+ 574 0086 00 00 00 00 		.1byte	0x5
+ 575 0088 16          		.4byte	.LASF33
+ 576 0089 05          		.1byte	0x17
+ 577 0089 00 00 00 00 		.1byte	0x5
+ 578 008b 17          		.4byte	.LASF34
+ 579 008c 05          		.1byte	0x18
+ 580 008c 00 00 00 00 		.1byte	0x5
+ 581 008e 18          		.4byte	.LASF35
+ 582 008f 05          		.1byte	0x19
+ 583 008f 00 00 00 00 		.1byte	0x0
+ 584 0091 19          		.1byte	0x4
+ 585 0092 00          		.1byte	0x2
+ 586 0092 04          		.1byte	0x3
+ 587 0093 02          		.1byte	0x90
+ 588 0093 03          		.4byte	0x158
+ 589 0094 90          		.1byte	0x5
+ 590 0094 00 00 01 58 		.4byte	.LASF36
+ 591 0096 05          		.1byte	0x0
+ 592 0097 00 00 00 00 		.1byte	0x5
+ 593 0099 00          		.4byte	.LASF37
+ 594 0099 05          		.1byte	0x1
+ 595 009a 00 00 00 00 		.1byte	0x5
+ 596 009c 01          		.4byte	.LASF38
+ 597 009c 05          		.1byte	0x3
+ 598 009d 00 00 00 00 		.1byte	0x5
+ 599 009f 03          		.4byte	.LASF39
+ 600 009f 05          		.1byte	0x5
+ 601 00a0 00 00 00 00 		.1byte	0x5
+ 602 00a2 05          		.4byte	.LASF40
+ 603 00a2 05          		.1byte	0x7
+ 604 00a3 00 00 00 00 		.1byte	0x5
+ 605 00a5 07          		.4byte	.LASF41
+ 606 00a5 05          		.1byte	0x9
+ 607 00a6 00 00 00 00 		.1byte	0x5
+ 608 00a8 09          		.4byte	.LASF42
+ 609 00a8 05          		.1byte	0xd
+ 610 00a9 00 00 00 00 		.1byte	0x0
+ 611 00ab 0D          		.1byte	0x6
+ 612 00ab 00          		.1byte	0x2
+ 613 00ac 06          		.1byte	0x7
+ 614 00ac 02          		.1byte	0x4
+ 615 00ad 07          		.1byte	0x2
+ 616 00ad 04          		.1byte	0x4
+ 617 00ae 02          		.1byte	0x58
+ 618 00ae 04          		.4byte	0x176
+ 619 00af 58          		.1byte	0x5
+ 620 00af 00 00 01 76 		.4byte	.LASF43
+ 621 00b1 05          		.1byte	0x0
+ 622 00b2 00 00 00 00 		.1byte	0x5
+ 623 00b4 00          		.4byte	.LASF44
+ 624 00b4 05          		.1byte	0x1
+ 625 00b5 00 00 00 00 		.1byte	0x5
+ 626 00b7 01          		.4byte	.LASF45
+ 627 00b7 05          		.1byte	0x2
+ 628 00b8 00 00 00 00 		.1byte	0x0
+ 629 00ba 02          		.1byte	0x7
+ 630 00ba 00          		.1byte	0x1
+ 631 00bb 07          		.4byte	.LASF59
+ 632 00bb 01          		.1byte	0x1
+ 633 00bc 00 00 00 00 		.1byte	0x34
+ 634 00be 01          		.1byte	0x1
+ 635 00be 34          		.4byte	0x74
+ 636 00bf 01          		.4byte	.LFB2
+ 637 00bf 00 00 00 74 		.4byte	.LFE2
+ 638 00c1 00 00 00 00 		.4byte	.LLST0
+ 639 00c3 00 00 00 00 		.4byte	0x1df
+ 640 00c5 00 00 00 00 		.1byte	0x8
+ 641 00c7 00 00 01 DF 		.4byte	.LASF46
+ 642 00c9 08          		.1byte	0x1
+ 643 00ca 00 00 00 00 		.1byte	0x32
+ 644 00cc 01          		.4byte	0x29
+ 645 00cc 32          		.4byte	.LLST1
+ 646 00cd 00 00 00 29 		.1byte	0x8
+ 647 00cf 00 00 00 00 		.4byte	.LASF47
+ 648 00d1 08          		.1byte	0x1
+ 649 00d1 00 00 00 00 		.1byte	0x32
+ 650 00d3 01          		.4byte	0x29
+ 651 00d4 32          		.4byte	.LLST2
+ 652 00d4 00 00 00 29 		.1byte	0x8
+ 653 00d6 00 00 00 00 		.4byte	.LASF48
+ 654 00d8 08          		.1byte	0x1
+ 655 00d9 00 00 00 00 		.1byte	0x32
+ 656 00db 01          		.4byte	0x29
+ 657 00db 32          		.4byte	.LLST3
+ 658 00dc 00 00 00 29 		.1byte	0x8
+ 659 00de 00 00 00 00 		.4byte	.LASF49
+ 660 00e0 08          		.1byte	0x1
+ 661 00e0 00 00 00 00 		.1byte	0x33
+ 662 00e2 01          		.4byte	0x74
+ 663 00e3 33          		.4byte	.LLST4
+ 664 00e3 00 00 00 74 		.1byte	0x9
+ 665 00e5 00 00 00 00 		.4byte	.LASF60
+ 666 00e7 09          		.1byte	0x1
+ 667 00e8 00 00 00 00 		.1byte	0x39
+ 668 00ea 01          		.4byte	0x1df
+ 669 00ea 39          		.4byte	.LLST5
+ 670 00eb 00 00 01 DF 		.1byte	0x0
+ 671 00ed 00 00 00 00 		.1byte	0xa
+ 672 00ef 00          		.1byte	0x2
+ 673 00ef 0A          		.4byte	0x3b
+ 674 00f0 02          		.1byte	0xb
+ 675 00f0 00 00 00 3B 		.1byte	0x1
+ 676 00f2 0B          		.4byte	.LASF52
+ 677 00f3 01          		.1byte	0x1
+ 678 00f3 00 00 00 00 		.1byte	0x62
+ 679 00f5 01          		.1byte	0x1
+ 680 00f6 62          		.4byte	.LFB3
+ 681 00f6 01          		.4byte	.LFE3
+ 682 00f7 00 00 00 00 		.1byte	0x1
+ 683 00f9 00 00 00 00 		.1byte	0x55
+ 684 00fb 01          		.4byte	0x219
+ 685 00fb 55          		.1byte	0x8
+ 686 00fc 00 00 02 19 		.4byte	.LASF50
+ 687 00fe 08          		.1byte	0x1
+ 688 00fe 00 00 00 00 		.1byte	0x61
+ 689 0100 01          		.4byte	0x3b
+ 690 0101 61          		.4byte	.LLST7
+ 691 0101 00 00 00 3B 		.1byte	0xc
+ 692 0103 00 00 00 00 		.4byte	.LASF51
+ 693 0105 0C          		.1byte	0x1
+ 694 0106 00 00 00 00 		.1byte	0x61
+ 695 0108 01          		.4byte	0x3b
+ 696 0108 61          		.1byte	0x1
+ 697 0109 00 00 00 3B 		.1byte	0x50
+ 698 010b 01          		.1byte	0x0
+ 699 010b 50          		.1byte	0xd
+ 700 010c 00          		.1byte	0x1
+ 701 010c 0D          		.4byte	.LASF53
+ 702 010d 01          		.1byte	0x1
+ 703 010d 00 00 00 00 		.1byte	0x88
+ 704 010f 01          		.1byte	0x1
+ 705 0110 88          		.4byte	.LFB5
+ 706 0110 01          		.4byte	.LFE5
+ 707 0111 00 00 00 00 		.4byte	.LLST8
+ 708 0113 00 00 00 00 		.4byte	0x242
+ 709 0115 00 00 00 00 		.1byte	0x8
+ 710 0117 00 00 02 42 		.4byte	.LASF54
+ 711 0119 08          		.1byte	0x1
+ 712 0119 00 00 00 00 		.1byte	0x87
+ 713 011b 01          		.4byte	0x74
+ 714 011c 87          		.4byte	.LLST9
+ 715 011c 00 00 00 74 		.1byte	0x0
+ 716 011e 00 00 00 00 		.1byte	0xe
+ 717 0120 00          		.1byte	0x1
+ 718 0121 0E          		.4byte	.LASF61
+ 719 0121 01          		.1byte	0x1
+ 720 0122 00 00 00 00 		.1byte	0x74
+ 721 0124 01          		.1byte	0x1
+ 722 0124 74          		.4byte	.LFB4
+ 723 0125 01          		.4byte	.LFE4
+ 724 0125 00 00 00 00 		.4byte	.LLST10
+ 725 0127 00 00 00 00 		.1byte	0x8
+ 726 0129 00 00 00 00 		.4byte	.LASF55
+ 727 012b 08          		.1byte	0x1
+ 728 012c 00 00 00 00 		.1byte	0x73
+ 729 012e 01          		.4byte	0x4d
+ 730 012e 73          		.4byte	.LLST11
+ 731 012f 00 00 00 4D 		.1byte	0x0
+ 732 0131 00 00 00 00 		.1byte	0x0
+ 733 0133 00          		.section	.debug_abbrev
+ 734 0133 00          		.1byte	0x1
+ 735                 		.1byte	0x11
+ 736 0000 01          		.1byte	0x1
+ 737 0000 11          		.1byte	0x25
+ 738 0001 01          		.1byte	0xe
+ 739 0001 25          		.1byte	0x13
+ 740 0002 0E          		.1byte	0xb
+ 741 0002 13          		.1byte	0x3
+ 742 0003 0B          		.1byte	0xe
+ 743 0003 03          		.1byte	0x1b
+ 744 0004 0E          		.1byte	0xe
+ 745 0004 1B          		.1byte	0x11
+ 746 0005 0E          		.1byte	0x1
+ 747 0005 11          		.1byte	0x52
+ 748 0006 01          		.1byte	0x1
+ 749 0006 52          		.1byte	0x55
+ 750 0007 01          		.1byte	0x6
+ 751 0007 55          		.1byte	0x10
+ 752 0008 06          		.1byte	0x6
+ 753 0008 10          		.1byte	0x0
+ 754 0009 06          		.1byte	0x0
+ 755 0009 00          		.1byte	0x2
+ 756 000a 00          		.1byte	0x16
+ 757 000a 02          		.1byte	0x0
+ 758 000b 16          		.1byte	0x3
+ 759 000b 00          		.1byte	0xe
+ 760 000c 03          		.1byte	0x3a
+ 761 000c 0E          		.1byte	0xb
+ 762 000d 3A          		.1byte	0x3b
+ 763 000d 0B          		.1byte	0xb
+ 764 000e 3B          		.1byte	0x49
+ 765 000e 0B          		.1byte	0x13
+ 766 000f 49          		.1byte	0x0
+ 767 000f 13          		.1byte	0x0
+ 768 0010 00          		.1byte	0x3
+ 769 0010 00          		.1byte	0x24
+ 770 0011 03          		.1byte	0x0
+ 771 0011 24          		.1byte	0xb
+ 772 0012 00          		.1byte	0xb
+ 773 0012 0B          		.1byte	0x3e
+ 774 0013 0B          		.1byte	0xb
+ 775 0013 3E          		.1byte	0x3
+ 776 0014 0B          		.1byte	0xe
+ 777 0014 03          		.1byte	0x0
+ 778 0015 0E          		.1byte	0x0
+ 779 0015 00          		.1byte	0x4
+ 780 0016 00          		.1byte	0x4
+ 781 0016 04          		.1byte	0x1
+ 782 0017 04          		.1byte	0xb
+ 783 0017 01          		.1byte	0xb
+ 784 0018 0B          		.1byte	0x3a
+ 785 0018 0B          		.1byte	0xb
+ 786 0019 3A          		.1byte	0x3b
+ 787 0019 0B          		.1byte	0xb
+ 788 001a 3B          		.1byte	0x1
+ 789 001a 0B          		.1byte	0x13
+ 790 001b 01          		.1byte	0x0
+ 791 001b 13          		.1byte	0x0
+ 792 001c 00          		.1byte	0x5
+ 793 001c 00          		.1byte	0x28
+ 794 001d 05          		.1byte	0x0
+ 795 001d 28          		.1byte	0x3
+ 796 001e 00          		.1byte	0xe
+ 797 001e 03          		.1byte	0x1c
+ 798 001f 0E          		.1byte	0xd
+ 799 001f 1C          		.1byte	0x0
+ 800 0020 0D          		.1byte	0x0
+ 801 0020 00          		.1byte	0x6
+ 802 0021 00          		.1byte	0x24
+ 803 0021 06          		.1byte	0x0
+ 804 0022 24          		.1byte	0xb
+ 805 0022 00          		.1byte	0xb
+ 806 0023 0B          		.1byte	0x3e
+ 807 0023 0B          		.1byte	0xb
+ 808 0024 3E          		.1byte	0x0
+ 809 0024 0B          		.1byte	0x0
+ 810 0025 00          		.1byte	0x7
+ 811 0025 00          		.1byte	0x2e
+ 812 0026 07          		.1byte	0x1
+ 813 0026 2E          		.1byte	0x3f
+ 814 0027 01          		.1byte	0xc
+ 815 0027 3F          		.1byte	0x3
+ 816 0028 0C          		.1byte	0xe
+ 817 0028 03          		.1byte	0x3a
+ 818 0029 0E          		.1byte	0xb
+ 819 0029 3A          		.1byte	0x3b
+ 820 002a 0B          		.1byte	0xb
+ 821 002a 3B          		.1byte	0x27
+ 822 002b 0B          		.1byte	0xc
+ 823 002b 27          		.1byte	0x49
+ 824 002c 0C          		.1byte	0x13
+ 825 002c 49          		.1byte	0x11
+ 826 002d 13          		.1byte	0x1
+ 827 002d 11          		.1byte	0x12
+ 828 002e 01          		.1byte	0x1
+ 829 002e 12          		.1byte	0x40
+ 830 002f 01          		.1byte	0x6
+ 831 002f 40          		.1byte	0x1
+ 832 0030 06          		.1byte	0x13
+ 833 0030 01          		.1byte	0x0
+ 834 0031 13          		.1byte	0x0
+ 835 0031 00          		.1byte	0x8
+ 836 0032 00          		.1byte	0x5
+ 837 0032 08          		.1byte	0x0
+ 838 0033 05          		.1byte	0x3
+ 839 0033 00          		.1byte	0xe
+ 840 0034 03          		.1byte	0x3a
+ 841 0034 0E          		.1byte	0xb
+ 842 0035 3A          		.1byte	0x3b
+ 843 0035 0B          		.1byte	0xb
+ 844 0036 3B          		.1byte	0x49
+ 845 0036 0B          		.1byte	0x13
+ 846 0037 49          		.1byte	0x2
+ 847 0037 13          		.1byte	0x6
+ 848 0038 02          		.1byte	0x0
+ 849 0038 06          		.1byte	0x0
+ 850 0039 00          		.1byte	0x9
+ 851 0039 00          		.1byte	0x34
+ 852 003a 09          		.1byte	0x0
+ 853 003a 34          		.1byte	0x3
+ 854 003b 00          		.1byte	0xe
+ 855 003b 03          		.1byte	0x3a
+ 856 003c 0E          		.1byte	0xb
+ 857 003c 3A          		.1byte	0x3b
+ 858 003d 0B          		.1byte	0xb
+ 859 003d 3B          		.1byte	0x49
+ 860 003e 0B          		.1byte	0x13
+ 861 003e 49          		.1byte	0x2
+ 862 003f 13          		.1byte	0x6
+ 863 003f 02          		.1byte	0x0
+ 864 0040 06          		.1byte	0x0
+ 865 0040 00          		.1byte	0xa
+ 866 0041 00          		.1byte	0xf
+ 867 0041 0A          		.1byte	0x0
+ 868 0042 0F          		.1byte	0xb
+ 869 0042 00          		.1byte	0xb
+ 870 0043 0B          		.1byte	0x49
+ 871 0043 0B          		.1byte	0x13
+ 872 0044 49          		.1byte	0x0
+ 873 0044 13          		.1byte	0x0
+ 874 0045 00          		.1byte	0xb
+ 875 0045 00          		.1byte	0x2e
+ 876 0046 0B          		.1byte	0x1
+ 877 0046 2E          		.1byte	0x3f
+ 878 0047 01          		.1byte	0xc
+ 879 0047 3F          		.1byte	0x3
+ 880 0048 0C          		.1byte	0xe
+ 881 0048 03          		.1byte	0x3a
+ 882 0049 0E          		.1byte	0xb
+ 883 0049 3A          		.1byte	0x3b
+ 884 004a 0B          		.1byte	0xb
+ 885 004a 3B          		.1byte	0x27
+ 886 004b 0B          		.1byte	0xc
+ 887 004b 27          		.1byte	0x11
+ 888 004c 0C          		.1byte	0x1
+ 889 004c 11          		.1byte	0x12
+ 890 004d 01          		.1byte	0x1
+ 891 004d 12          		.1byte	0x40
+ 892 004e 01          		.1byte	0xa
+ 893 004e 40          		.1byte	0x1
+ 894 004f 0A          		.1byte	0x13
+ 895 004f 01          		.1byte	0x0
+ 896 0050 13          		.1byte	0x0
+ 897 0050 00          		.1byte	0xc
+ 898 0051 00          		.1byte	0x5
+ 899 0051 0C          		.1byte	0x0
+ 900 0052 05          		.1byte	0x3
+ 901 0052 00          		.1byte	0xe
+ 902 0053 03          		.1byte	0x3a
+ 903 0053 0E          		.1byte	0xb
+ 904 0054 3A          		.1byte	0x3b
+ 905 0054 0B          		.1byte	0xb
+ 906 0055 3B          		.1byte	0x49
+ 907 0055 0B          		.1byte	0x13
+ 908 0056 49          		.1byte	0x2
+ 909 0056 13          		.1byte	0xa
+ 910 0057 02          		.1byte	0x0
+ 911 0057 0A          		.1byte	0x0
+ 912 0058 00          		.1byte	0xd
+ 913 0058 00          		.1byte	0x2e
+ 914 0059 0D          		.1byte	0x1
+ 915 0059 2E          		.1byte	0x3f
+ 916 005a 01          		.1byte	0xc
+ 917 005a 3F          		.1byte	0x3
+ 918 005b 0C          		.1byte	0xe
+ 919 005b 03          		.1byte	0x3a
+ 920 005c 0E          		.1byte	0xb
+ 921 005c 3A          		.1byte	0x3b
+ 922 005d 0B          		.1byte	0xb
+ 923 005d 3B          		.1byte	0x27
+ 924 005e 0B          		.1byte	0xc
+ 925 005e 27          		.1byte	0x11
+ 926 005f 0C          		.1byte	0x1
+ 927 005f 11          		.1byte	0x12
+ 928 0060 01          		.1byte	0x1
+ 929 0060 12          		.1byte	0x40
+ 930 0061 01          		.1byte	0x6
+ 931 0061 40          		.1byte	0x1
+ 932 0062 06          		.1byte	0x13
+ 933 0062 01          		.1byte	0x0
+ 934 0063 13          		.1byte	0x0
+ 935 0063 00          		.1byte	0xe
+ 936 0064 00          		.1byte	0x2e
+ 937 0064 0E          		.1byte	0x1
+ 938 0065 2E          		.1byte	0x3f
+ 939 0065 01          		.1byte	0xc
+ 940 0066 3F          		.1byte	0x3
+ 941 0066 0C          		.1byte	0xe
+ 942 0067 03          		.1byte	0x3a
+ 943 0067 0E          		.1byte	0xb
+ 944 0068 3A          		.1byte	0x3b
+ 945 0068 0B          		.1byte	0xb
+ 946 0069 3B          		.1byte	0x27
+ 947 0069 0B          		.1byte	0xc
+ 948 006a 27          		.1byte	0x11
+ 949 006a 0C          		.1byte	0x1
+ 950 006b 11          		.1byte	0x12
+ 951 006b 01          		.1byte	0x1
+ 952 006c 12          		.1byte	0x40
+ 953 006c 01          		.1byte	0x6
+ 954 006d 40          		.1byte	0x0
+ 955 006d 06          		.1byte	0x0
+ 956 006e 00          		.1byte	0x0
+ 957 006e 00          		.section	.debug_pubnames,"",@progbits
+ 958 006f 00          		.4byte	0x68
+ 959                 		.2byte	0x2
+ 960 0000 00 00 00 68 		.4byte	.Ldebug_info0
+ 961 0002 00 02       		.4byte	0x268
+ 962 0003 00 00 00 00 		.4byte	0x176
+ 963 0005 00 00 02 68 		.ascii "PioFastPwmSetWidth\000"
+ 964 0007 00 00 01 76 		.4byte	0x1e5
+ 965 0009 50 69 6F 46 		.ascii "PioFastPwmSetPeriods\000"
+ 965      61 73 74 50 
+ 965      77 6D 53 65 
+ 965      74 57 69 64 
+ 965      74 68 00 
+ 966 0012 00 00 01 E5 		.4byte	0x219
+ 967 0014 50 69 6F 46 		.ascii "PioFastPwmEnable\000"
+ 967      61 73 74 50 
+ 967      77 6D 53 65 
+ 967      74 50 65 72 
+ 967      69 6F 64 73 
+ 968 001f 00 00 02 19 		.4byte	0x242
+ 969 0021 50 69 6F 46 		.ascii "PioFastPwmConfig\000"
+ 969      61 73 74 50 
+ 969      77 6D 45 6E 
+ 969      61 62 6C 65 
+ 969      00 
+ 970 0029 00 00 02 42 		.4byte	0x0
+ 971 002b 50 69 6F 46 		.section	.debug_aranges,"",@progbits
+ 971      61 73 74 50 
+ 971      77 6D 43 6F 
+ 971      6E 66 69 67 
+ 971      00 
+ 972 0034 00 00 00 00 		.4byte	0x34
+ 973                 		.2byte	0x2
+ 974 0000 00 00 00 34 		.4byte	.Ldebug_info0
+ 975 0002 00 02       		.1byte	0x4
+ 976 0003 00 00 00 00 		.1byte	0x0
+ 977 0005 04          		.2byte	0x0
+ 978 0005 00          		.2byte	0x0
+ 979 0006 00 00       		.4byte	.LFB2
+ 980 0007 00 00       		.4byte	.LFE2-.LFB2
+ 981 0008 00 00 00 00 		.4byte	.LFB3
+ 982 000a 00 00 00 00 		.4byte	.LFE3-.LFB3
+ 983 000c 00 00 00 00 		.4byte	.LFB5
+ 984 000e 00 00 00 08 		.4byte	.LFE5-.LFB5
+ 985 0010 00 00 00 00 		.4byte	.LFB4
+ 986 0012 00 00 00 00 		.4byte	.LFE4-.LFB4
+ 987 0014 00 00 00 00 		.4byte	0x0
+ 988 0016 00 00 00 00 		.4byte	0x0
+ 989 0018 00 00 00 00 		.section	.debug_ranges,"",@progbits
+ 990 001a 00 00 00 00 	.Ldebug_ranges0:
+ 991                 		.4byte	.Ltext0
+ 992                 		.4byte	.Letext0
+ 993 0000 00 00 00 00 		.4byte	.LFB2
+ 994 0002 00 00 00 00 		.4byte	.LFE2
+ 995 0004 00 00 00 00 		.4byte	.LFB3
+ 996 0006 00 00 00 00 		.4byte	.LFE3
+ 997 0008 00 00 00 00 		.4byte	.LFB5
+ 998 000a 00 00 00 00 		.4byte	.LFE5
+ 999 000c 00 00 00 00 		.4byte	.LFB4
+ 1000 000e 00 00 00 00 		.4byte	.LFE4
+ 1001 0010 00 00 00 00 		.4byte	0x0
+ 1002 0012 00 00 00 00 		.4byte	0x0
+ 1003 0014 00 00 00 00 		.section	.debug_str,"MS",@progbits,1
+ 1004 0016 00 00 00 00 	.LASF35:
+ 1005                 		.ascii "pio_mode_ana_mon_clk_pio\000"
+ 1006                 	.LASF23:
+ 1007 0000 70 69 6F 5F 		.ascii "pio_mode_radio_rx_en\000"
+ 1007      6D 6F 64 65 
+ 1007      5F 61 6E 61 
+ 1007      5F 6D 6F 6E 
+ 1007      5F 63 6C 6B 
+ 1008                 	.LASF31:
+ 1009 000c 70 69 6F 5F 		.ascii "pio_mode_i2c_data\000"
+ 1009      6D 6F 64 65 
+ 1009      5F 72 61 64 
+ 1009      69 6F 5F 72 
+ 1009      78 5F 65 6E 
+ 1010                 	.LASF7:
+ 1011 0017 70 69 6F 5F 		.ascii "short int\000"
+ 1011      6D 6F 64 65 
+ 1011      5F 69 32 63 
+ 1011      5F 64 61 74 
+ 1011      61 00 
+ 1012                 	.LASF52:
+ 1013 0020 73 68 6F 72 		.ascii "PioFastPwmSetPeriods\000"
+ 1013      74 20 69 6E 
+ 1013      74 00 
+ 1014                 	.LASF49:
+ 1015 0025 50 69 6F 46 		.ascii "inverted\000"
+ 1015      61 73 74 50 
+ 1015      77 6D 53 65 
+ 1015      74 50 65 72 
+ 1015      69 6F 64 73 
+ 1016                 	.LASF50:
+ 1017 002f 69 6E 76 65 		.ascii "bright\000"
+ 1017      72 74 65 64 
+ 1017      00 
+ 1018                 	.LASF30:
+ 1019 0034 62 72 69 67 		.ascii "pio_mode_ser_flash_csb\000"
+ 1019      68 74 00 
+ 1020                 	.LASF45:
+ 1021 0037 70 69 6F 5F 		.ascii "sleep_mode_shallow\000"
+ 1021      6D 6F 64 65 
+ 1021      5F 73 65 72 
+ 1021      5F 66 6C 61 
+ 1021      73 68 5F 63 
+ 1022                 	.LASF28:
+ 1023 0043 73 6C 65 65 		.ascii "pio_mode_pio_control_rxd\000"
+ 1023      70 5F 6D 6F 
+ 1023      64 65 5F 73 
+ 1023      68 61 6C 6C 
+ 1023      6F 77 00 
+ 1024                 	.LASF44:
+ 1025 004c 70 69 6F 5F 		.ascii "sleep_mode_deep\000"
+ 1025      6D 6F 64 65 
+ 1025      5F 70 69 6F 
+ 1025      5F 63 6F 6E 
+ 1025      74 72 6F 6C 
+ 1026                 	.LASF51:
+ 1027 0059 73 6C 65 65 		.ascii "dull\000"
+ 1027      70 5F 6D 6F 
+ 1027      64 65 5F 64 
+ 1027      65 65 70 00 
+ 1028                 	.LASF25:
+ 1029 0061 64 75 6C 6C 		.ascii "pio_mode_nvm_power_en\000"
+ 1029      00 
+ 1030                 	.LASF1:
+ 1031 0063 70 69 6F 5F 		.ascii "uint16\000"
+ 1031      6D 6F 64 65 
+ 1031      5F 6E 76 6D 
+ 1031      5F 70 6F 77 
+ 1031      65 72 5F 65 
+ 1032                 	.LASF54:
+ 1033 006e 75 69 6E 74 		.ascii "enable\000"
+ 1033      31 36 00 
+ 1034                 	.LASF0:
+ 1035 0072 65 6E 61 62 		.ascii "uint8\000"
+ 1035      6C 65 00 
+ 1036                 	.LASF59:
+ 1037 0075 75 69 6E 74 		.ascii "PioFastPwmSetWidth\000"
+ 1037      38 00 
+ 1038                 	.LASF47:
+ 1039 0078 50 69 6F 46 		.ascii "bright_width\000"
+ 1039      61 73 74 50 
+ 1039      77 6D 53 65 
+ 1039      74 57 69 64 
+ 1039      74 68 00 
+ 1040                 	.LASF9:
+ 1041 0082 62 72 69 67 		.ascii "bool\000"
+ 1041      68 74 5F 77 
+ 1041      69 64 74 68 
+ 1041      00 
+ 1042                 	.LASF32:
+ 1043 0088 62 6F 6F 6C 		.ascii "pio_mode_i2c_clock\000"
+ 1043      00 
+ 1044                 	.LASF33:
+ 1045 008b 70 69 6F 5F 		.ascii "pio_mode_uart_flow_ctrl\000"
+ 1045      6D 6F 64 65 
+ 1045      5F 69 32 63 
+ 1045      5F 63 6C 6F 
+ 1045      63 6B 00 
+ 1046                 	.LASF56:
+ 1047 0094 70 69 6F 5F 		.ascii "GNU C 4.3.4 CSR version 28 for xap [2131110]\000"
+ 1047      6D 6F 64 65 
+ 1047      5F 75 61 72 
+ 1047      74 5F 66 6C 
+ 1047      6F 77 5F 63 
+ 1048                 	.LASF36:
+ 1049 00a0 47 4E 55 20 		.ascii "pio_mode_no_pulls\000"
+ 1049      43 20 34 2E 
+ 1049      33 2E 34 20 
+ 1049      43 53 52 20 
+ 1049      76 65 72 73 
+ 1050                 	.LASF8:
+ 1051 00b7 70 69 6F 5F 		.ascii "long int\000"
+ 1051      6D 6F 64 65 
+ 1051      5F 6E 6F 5F 
+ 1051      70 75 6C 6C 
+ 1051      73 00 
+ 1052                 	.LASF11:
+ 1053 00c0 6C 6F 6E 67 		.ascii "pio_mode_user\000"
+ 1053      20 69 6E 74 
+ 1053      00 
+ 1054                 	.LASF41:
+ 1055 00c4 70 69 6F 5F 		.ascii "pio_mode_weak_sticky\000"
+ 1055      6D 6F 64 65 
+ 1055      5F 75 73 65 
+ 1055      72 00 
+ 1056                 	.LASF18:
+ 1057 00cb 70 69 6F 5F 		.ascii "pio_mode_quadrature0\000"
+ 1057      6D 6F 64 65 
+ 1057      5F 77 65 61 
+ 1057      6B 5F 73 74 
+ 1057      69 63 6B 79 
+ 1058                 	.LASF19:
+ 1059 00d6 70 69 6F 5F 		.ascii "pio_mode_quadrature1\000"
+ 1059      6D 6F 64 65 
+ 1059      5F 71 75 61 
+ 1059      64 72 61 74 
+ 1059      75 72 65 30 
+ 1060                 	.LASF20:
+ 1061 00e0 70 69 6F 5F 		.ascii "pio_mode_quadrature2\000"
+ 1061      6D 6F 64 65 
+ 1061      5F 71 75 61 
+ 1061      64 72 61 74 
+ 1061      75 72 65 31 
+ 1062                 	.LASF21:
+ 1063 00eb 70 69 6F 5F 		.ascii "pio_mode_quadrature3\000"
+ 1063      6D 6F 64 65 
+ 1063      5F 71 75 61 
+ 1063      64 72 61 74 
+ 1063      75 72 65 32 
+ 1064                 	.LASF53:
+ 1065 00f5 70 69 6F 5F 		.ascii "PioFastPwmEnable\000"
+ 1065      6D 6F 64 65 
+ 1065      5F 71 75 61 
+ 1065      64 72 61 74 
+ 1065      75 72 65 33 
+ 1066                 	.LASF2:
+ 1067 0100 50 69 6F 46 		.ascii "unsigned char\000"
+ 1067      61 73 74 50 
+ 1067      77 6D 45 6E 
+ 1067      61 62 6C 65 
+ 1067      00 
+ 1068                 	.LASF6:
+ 1069 0108 75 6E 73 69 		.ascii "signed char\000"
+ 1069      67 6E 65 64 
+ 1069      20 63 68 61 
+ 1069      72 00 
+ 1070                 	.LASF60:
+ 1071 010f 73 69 67 6E 		.ascii "address\000"
+ 1071      65 64 20 63 
+ 1071      68 61 72 00 
+ 1072                 	.LASF14:
+ 1073 0115 61 64 64 72 		.ascii "pio_mode_pwm0\000"
+ 1073      65 73 73 00 
+ 1074                 	.LASF15:
+ 1075 0119 70 69 6F 5F 		.ascii "pio_mode_pwm1\000"
+ 1075      6D 6F 64 65 
+ 1075      5F 70 77 6D 
+ 1075      30 00 
+ 1076                 	.LASF16:
+ 1077 0120 70 69 6F 5F 		.ascii "pio_mode_pwm2\000"
+ 1077      6D 6F 64 65 
+ 1077      5F 70 77 6D 
+ 1077      31 00 
+ 1078                 	.LASF17:
+ 1079 0127 70 69 6F 5F 		.ascii "pio_mode_pwm3\000"
+ 1079      6D 6F 64 65 
+ 1079      5F 70 77 6D 
+ 1079      32 00 
+ 1080                 	.LASF10:
+ 1081 012e 70 69 6F 5F 		.ascii "unsigned int\000"
+ 1081      6D 6F 64 65 
+ 1081      5F 70 77 6D 
+ 1081      33 00 
+ 1082                 	.LASF3:
+ 1083 0135 75 6E 73 69 		.ascii "short unsigned int\000"
+ 1083      67 6E 65 64 
+ 1083      20 69 6E 74 
+ 1083      00 
+ 1084                 	.LASF39:
+ 1085 013c 73 68 6F 72 		.ascii "pio_mode_strong_pull_down\000"
+ 1085      74 20 75 6E 
+ 1085      73 69 67 6E 
+ 1085      65 64 20 69 
+ 1085      6E 74 00 
+ 1086                 	.LASF38:
+ 1087 0145 70 69 6F 5F 		.ascii "pio_mode_weak_pull_up\000"
+ 1087      6D 6F 64 65 
+ 1087      5F 73 74 72 
+ 1087      6F 6E 67 5F 
+ 1087      70 75 6C 6C 
+ 1088                 	.LASF57:
+ 1089 0152 70 69 6F 5F 		.ascii "fast_pwm.c\000"
+ 1089      6D 6F 64 65 
+ 1089      5F 77 65 61 
+ 1089      6B 5F 70 75 
+ 1089      6C 6C 5F 75 
+ 1090                 	.LASF43:
+ 1091 015d 66 61 73 74 		.ascii "sleep_mode_never\000"
+ 1091      5F 70 77 6D 
+ 1091      2E 63 00 
+ 1092                 	.LASF24:
+ 1093 0163 73 6C 65 65 		.ascii "pio_mode_radio_tx_en\000"
+ 1093      70 5F 6D 6F 
+ 1093      64 65 5F 6E 
+ 1093      65 76 65 72 
+ 1093      00 
+ 1094                 	.LASF4:
+ 1095 016b 70 69 6F 5F 		.ascii "uint32\000"
+ 1095      6D 6F 64 65 
+ 1095      5F 72 61 64 
+ 1095      69 6F 5F 74 
+ 1095      78 5F 65 6E 
+ 1096                 	.LASF5:
+ 1097 0176 75 69 6E 74 		.ascii "long unsigned int\000"
+ 1097      33 32 00 
+ 1098                 	.LASF55:
+ 1099 0179 6C 6F 6E 67 		.ascii "pio_mask\000"
+ 1099      20 75 6E 73 
+ 1099      69 67 6E 65 
+ 1099      64 20 69 6E 
+ 1099      74 00 
+ 1100                 	.LASF29:
+ 1101 0182 70 69 6F 5F 		.ascii "pio_mode_ser_flash_dout\000"
+ 1101      6D 61 73 6B 
+ 1101      00 
+ 1102                 	.LASF34:
+ 1103 0187 70 69 6F 5F 		.ascii "pio_mode_pio_control_timer\000"
+ 1103      6D 6F 64 65 
+ 1103      5F 73 65 72 
+ 1103      5F 66 6C 61 
+ 1103      73 68 5F 64 
+ 1104                 	.LASF58:
+ 1105 0193 70 69 6F 5F 		.ascii "C:\\csrmesh_2_0_node\\applications\\CSRmeshLight\000"
+ 1105      6D 6F 64 65 
+ 1105      5F 70 69 6F 
+ 1105      5F 63 6F 6E 
+ 1105      74 72 6F 6C 
+ 1106                 	.LASF42:
+ 1107 01a0 43 3A 5C 63 		.ascii "pio_mode_strong_sticky\000"
+ 1107      73 72 6D 65 
+ 1107      73 68 5F 32 
+ 1107      5F 30 5F 6E 
+ 1107      6F 64 65 5C 
+ 1108                 	.LASF26:
+ 1109 01b7 70 69 6F 5F 		.ascii "pio_mode_pio_controller\000"
+ 1109      6D 6F 64 65 
+ 1109      5F 73 74 72 
+ 1109      6F 6E 67 5F 
+ 1109      73 74 69 63 
+ 1110                 	.LASF46:
+ 1111 01c3 70 69 6F 5F 		.ascii "pwm_port\000"
+ 1111      6D 6F 64 65 
+ 1111      5F 70 69 6F 
+ 1111      5F 63 6F 6E 
+ 1111      74 72 6F 6C 
+ 1112                 	.LASF12:
+ 1113 01cf 70 77 6D 5F 		.ascii "pio_mode_edge_capture\000"
+ 1113      70 6F 72 74 
+ 1113      00 
+ 1114                 	.LASF40:
+ 1115 01d3 70 69 6F 5F 		.ascii "pio_mode_strong_pull_up\000"
+ 1115      6D 6F 64 65 
+ 1115      5F 65 64 67 
+ 1115      65 5F 63 61 
+ 1115      70 74 75 72 
+ 1116                 	.LASF48:
+ 1117 01de 70 69 6F 5F 		.ascii "dull_width\000"
+ 1117      6D 6F 64 65 
+ 1117      5F 73 74 72 
+ 1117      6F 6E 67 5F 
+ 1117      70 75 6C 6C 
+ 1118                 	.LASF13:
+ 1119 01ea 64 75 6C 6C 		.ascii "pio_mode_clk_req\000"
+ 1119      5F 77 69 64 
+ 1119      74 68 00 
+ 1120                 	.LASF37:
+ 1121 01f0 70 69 6F 5F 		.ascii "pio_mode_weak_pull_down\000"
+ 1121      6D 6F 64 65 
+ 1121      5F 63 6C 6B 
+ 1121      5F 72 65 71 
+ 1121      00 
+ 1122                 	.LASF27:
+ 1123 01f8 70 69 6F 5F 		.ascii "pio_mode_pio_control_txd\000"
+ 1123      6D 6F 64 65 
+ 1123      5F 77 65 61 
+ 1123      6B 5F 70 75 
+ 1123      6C 6C 5F 64 
+ 1124                 	.LASF22:
+ 1125 0204 70 69 6F 5F 		.ascii "pio_mode_uart\000"
+ 1125      6D 6F 64 65 
+ 1125      5F 70 69 6F 
+ 1125      5F 63 6F 6E 
+ 1125      74 72 6F 6C 
+ 1126                 	.LASF61:
+ 1127 0211 70 69 6F 5F 		.ascii "PioFastPwmConfig\000"
+ 1127      6D 6F 64 65 
+ 1127      5F 75 61 72 
+ 1127      74 00 
+ 1128                 		.ident	"GCC: (GNU) 4.3.4 CSR version 28 for xap [2131110]"
+ 1129 0218 50 69 6F 46 	...
+ 1129      61 73 74 50 
+ 1129      77 6D 43 6F 
+ 1129      6E 66 69 67 
+ 1129      00 

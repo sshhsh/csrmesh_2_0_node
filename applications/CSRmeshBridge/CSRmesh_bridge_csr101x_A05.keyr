@@ -1,0 +1,92 @@
+>DECIMAL_CS_VERSION=83
+
+// (0001) - Bluetooth device address
+&BDADDR = 3887 5b00 0002
+
+// (0002) - Crystal frequency trim
+&CRYSTAL_FTRIM = 0020
+
+// Depending upon the EEPROM/SPI size, an application can specify the memory
+// area to be used for NVM storage. The begining of EEPROM/SPI is used 
+// for its NVM module. The following keys control this storage:
+//
+// nvm_start_address: The address at which the NVM storage starts, in bytes.
+//					  This value should be set based on the available
+//				      EEPROM/SPI memory.
+//                    For an EEPROM of size 512kbit, this default to 
+//					  0xf000 i.e. 480kbits = 60kbyte
+// nvm_size         : The size of the user NVM store in words. This value 
+//				      should be set based on the EEPROM/SPI memory.
+//					  If SPI is being used then nvm_size must be an 
+//					  integer fraction of spi_flash_block size.
+//					  For an EEPROM of size 512kbit, this defaults to 
+//					  64 words i.e. 1kbit
+//
+// spi_flash_block_size          : The size in bytes of a SPI block. 
+//                                 Unused if I2C EEPROM.
+// nvm_num_spi_blocks            : The number of SPI blocks allocated to user 
+//                                 NVM. Unused if I2C EEPROM.
+//
+// So the following must hold true:
+// On SPI:
+//       nvm_start_address + 
+//       (spi_flash_block_size * nvm_num_spi_blocks) <= 
+//                                              size of chip in bytes
+//       nvm_size must be an integer fraction of spi_flash_block_size
+// On EEPROM:
+//       nvm_start_address + nvm_size <= size of chip in bytes.
+
+// NVM storage configuration for devices >=512kbit SPI Flash if OTA Update 
+// Bootloader is included and OTA Update Bootloader version 7 or above is 
+// selected.(Default bootloader version is 7)
+// Comment out the following block if EEPROM is used
+// CS Keys values for SPI Memory - These CS keys should be used if SPI Memory 
+//                                 is being used.
+//
+//&spi_flash_block_size = 1000      // SPI flash block size in bytes(Hex)
+//&nvm_num_spi_blocks = 2           // Two blocks reserved for NVM
+//&nvm_start_address = 7000         // Default value(in hex)
+//&nvm_size = 100                   // Default value(number of words)
+
+// NVM storage configuration for 512kbit EEPROM if OTA Update Bootloader is not 
+// included or OTA Update Bootloader version 6 is selected
+// Comment out the following block if EEPROM(256/128kbit) or SPI Flash used
+//&nvm_start_address = f7ff 
+//&nvm_size = 100            // Default value (in hex) for a 512kbit EEPROM
+
+// NVM storage configuration for 256kbit EEPROM.
+// Comment out the following block if EEPROM(512/128kbit) or SPI Flash used
+//&nvm_start_address = 7F80 // Value (in hex) for a 256kbit EEPROM
+//&nvm_size = 100           // Number of words (in hex) for 256kbit EEPROM
+
+// NVM storage configuration for 128kbit EEPROM.
+// Comment out the following block if EEPROM(512/256kbit) or SPI Flash used
+//&nvm_start_address = 3F80 // Value (in hex) for a 128kbit EEPROM
+//&nvm_size = 100           // Number of words (in hex) for 128kbit EEPROM
+
+// NVM storage configuration for 512kbit SPI Flash if OTA Update Bootloader is
+// not included or OTA Update Bootloader version 6 is selected
+// Comment out the following block if EEPROM is used
+// CS Keys values for 512kbit SPI Memory - These CS keys should be used if 
+//                                         SPI Memory is being used.
+//&spi_flash_block_size = 1000          // SPI flash block size in bytes(Hex)
+//&nvm_num_spi_blocks = 2               // Two blocks reserved for NVM
+//&nvm_start_address = E000             // Default value(in hex) for a 512kbit
+                                        // Memory
+//&nvm_size = 100                       // Default value(number of words for a
+                                        // 512kbit Memory
+
+// CS Key values for smaller memories should be chosen based on the
+// SPI block size.
+
+// NVM storage configuration for devices >= 512kbit EEPROM if OTA Update 
+// Bootloader is included and OTA Update Bootloader version 7 or above is 
+// selected.(Default bootloader version is 7)
+// Comment out the following block if SPI Flash used
+&nvm_start_address = 4100          // Default value (in hex) for EEPROM
+&nvm_size = 100                    // Default value(number of words)
+
+//  User Keys.
+&USER_KEYS = 0000 0000 0000 0000 0000 0000 0000 0000
+&uart_rate= 0ebf
+

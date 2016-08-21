@@ -1,0 +1,884 @@
+   1                 		.file	"my_light2.c"
+   2                 		.variant xap2+
+   3                 	
+   4                 		.small
+   5                 	
+   6                 		.section	.debug_abbrev,"",@progbits
+   7                 	.Ldebug_abbrev0:
+   8                 		.section	.debug_info,"",@progbits
+   9                 	.Ldebug_info0:
+  10                 		.section	.debug_line,"",@progbits
+  11                 	.Ldebug_line0:
+  12 0000 00 00 00 00 		.text
+  12      00 02 00 00 
+  12      00 00 01 01 
+  12      FB 0E 0D 00 
+  12      01 01 01 01 
+  13                 	.Ltext0:
+  14                 		.section	.text.GET_device_id,"ax",@progbits
+  15                 		.global	GET_device_id
+  16                 		.type	GET_device_id, @function
+  17                 	GET_device_id:
+  18                 	.LFB2:
+  19                 		.file 1 "my_light2.c"
+   0:my_light2.c   **** #include <csr_mesh.h>
+   1:my_light2.c   **** 
+   2:my_light2.c   **** #include "my_light2.h"
+   3:my_light2.c   **** #include "csr_mesh_light.h"
+   4:my_light2.c   **** 
+   5:my_light2.c   **** 
+   6:my_light2.c   **** extern void GET_device_id(void)
+   7:my_light2.c   **** {
+  20                 	 10 0
+   8:my_light2.c   ****     /*CSR_MESH_APP_EVENT_DATA_T * data = &eventData;*/
+   9:my_light2.c   **** 	CSRmeshGetDeviceID(DEFAULT_NW_ID,eventData);
+  21                 	ld	AL,#0x0000
+  22 0000 00 14       		ld	AH,@eventData
+  23 0001 00 00 00 11 		bra	CSRmeshGetDeviceID
+  24 0003 00 00 00 00 	.LFE2:
+  24      00 E0 
+  25                 		.size	GET_device_id, .-GET_device_id
+  26                 		.global	__size_of_GET_device_id
+  27                 		.equ	__size_of_GET_device_id,. - GET_device_id
+  28                 		.section	.debug_frame,"",@progbits
+  29                 	.Lframe0:
+  30                 		.4byte	.LECIE0-.LSCIE0
+  31 0000 00 00 00 00 	.LSCIE0:
+  32                 		.4byte	0xffffffff
+  33 0002 FF FF FF FF 		.1byte	0x1
+  34 0004 01          		.ascii "\000"
+  35 0004 00          		.1byte	0x1
+  36 0005 01          		.1byte	0x7f
+  37 0005 7F          		.1byte	0x3
+  38 0006 03          		.1byte	0xc
+  39 0006 0C          		.1byte	0x5
+  40 0007 05          		.1byte	0x0
+  41 0007 00          		.p2align	2
+  42                 	.LECIE0:
+  43                 	.LSFDE0:
+  44                 		.4byte	.LEFDE0-.LASFDE0
+  45 0008 00 00 00 00 	.LASFDE0:
+  46                 		.4byte	.Lframe0
+  47 000a 00 00 00 00 		.4byte	.LFB2
+  48 000c 00 00 00 00 		.4byte	.LFE2-.LFB2
+  49 000e 00 00 00 00 		.p2align	2
+  50                 	.LEFDE0:
+  51                 		.text
+  52                 	.Letext0:
+  53                 		.file 2 "..\\..\\include/csr_mesh_types.h"
+  54                 		.file 3 "my_light2.h"
+  55                 		.section	.debug_info
+  56                 		.4byte	0x1f9
+  57 0000 00 00 01 F9 		.2byte	0x2
+  58 0002 00 02       		.4byte	.Ldebug_abbrev0
+  59 0003 00 00 00 00 		.1byte	0x4
+  60 0005 04          		.1byte	0x1
+  61 0005 01          		.4byte	.LASF57
+  62 0006 00 00 00 00 		.1byte	0x1
+  63 0008 01          		.4byte	.LASF58
+  64 0008 00 00 00 00 		.4byte	.LASF59
+  65 000a 00 00 00 00 		.4byte	0x0
+  66 000c 00 00 00 00 		.4byte	0x0
+  67 000e 00 00 00 00 		.4byte	.Ldebug_ranges0+0x0
+  68 0010 00 00 00 00 		.4byte	.Ldebug_line0
+  69 0012 00 00 00 00 		.1byte	0x2
+  70 0014 02          		.1byte	0x2
+  71 0015 02          		.1byte	0x8
+  72 0015 08          		.4byte	.LASF0
+  73 0016 00 00 00 00 		.1byte	0x2
+  74 0018 02          		.1byte	0x2
+  75 0018 02          		.1byte	0x7
+  76 0019 07          		.4byte	.LASF1
+  77 0019 00 00 00 00 		.1byte	0x2
+  78 001b 02          		.1byte	0x4
+  79 001c 04          		.1byte	0x7
+  80 001c 07          		.4byte	.LASF2
+  81 001d 00 00 00 00 		.1byte	0x2
+  82 001f 02          		.1byte	0x2
+  83 001f 02          		.1byte	0x6
+  84 0020 06          		.4byte	.LASF3
+  85 0020 00 00 00 00 		.1byte	0x2
+  86 0022 02          		.1byte	0x2
+  87 0023 02          		.1byte	0x5
+  88 0023 05          		.4byte	.LASF4
+  89 0024 00 00 00 00 		.1byte	0x2
+  90 0026 02          		.1byte	0x4
+  91 0026 04          		.1byte	0x5
+  92 0027 05          		.4byte	.LASF5
+  93 0027 00 00 00 00 		.1byte	0x2
+  94 0029 02          		.1byte	0x2
+  95 002a 02          		.1byte	0x7
+  96 002a 07          		.4byte	.LASF6
+  97 002b 00 00 00 00 		.1byte	0x2
+  98 002d 02          		.1byte	0x2
+  99 002d 02          		.1byte	0x8
+ 100 002e 08          		.4byte	.LASF7
+ 101 002e 00 00 00 00 		.1byte	0x3
+ 102 0030 03          		.1byte	0x2
+ 103 0031 02          		.1byte	0x2
+ 104 0031 02          		.1byte	0x5d
+ 105 0032 5D          		.4byte	0x8f
+ 106 0032 00 00 00 8F 		.1byte	0x4
+ 107 0034 04          		.4byte	.LASF8
+ 108 0035 00 00 00 00 		.1byte	0x0
+ 109 0037 00          		.1byte	0x4
+ 110 0037 04          		.4byte	.LASF9
+ 111 0038 00 00 00 00 		.1byte	0x1
+ 112 003a 01          		.1byte	0x4
+ 113 003a 04          		.4byte	.LASF10
+ 114 003b 00 00 00 00 		.1byte	0x2
+ 115 003d 02          		.1byte	0x4
+ 116 003d 04          		.4byte	.LASF11
+ 117 003e 00 00 00 00 		.1byte	0x3
+ 118 0040 03          		.1byte	0x4
+ 119 0040 04          		.4byte	.LASF12
+ 120 0041 00 00 00 00 		.1byte	0x4
+ 121 0043 04          		.1byte	0x4
+ 122 0043 04          		.4byte	.LASF13
+ 123 0044 00 00 00 00 		.1byte	0xff,0x1
+ 124 0046 FF 01       		.1byte	0x0
+ 125 0047 00          		.1byte	0x5
+ 126 0047 05          		.4byte	.LASF51
+ 127 0048 00 00 00 00 		.1byte	0x2
+ 128 004a 02          		.1byte	0x64
+ 129 004a 64          		.4byte	0x61
+ 130 004b 00 00 00 61 		.1byte	0x6
+ 131 004d 06          		.1byte	0x2
+ 132 004d 02          		.1byte	0x7
+ 133 004e 07          		.1byte	0x3
+ 134 004e 03          		.1byte	0x2
+ 135 004f 02          		.1byte	0x2
+ 136 004f 02          		.1byte	0x8f
+ 137 0050 8F          		.4byte	0x186
+ 138 0050 00 00 01 86 		.1byte	0x4
+ 139 0052 04          		.4byte	.LASF14
+ 140 0053 00 00 00 00 		.1byte	0x1
+ 141 0055 01          		.1byte	0x4
+ 142 0055 04          		.4byte	.LASF15
+ 143 0056 00 00 00 00 		.1byte	0x2
+ 144 0058 02          		.1byte	0x4
+ 145 0058 04          		.4byte	.LASF16
+ 146 0059 00 00 00 00 		.1byte	0x3
+ 147 005b 03          		.1byte	0x4
+ 148 005b 04          		.4byte	.LASF17
+ 149 005c 00 00 00 00 		.1byte	0x4
+ 150 005e 04          		.1byte	0x4
+ 151 005e 04          		.4byte	.LASF18
+ 152 005f 00 00 00 00 		.1byte	0x5
+ 153 0061 05          		.1byte	0x4
+ 154 0061 04          		.4byte	.LASF19
+ 155 0062 00 00 00 00 		.1byte	0x6
+ 156 0064 06          		.1byte	0x4
+ 157 0064 04          		.4byte	.LASF20
+ 158 0065 00 00 00 00 		.1byte	0x7
+ 159 0067 07          		.1byte	0x4
+ 160 0067 04          		.4byte	.LASF21
+ 161 0068 00 00 00 00 		.1byte	0x8
+ 162 006a 08          		.1byte	0x4
+ 163 006a 04          		.4byte	.LASF22
+ 164 006b 00 00 00 00 		.1byte	0x9
+ 165 006d 09          		.1byte	0x4
+ 166 006d 04          		.4byte	.LASF23
+ 167 006e 00 00 00 00 		.1byte	0xa
+ 168 0070 0A          		.1byte	0x4
+ 169 0070 04          		.4byte	.LASF24
+ 170 0071 00 00 00 00 		.1byte	0xb
+ 171 0073 0B          		.1byte	0x4
+ 172 0073 04          		.4byte	.LASF25
+ 173 0074 00 00 00 00 		.1byte	0xc
+ 174 0076 0C          		.1byte	0x4
+ 175 0076 04          		.4byte	.LASF26
+ 176 0077 00 00 00 00 		.1byte	0xd
+ 177 0079 0D          		.1byte	0x4
+ 178 0079 04          		.4byte	.LASF27
+ 179 007a 00 00 00 00 		.1byte	0xe
+ 180 007c 0E          		.1byte	0x4
+ 181 007c 04          		.4byte	.LASF28
+ 182 007d 00 00 00 00 		.1byte	0xf
+ 183 007f 0F          		.1byte	0x4
+ 184 007f 04          		.4byte	.LASF29
+ 185 0080 00 00 00 00 		.1byte	0x10
+ 186 0082 10          		.1byte	0x4
+ 187 0082 04          		.4byte	.LASF30
+ 188 0083 00 00 00 00 		.1byte	0x11
+ 189 0085 11          		.1byte	0x4
+ 190 0085 04          		.4byte	.LASF31
+ 191 0086 00 00 00 00 		.1byte	0x12
+ 192 0088 12          		.1byte	0x4
+ 193 0088 04          		.4byte	.LASF32
+ 194 0089 00 00 00 00 		.1byte	0x13
+ 195 008b 13          		.1byte	0x4
+ 196 008b 04          		.4byte	.LASF33
+ 197 008c 00 00 00 00 		.1byte	0x14
+ 198 008e 14          		.1byte	0x4
+ 199 008e 04          		.4byte	.LASF34
+ 200 008f 00 00 00 00 		.1byte	0x15
+ 201 0091 15          		.1byte	0x4
+ 202 0091 04          		.4byte	.LASF35
+ 203 0092 00 00 00 00 		.1byte	0x16
+ 204 0094 16          		.1byte	0x4
+ 205 0094 04          		.4byte	.LASF36
+ 206 0095 00 00 00 00 		.1byte	0x17
+ 207 0097 17          		.1byte	0x4
+ 208 0097 04          		.4byte	.LASF37
+ 209 0098 00 00 00 00 		.1byte	0x18
+ 210 009a 18          		.1byte	0x4
+ 211 009a 04          		.4byte	.LASF38
+ 212 009b 00 00 00 00 		.1byte	0x19
+ 213 009d 19          		.1byte	0x4
+ 214 009d 04          		.4byte	.LASF39
+ 215 009e 00 00 00 00 		.1byte	0x1a
+ 216 00a0 1A          		.1byte	0x4
+ 217 00a0 04          		.4byte	.LASF40
+ 218 00a1 00 00 00 00 		.1byte	0x1b
+ 219 00a3 1B          		.1byte	0x4
+ 220 00a3 04          		.4byte	.LASF41
+ 221 00a4 00 00 00 00 		.1byte	0x1c
+ 222 00a6 1C          		.1byte	0x4
+ 223 00a6 04          		.4byte	.LASF42
+ 224 00a7 00 00 00 00 		.1byte	0x1d
+ 225 00a9 1D          		.1byte	0x4
+ 226 00a9 04          		.4byte	.LASF43
+ 227 00aa 00 00 00 00 		.1byte	0x1e
+ 228 00ac 1E          		.1byte	0x4
+ 229 00ac 04          		.4byte	.LASF44
+ 230 00ad 00 00 00 00 		.1byte	0x1f
+ 231 00af 1F          		.1byte	0x4
+ 232 00af 04          		.4byte	.LASF45
+ 233 00b0 00 00 00 00 		.1byte	0x20
+ 234 00b2 20          		.1byte	0x4
+ 235 00b2 04          		.4byte	.LASF46
+ 236 00b3 00 00 00 00 		.1byte	0x21
+ 237 00b5 21          		.1byte	0x4
+ 238 00b5 04          		.4byte	.LASF47
+ 239 00b6 00 00 00 00 		.1byte	0x22
+ 240 00b8 22          		.1byte	0x4
+ 241 00b8 04          		.4byte	.LASF48
+ 242 00b9 00 00 00 00 		.1byte	0x23
+ 243 00bb 23          		.1byte	0x4
+ 244 00bb 04          		.4byte	.LASF49
+ 245 00bc 00 00 00 00 		.1byte	0x24
+ 246 00be 24          		.1byte	0x4
+ 247 00be 04          		.4byte	.LASF50
+ 248 00bf 00 00 00 00 		.1byte	0xff,0xff,0x3
+ 249 00c1 FF FF 03    		.1byte	0x0
+ 250 00c2 00          		.1byte	0x5
+ 251 00c3 05          		.4byte	.LASF52
+ 252 00c3 00 00 00 00 		.1byte	0x2
+ 253 00c5 02          		.1byte	0xb5
+ 254 00c6 B5          		.4byte	0x9d
+ 255 00c6 00 00 00 9D 		.1byte	0x7
+ 256 00c8 07          		.1byte	0x6
+ 257 00c9 06          		.1byte	0x2
+ 258 00c9 02          		.2byte	0x148
+ 259 00ca 01 48       		.4byte	0x1c8
+ 260 00cb 00 00 01 C8 		.1byte	0x8
+ 261 00cd 08          		.4byte	.LASF53
+ 262 00cd 00 00 00 00 		.1byte	0x2
+ 263 00cf 02          		.2byte	0x149
+ 264 00d0 01 49       		.4byte	0x186
+ 265 00d1 00 00 01 86 		.1byte	0x2
+ 266 00d3 02          		.1byte	0x23
+ 267 00d3 23          		.1byte	0x0
+ 268 00d4 00          		.1byte	0x8
+ 269 00d4 08          		.4byte	.LASF54
+ 270 00d5 00 00 00 00 		.1byte	0x2
+ 271 00d7 02          		.2byte	0x14a
+ 272 00d7 01 4A       		.4byte	0x8f
+ 273 00d8 00 00 00 8F 		.1byte	0x2
+ 274 00da 02          		.1byte	0x23
+ 275 00db 23          		.1byte	0x1
+ 276 00db 01          		.1byte	0x8
+ 277 00dc 08          		.4byte	.LASF55
+ 278 00dc 00 00 00 00 		.1byte	0x2
+ 279 00de 02          		.2byte	0x14b
+ 280 00df 01 4B       		.4byte	0x1c8
+ 281 00e0 00 00 01 C8 		.1byte	0x2
+ 282 00e2 02          		.1byte	0x23
+ 283 00e2 23          		.1byte	0x2
+ 284 00e3 02          		.1byte	0x0
+ 285 00e3 00          		.1byte	0x9
+ 286 00e4 09          		.1byte	0x2
+ 287 00e4 02          		.1byte	0xa
+ 288 00e5 0A          		.4byte	.LASF56
+ 289 00e5 00 00 00 00 		.1byte	0x2
+ 290 00e7 02          		.2byte	0x14c
+ 291 00e8 01 4C       		.4byte	0x191
+ 292 00e9 00 00 01 91 		.1byte	0xb
+ 293 00eb 0B          		.1byte	0x1
+ 294 00eb 01          		.4byte	.LASF60
+ 295 00ec 00 00 00 00 		.1byte	0x1
+ 296 00ee 01          		.1byte	0x8
+ 297 00ee 08          		.1byte	0x1
+ 298 00ef 01          		.4byte	.LFB2
+ 299 00ef 00 00 00 00 		.4byte	.LFE2
+ 300 00f1 00 00 00 00 		.1byte	0x1
+ 301 00f3 01          		.1byte	0x55
+ 302 00f4 55          		.1byte	0xc
+ 303 00f4 0C          		.4byte	.LASF61
+ 304 00f5 00 00 00 00 		.1byte	0x3
+ 305 00f7 03          		.1byte	0x8
+ 306 00f7 08          		.4byte	0x1f6
+ 307 00f8 00 00 01 F6 		.1byte	0x1
+ 308 00fa 01          		.1byte	0x1
+ 309 00fa 01          		.1byte	0xd
+ 310 00fb 0D          		.1byte	0x2
+ 311 00fb 02          		.4byte	0x1ca
+ 312 00fc 00 00 01 CA 		.1byte	0x0
+ 313 00fe 00          		.section	.debug_abbrev
+ 314                 		.1byte	0x1
+ 315 0000 01          		.1byte	0x11
+ 316 0000 11          		.1byte	0x1
+ 317 0001 01          		.1byte	0x25
+ 318 0001 25          		.1byte	0xe
+ 319 0002 0E          		.1byte	0x13
+ 320 0002 13          		.1byte	0xb
+ 321 0003 0B          		.1byte	0x3
+ 322 0003 03          		.1byte	0xe
+ 323 0004 0E          		.1byte	0x1b
+ 324 0004 1B          		.1byte	0xe
+ 325 0005 0E          		.1byte	0x11
+ 326 0005 11          		.1byte	0x1
+ 327 0006 01          		.1byte	0x52
+ 328 0006 52          		.1byte	0x1
+ 329 0007 01          		.1byte	0x55
+ 330 0007 55          		.1byte	0x6
+ 331 0008 06          		.1byte	0x10
+ 332 0008 10          		.1byte	0x6
+ 333 0009 06          		.1byte	0x0
+ 334 0009 00          		.1byte	0x0
+ 335 000a 00          		.1byte	0x2
+ 336 000a 02          		.1byte	0x24
+ 337 000b 24          		.1byte	0x0
+ 338 000b 00          		.1byte	0xb
+ 339 000c 0B          		.1byte	0xb
+ 340 000c 0B          		.1byte	0x3e
+ 341 000d 3E          		.1byte	0xb
+ 342 000d 0B          		.1byte	0x3
+ 343 000e 03          		.1byte	0xe
+ 344 000e 0E          		.1byte	0x0
+ 345 000f 00          		.1byte	0x0
+ 346 000f 00          		.1byte	0x3
+ 347 0010 03          		.1byte	0x4
+ 348 0010 04          		.1byte	0x1
+ 349 0011 01          		.1byte	0xb
+ 350 0011 0B          		.1byte	0xb
+ 351 0012 0B          		.1byte	0x3a
+ 352 0012 3A          		.1byte	0xb
+ 353 0013 0B          		.1byte	0x3b
+ 354 0013 3B          		.1byte	0xb
+ 355 0014 0B          		.1byte	0x1
+ 356 0014 01          		.1byte	0x13
+ 357 0015 13          		.1byte	0x0
+ 358 0015 00          		.1byte	0x0
+ 359 0016 00          		.1byte	0x4
+ 360 0016 04          		.1byte	0x28
+ 361 0017 28          		.1byte	0x0
+ 362 0017 00          		.1byte	0x3
+ 363 0018 03          		.1byte	0xe
+ 364 0018 0E          		.1byte	0x1c
+ 365 0019 1C          		.1byte	0xd
+ 366 0019 0D          		.1byte	0x0
+ 367 001a 00          		.1byte	0x0
+ 368 001a 00          		.1byte	0x5
+ 369 001b 05          		.1byte	0x16
+ 370 001b 16          		.1byte	0x0
+ 371 001c 00          		.1byte	0x3
+ 372 001c 03          		.1byte	0xe
+ 373 001d 0E          		.1byte	0x3a
+ 374 001d 3A          		.1byte	0xb
+ 375 001e 0B          		.1byte	0x3b
+ 376 001e 3B          		.1byte	0xb
+ 377 001f 0B          		.1byte	0x49
+ 378 001f 49          		.1byte	0x13
+ 379 0020 13          		.1byte	0x0
+ 380 0020 00          		.1byte	0x0
+ 381 0021 00          		.1byte	0x6
+ 382 0021 06          		.1byte	0x24
+ 383 0022 24          		.1byte	0x0
+ 384 0022 00          		.1byte	0xb
+ 385 0023 0B          		.1byte	0xb
+ 386 0023 0B          		.1byte	0x3e
+ 387 0024 3E          		.1byte	0xb
+ 388 0024 0B          		.1byte	0x0
+ 389 0025 00          		.1byte	0x0
+ 390 0025 00          		.1byte	0x7
+ 391 0026 07          		.1byte	0x13
+ 392 0026 13          		.1byte	0x1
+ 393 0027 01          		.1byte	0xb
+ 394 0027 0B          		.1byte	0xb
+ 395 0028 0B          		.1byte	0x3a
+ 396 0028 3A          		.1byte	0xb
+ 397 0029 0B          		.1byte	0x3b
+ 398 0029 3B          		.1byte	0x5
+ 399 002a 05          		.1byte	0x1
+ 400 002a 01          		.1byte	0x13
+ 401 002b 13          		.1byte	0x0
+ 402 002b 00          		.1byte	0x0
+ 403 002c 00          		.1byte	0x8
+ 404 002c 08          		.1byte	0xd
+ 405 002d 0D          		.1byte	0x0
+ 406 002d 00          		.1byte	0x3
+ 407 002e 03          		.1byte	0xe
+ 408 002e 0E          		.1byte	0x3a
+ 409 002f 3A          		.1byte	0xb
+ 410 002f 0B          		.1byte	0x3b
+ 411 0030 3B          		.1byte	0x5
+ 412 0030 05          		.1byte	0x49
+ 413 0031 49          		.1byte	0x13
+ 414 0031 13          		.1byte	0x38
+ 415 0032 38          		.1byte	0xa
+ 416 0032 0A          		.1byte	0x0
+ 417 0033 00          		.1byte	0x0
+ 418 0033 00          		.1byte	0x9
+ 419 0034 09          		.1byte	0xf
+ 420 0034 0F          		.1byte	0x0
+ 421 0035 00          		.1byte	0xb
+ 422 0035 0B          		.1byte	0xb
+ 423 0036 0B          		.1byte	0x0
+ 424 0036 00          		.1byte	0x0
+ 425 0037 00          		.1byte	0xa
+ 426 0037 0A          		.1byte	0x16
+ 427 0038 16          		.1byte	0x0
+ 428 0038 00          		.1byte	0x3
+ 429 0039 03          		.1byte	0xe
+ 430 0039 0E          		.1byte	0x3a
+ 431 003a 3A          		.1byte	0xb
+ 432 003a 0B          		.1byte	0x3b
+ 433 003b 3B          		.1byte	0x5
+ 434 003b 05          		.1byte	0x49
+ 435 003c 49          		.1byte	0x13
+ 436 003c 13          		.1byte	0x0
+ 437 003d 00          		.1byte	0x0
+ 438 003d 00          		.1byte	0xb
+ 439 003e 0B          		.1byte	0x2e
+ 440 003e 2E          		.1byte	0x0
+ 441 003f 00          		.1byte	0x3f
+ 442 003f 3F          		.1byte	0xc
+ 443 0040 0C          		.1byte	0x3
+ 444 0040 03          		.1byte	0xe
+ 445 0041 0E          		.1byte	0x3a
+ 446 0041 3A          		.1byte	0xb
+ 447 0042 0B          		.1byte	0x3b
+ 448 0042 3B          		.1byte	0xb
+ 449 0043 0B          		.1byte	0x27
+ 450 0043 27          		.1byte	0xc
+ 451 0044 0C          		.1byte	0x11
+ 452 0044 11          		.1byte	0x1
+ 453 0045 01          		.1byte	0x12
+ 454 0045 12          		.1byte	0x1
+ 455 0046 01          		.1byte	0x40
+ 456 0046 40          		.1byte	0xa
+ 457 0047 0A          		.1byte	0x0
+ 458 0047 00          		.1byte	0x0
+ 459 0048 00          		.1byte	0xc
+ 460 0048 0C          		.1byte	0x34
+ 461 0049 34          		.1byte	0x0
+ 462 0049 00          		.1byte	0x3
+ 463 004a 03          		.1byte	0xe
+ 464 004a 0E          		.1byte	0x3a
+ 465 004b 3A          		.1byte	0xb
+ 466 004b 0B          		.1byte	0x3b
+ 467 004c 3B          		.1byte	0xb
+ 468 004c 0B          		.1byte	0x49
+ 469 004d 49          		.1byte	0x13
+ 470 004d 13          		.1byte	0x3f
+ 471 004e 3F          		.1byte	0xc
+ 472 004e 0C          		.1byte	0x3c
+ 473 004f 3C          		.1byte	0xc
+ 474 004f 0C          		.1byte	0x0
+ 475 0050 00          		.1byte	0x0
+ 476 0050 00          		.1byte	0xd
+ 477 0051 0D          		.1byte	0xf
+ 478 0051 0F          		.1byte	0x0
+ 479 0052 00          		.1byte	0xb
+ 480 0052 0B          		.1byte	0xb
+ 481 0053 0B          		.1byte	0x49
+ 482 0053 49          		.1byte	0x13
+ 483 0054 13          		.1byte	0x0
+ 484 0054 00          		.1byte	0x0
+ 485 0055 00          		.1byte	0x0
+ 486 0055 00          		.section	.debug_pubnames,"",@progbits
+ 487                 		.4byte	0x20
+ 488 0000 00 00 00 20 		.2byte	0x2
+ 489 0002 00 02       		.4byte	.Ldebug_info0
+ 490 0003 00 00 00 00 		.4byte	0x1fd
+ 491 0005 00 00 01 FD 		.4byte	0x1d6
+ 492 0007 00 00 01 D6 		.ascii "GET_device_id\000"
+ 493 0009 47 45 54 5F 		.4byte	0x0
+ 493      64 65 76 69 
+ 493      63 65 5F 69 
+ 493      64 00 
+ 494 0010 00 00 00 00 		.section	.debug_aranges,"",@progbits
+ 495                 		.4byte	0x1c
+ 496 0000 00 00 00 1C 		.2byte	0x2
+ 497 0002 00 02       		.4byte	.Ldebug_info0
+ 498 0003 00 00 00 00 		.1byte	0x4
+ 499 0005 04          		.1byte	0x0
+ 500 0005 00          		.2byte	0x0
+ 501 0006 00 00       		.2byte	0x0
+ 502 0007 00 00       		.4byte	.LFB2
+ 503 0008 00 00 00 00 		.4byte	.LFE2-.LFB2
+ 504 000a 00 00 00 00 		.4byte	0x0
+ 505 000c 00 00 00 00 		.4byte	0x0
+ 506 000e 00 00 00 00 		.section	.debug_ranges,"",@progbits
+ 507                 	.Ldebug_ranges0:
+ 508                 		.4byte	.Ltext0
+ 509 0000 00 00 00 00 		.4byte	.Letext0
+ 510 0002 00 00 00 00 		.4byte	.LFB2
+ 511 0004 00 00 00 00 		.4byte	.LFE2
+ 512 0006 00 00 00 00 		.4byte	0x0
+ 513 0008 00 00 00 00 		.4byte	0x0
+ 514 000a 00 00 00 00 		.section	.debug_str,"MS",@progbits,1
+ 515                 	.LASF50:
+ 516                 		.ascii "CSR_MESH_INVALID_EVENT\000"
+ 517 0000 43 53 52 5F 	.LASF39:
+ 517      4D 45 53 48 
+ 517      5F 49 4E 56 
+ 517      41 4C 49 44 
+ 517      5F 45 56 45 
+ 518                 		.ascii "CSR_MESH_SEND_MCP_MSG_EVENT\000"
+ 519 000b 43 53 52 5F 	.LASF37:
+ 519      4D 45 53 48 
+ 519      5F 53 45 4E 
+ 519      44 5F 4D 43 
+ 519      50 5F 4D 53 
+ 520                 		.ascii "CSR_MESH_GROUP_SET_MODEL_GROUPID_EVENT\000"
+ 521 0019 43 53 52 5F 	.LASF36:
+ 521      4D 45 53 48 
+ 521      5F 47 52 4F 
+ 521      55 50 5F 53 
+ 521      45 54 5F 4D 
+ 522                 		.ascii "CSR_MESH_GET_DEVICE_APPEARANCE_EVENT\000"
+ 523 002d 43 53 52 5F 	.LASF54:
+ 523      4D 45 53 48 
+ 523      5F 47 45 54 
+ 523      5F 44 45 56 
+ 523      49 43 45 5F 
+ 524                 		.ascii "status\000"
+ 525 003f 73 74 61 74 	.LASF38:
+ 525      75 73 00 
+ 526                 		.ascii "CSR_MESH_SEND_RAW_MCP_MSG_EVENT\000"
+ 527 0043 43 53 52 5F 	.LASF48:
+ 527      4D 45 53 48 
+ 527      5F 53 45 4E 
+ 527      44 5F 52 41 
+ 527      57 5F 4D 43 
+ 528                 		.ascii "CSR_MESH_ASSOCIATION_ATTENTION_EVENT\000"
+ 529 0053 43 53 52 5F 	.LASF27:
+ 529      4D 45 53 48 
+ 529      5F 41 53 53 
+ 529      4F 43 49 41 
+ 529      54 49 4F 4E 
+ 530                 		.ascii "CSR_MESH_MASP_DEVICE_APPEARANCE_EVENT\000"
+ 531 0065 43 53 52 5F 	.LASF60:
+ 531      4D 45 53 48 
+ 531      5F 4D 41 53 
+ 531      50 5F 44 45 
+ 531      56 49 43 45 
+ 532                 		.ascii "GET_device_id\000"
+ 533 0078 47 45 54 5F 	.LASF18:
+ 533      64 65 76 69 
+ 533      63 65 5F 69 
+ 533      64 00 
+ 534                 		.ascii "CSR_MESH_STOP_EVENT\000"
+ 535 007f 43 53 52 5F 	.LASF55:
+ 535      4D 45 53 48 
+ 535      5F 53 54 4F 
+ 535      50 5F 45 56 
+ 535      45 4E 54 00 
+ 536                 		.ascii "appCallbackDataPtr\000"
+ 537 0089 61 70 70 43 	.LASF34:
+ 537      61 6C 6C 62 
+ 537      61 63 6B 44 
+ 537      61 74 61 50 
+ 537      74 72 00 
+ 538                 		.ascii "CSR_MESH_CONFIG_GET_PARAMS_EVENT\000"
+ 539 0093 43 53 52 5F 	.LASF29:
+ 539      4D 45 53 48 
+ 539      5F 43 4F 4E 
+ 539      46 49 47 5F 
+ 539      47 45 54 5F 
+ 540                 		.ascii "CSR_MESH_SET_MAX_NO_OF_NETWORK_EVENT\000"
+ 541 00a3 43 53 52 5F 	.LASF24:
+ 541      4D 45 53 48 
+ 541      5F 53 45 54 
+ 541      5F 4D 41 58 
+ 541      5F 4E 4F 5F 
+ 542                 		.ascii "CSR_MESH_GET_DEVICE_ID_EVENT\000"
+ 543 00b6 43 53 52 5F 	.LASF57:
+ 543      4D 45 53 48 
+ 543      5F 47 45 54 
+ 543      5F 44 45 56 
+ 543      49 43 45 5F 
+ 544                 		.ascii "GNU C 4.3.4 CSR version 28 for xap [2131110]\000"
+ 545 00c4 47 4E 55 20 	.LASF13:
+ 545      43 20 34 2E 
+ 545      33 2E 34 20 
+ 545      43 53 52 20 
+ 545      76 65 72 73 
+ 546                 		.ascii "CSR_MESH_OPERATION_GENERIC_FAIL\000"
+ 547 00db 43 53 52 5F 	.LASF23:
+ 547      4D 45 53 48 
+ 547      5F 4F 50 45 
+ 547      52 41 54 49 
+ 547      4F 4E 5F 47 
+ 548                 		.ascii "CSR_MESH_SEND_ASSOC_COMPLETE_EVENT\000"
+ 549 00eb 43 53 52 5F 	.LASF16:
+ 549      4D 45 53 48 
+ 549      5F 53 45 4E 
+ 549      44 5F 41 53 
+ 549      53 4F 43 5F 
+ 550                 		.ascii "CSR_MESH_RESET_EVENT\000"
+ 551 00fc 43 53 52 5F 	.LASF33:
+ 551      4D 45 53 48 
+ 551      5F 52 45 53 
+ 551      45 54 5F 45 
+ 551      56 45 4E 54 
+ 552                 		.ascii "CSR_MESH_CONFIG_SET_PARAMS_EVENT\000"
+ 553 0107 43 53 52 5F 	.LASF0:
+ 553      4D 45 53 48 
+ 553      5F 43 4F 4E 
+ 553      46 49 47 5F 
+ 553      53 45 54 5F 
+ 554                 		.ascii "unsigned char\000"
+ 555 0117 75 6E 73 69 	.LASF52:
+ 555      67 6E 65 64 
+ 555      20 63 68 61 
+ 555      72 00 
+ 556                 		.ascii "CSR_MESH_EVENT_T\000"
+ 557 011e 43 53 52 5F 	.LASF44:
+ 557      4D 45 53 48 
+ 557      5F 45 56 45 
+ 557      4E 54 5F 54 
+ 557      00 
+ 558                 		.ascii "CSR_MESH_RESET_DIAG_DATA_EVENT\000"
+ 559 0127 43 53 52 5F 	.LASF2:
+ 559      4D 45 53 48 
+ 559      5F 52 45 53 
+ 559      45 54 5F 44 
+ 559      49 41 47 5F 
+ 560                 		.ascii "long unsigned int\000"
+ 561 0136 6C 6F 6E 67 	.LASF1:
+ 561      20 75 6E 73 
+ 561      69 67 6E 65 
+ 561      64 20 69 6E 
+ 561      74 00 
+ 562                 		.ascii "short unsigned int\000"
+ 563 013f 73 68 6F 72 	.LASF8:
+ 563      74 20 75 6E 
+ 563      73 69 67 6E 
+ 563      65 64 20 69 
+ 563      6E 74 00 
+ 564                 		.ascii "CSR_MESH_OPERATION_SUCCESS\000"
+ 565 0149 43 53 52 5F 	.LASF17:
+ 565      4D 45 53 48 
+ 565      5F 4F 50 45 
+ 565      52 41 54 49 
+ 565      4F 4E 5F 53 
+ 566                 		.ascii "CSR_MESH_START_EVENT\000"
+ 567 0156 43 53 52 5F 	.LASF59:
+ 567      4D 45 53 48 
+ 567      5F 53 54 41 
+ 567      52 54 5F 45 
+ 567      56 45 4E 54 
+ 568                 		.ascii "C:\\csrmesh_2_0_node\\applications\\CSRmeshLight2\000"
+ 569 0161 43 3A 5C 63 	.LASF20:
+ 569      73 72 6D 65 
+ 569      73 68 5F 32 
+ 569      5F 30 5F 6E 
+ 569      6F 64 65 5C 
+ 570                 		.ascii "CSR_MESH_START_DEVICE_INQUIRY_EVENT\000"
+ 571 0178 43 53 52 5F 	.LASF19:
+ 571      4D 45 53 48 
+ 571      5F 53 54 41 
+ 571      52 54 5F 44 
+ 571      45 56 49 43 
+ 572                 		.ascii "CSR_MESH_TRANSMIT_STATE_EVENT\000"
+ 573 018a 43 53 52 5F 	.LASF46:
+ 573      4D 45 53 48 
+ 573      5F 54 52 41 
+ 573      4E 53 4D 49 
+ 573      54 5F 53 54 
+ 574                 		.ascii "CSR_MESH_GET_MESH_ID_EVENT\000"
+ 575 0199 43 53 52 5F 	.LASF42:
+ 575      4D 45 53 48 
+ 575      5F 47 45 54 
+ 575      5F 4D 45 53 
+ 575      48 5F 49 44 
+ 576                 		.ascii "CSR_MESH_REMOVE_NETWORK_EVENT\000"
+ 577 01a7 43 53 52 5F 	.LASF10:
+ 577      4D 45 53 48 
+ 577      5F 52 45 4D 
+ 577      4F 56 45 5F 
+ 577      4E 45 54 57 
+ 578                 		.ascii "CSR_MESH_OPERATION_NOT_PERMITTED\000"
+ 579 01b6 43 53 52 5F 	.LASF4:
+ 579      4D 45 53 48 
+ 579      5F 4F 50 45 
+ 579      52 41 54 49 
+ 579      4F 4E 5F 4E 
+ 580                 		.ascii "short int\000"
+ 581 01c6 73 68 6F 72 	.LASF21:
+ 581      74 20 69 6E 
+ 581      74 00 
+ 582                 		.ascii "CSR_MESH_ASSOC_STARTED_EVENT\000"
+ 583 01cb 43 53 52 5F 	.LASF43:
+ 583      4D 45 53 48 
+ 583      5F 41 53 53 
+ 583      4F 43 5F 53 
+ 583      54 41 52 54 
+ 584                 		.ascii "CSR_MESH_GET_DIAG_DATA_EVENT\000"
+ 585 01da 43 53 52 5F 	.LASF58:
+ 585      4D 45 53 48 
+ 585      5F 47 45 54 
+ 585      5F 44 49 41 
+ 585      47 5F 44 41 
+ 586                 		.ascii "my_light2.c\000"
+ 587 01e8 6D 79 5F 6C 	.LASF53:
+ 587      69 67 68 74 
+ 587      32 2E 63 00 
+ 588                 		.ascii "event\000"
+ 589 01ee 65 76 65 6E 	.LASF49:
+ 589      74 00 
+ 590                 		.ascii "CSR_MESH_BEARER_STATE_EVENT\000"
+ 591 01f1 43 53 52 5F 	.LASF6:
+ 591      4D 45 53 48 
+ 591      5F 42 45 41 
+ 591      52 45 52 5F 
+ 591      53 54 41 54 
+ 592                 		.ascii "unsigned int\000"
+ 593 01ff 75 6E 73 69 	.LASF7:
+ 593      67 6E 65 64 
+ 593      20 69 6E 74 
+ 593      00 
+ 594                 		.ascii "char\000"
+ 595 0206 63 68 61 72 	.LASF35:
+ 595      00 
+ 596                 		.ascii "CSR_MESH_GET_VID_PID_VERSTION_EVENT\000"
+ 597 0208 43 53 52 5F 	.LASF61:
+ 597      4D 45 53 48 
+ 597      5F 47 45 54 
+ 597      5F 56 49 44 
+ 597      5F 50 49 44 
+ 598                 		.ascii "eventData\000"
+ 599 021a 65 76 65 6E 	.LASF30:
+ 599      74 44 61 74 
+ 599      61 00 
+ 600                 		.ascii "CSR_MESH_SET_PASSPHRASE_EVENT\000"
+ 601 021f 43 53 52 5F 	.LASF15:
+ 601      4D 45 53 48 
+ 601      5F 53 45 54 
+ 601      5F 50 41 53 
+ 601      53 50 48 52 
+ 602                 		.ascii "CSR_MESH_REGISTER_APP_CB_EVENT\000"
+ 603 022e 43 53 52 5F 	.LASF51:
+ 603      4D 45 53 48 
+ 603      5F 52 45 47 
+ 603      49 53 54 45 
+ 603      52 5F 41 50 
+ 604                 		.ascii "CSR_MESH_OPERATION_STATUS_T\000"
+ 605 023e 43 53 52 5F 	.LASF14:
+ 605      4D 45 53 48 
+ 605      5F 4F 50 45 
+ 605      52 41 54 49 
+ 605      4F 4E 5F 53 
+ 606                 		.ascii "CSR_MESH_INIT_EVENT\000"
+ 607 024c 43 53 52 5F 	.LASF25:
+ 607      4D 45 53 48 
+ 607      5F 49 4E 49 
+ 607      54 5F 45 56 
+ 607      45 4E 54 00 
+ 608                 		.ascii "CSR_MESH_GET_DEVICE_UUID_EVENT\000"
+ 609 0256 43 53 52 5F 	.LASF41:
+ 609      4D 45 53 48 
+ 609      5F 47 45 54 
+ 609      5F 44 45 56 
+ 609      49 43 45 5F 
+ 610                 		.ascii "CSR_MESH_MCP_REGISTER_MODEL_CLIENT_EVENT\000"
+ 611 0265 43 53 52 5F 	.LASF12:
+ 611      4D 45 53 48 
+ 611      5F 4D 43 50 
+ 611      5F 52 45 47 
+ 611      49 53 54 45 
+ 612                 		.ascii "CSR_MESH_OPERATION_REQUEST_FOR_INFO\000"
+ 613 027a 43 53 52 5F 	.LASF40:
+ 613      4D 45 53 48 
+ 613      5F 4F 50 45 
+ 613      52 41 54 49 
+ 613      4F 4E 5F 52 
+ 614                 		.ascii "CSR_MESH_MCP_REGISTER_MODEL_EVENT\000"
+ 615 028c 43 53 52 5F 	.LASF9:
+ 615      4D 45 53 48 
+ 615      5F 4D 43 50 
+ 615      5F 52 45 47 
+ 615      49 53 54 45 
+ 616                 		.ascii "CSR_MESH_OPERATION_STACK_NOT_INITIALIZED\000"
+ 617 029d 43 53 52 5F 	.LASF47:
+ 617      4D 45 53 48 
+ 617      5F 4F 50 45 
+ 617      52 41 54 49 
+ 617      4F 4E 5F 53 
+ 618                 		.ascii "CSR_MESH_GET_NET_ID_FROM_MESH_ID_EVENT\000"
+ 619 02b1 43 53 52 5F 	.LASF22:
+ 619      4D 45 53 48 
+ 619      5F 47 45 54 
+ 619      5F 4E 45 54 
+ 619      5F 49 44 5F 
+ 620                 		.ascii "CSR_MESH_ASSOC_COMPLETE_EVENT\000"
+ 621 02c5 43 53 52 5F 	.LASF32:
+ 621      4D 45 53 48 
+ 621      5F 41 53 53 
+ 621      4F 43 5F 43 
+ 621      4F 4D 50 4C 
+ 622                 		.ascii "CSR_MESH_CONFIG_RESET_DEVICE_EVENT\000"
+ 623 02d4 43 53 52 5F 	.LASF31:
+ 623      4D 45 53 48 
+ 623      5F 43 4F 4E 
+ 623      46 49 47 5F 
+ 623      52 45 53 45 
+ 624                 		.ascii "CSR_MESH_SET_NETWORK_KEY_EVENT\000"
+ 625 02e5 43 53 52 5F 	.LASF5:
+ 625      4D 45 53 48 
+ 625      5F 53 45 54 
+ 625      5F 4E 45 54 
+ 625      57 4F 52 4B 
+ 626                 		.ascii "long int\000"
+ 627 02f5 6C 6F 6E 67 	.LASF28:
+ 627      20 69 6E 74 
+ 627      00 
+ 628                 		.ascii "CSR_MESH_NETWORK_ID_LIST_EVENT\000"
+ 629 02f9 43 53 52 5F 	.LASF26:
+ 629      4D 45 53 48 
+ 629      5F 4E 45 54 
+ 629      57 4F 52 4B 
+ 629      5F 49 44 5F 
+ 630                 		.ascii "CSR_MESH_MASP_DEVICE_IND_EVENT\000"
+ 631 0309 43 53 52 5F 	.LASF45:
+ 631      4D 45 53 48 
+ 631      5F 4D 41 53 
+ 631      50 5F 44 45 
+ 631      56 49 43 45 
+ 632                 		.ascii "CSR_MESH_REGISTER_SNIFFER_APP_CB_EVENT\000"
+ 633 0318 43 53 52 5F 	.LASF3:
+ 633      4D 45 53 48 
+ 633      5F 52 45 47 
+ 633      49 53 54 45 
+ 633      52 5F 53 4E 
+ 634                 		.ascii "signed char\000"
+ 635 032c 73 69 67 6E 	.LASF11:
+ 635      65 64 20 63 
+ 635      68 61 72 00 
+ 636                 		.ascii "CSR_MESH_OPERATION_MEMORY_FULL\000"
+ 637 0332 43 53 52 5F 	.LASF56:
+ 637      4D 45 53 48 
+ 637      5F 4F 50 45 
+ 637      52 41 54 49 
+ 637      4F 4E 5F 4D 
+ 638                 		.ascii "CSR_MESH_APP_EVENT_DATA_T\000"
+ 639 0341 43 53 52 5F 		.ident	"GCC: (GNU) 4.3.4 CSR version 28 for xap [2131110]"
+ 639      4D 45 53 48 
+ 639      5F 41 50 50 
+ 639      5F 45 56 45 
+ 639      4E 54 5F 44 
+ 640                 	...

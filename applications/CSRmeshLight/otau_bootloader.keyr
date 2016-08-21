@@ -1,0 +1,30 @@
+>DECIMAL_CS_VERSION=67
+
+////////////////////////////////////////////////////
+// Over-the-Air Update Bootloader CS keys         //
+////////////////////////////////////////////////////
+
+// User-key 0 – Upgrade Behaviour
+// 0004 - Update Method 4: A single (large) application is held in the NVM.
+
+// User-key 1 – Confirmation Method
+// 0001 - Confirmation Method 1: No confirmation is required.
+
+// User-key 2 – Battery levels. Specifies the minimum and maximum battery voltage levels.
+// The upper byte of user-key 2 defines the maximum voltage
+// The lower byte of user-key 2 defines the minimum voltage
+
+// User-key 3 – Advertising periods. Specifies the periods to be used for fast and slow advertising.
+// The upper byte defines the time(seconds) to perform “high rate” advertising. 0 defaults to 90secs
+// The lower byte defines the time(seconds) to perform “slow rate” advertising. 0 means indefinite
+
+// User-key 4 – Validity check. Specifies when the application CRC check is performed for image validity
+// 0002      - CRC check is performed when the application update is received
+
+// User-key 5 – Simple I/O. OTAU boot-loader application allows one input and one outputPIO to be defined.
+
+// User-key 6 – EEPROM Write-Protect PIO. See (Over-the-Air Update Technical Overview) of sdk
+// User-key 7 – Reserved
+
+&USER_KEYS = 0004 0001 1e12 1e5a 0002 006c 004d 00a9
+

@@ -1,0 +1,21 @@
+>DECIMAL_CS_VERSION=67
+// (0001) - Bluetooth device address
+&BDADDR = 1511 5b00 0002
+// (0002) - Crystal frequency trim
+&CRYSTAL_FTRIM = 0020
+// (0007) - Transmit power level
+&TX_POWER_LEVEL = 0004
+// (000d) - Sleep clock accuracy allowance
+&SLEEP_CLOCK_ACCURACY = 009d
+// (0011) - Identity Root
+&IDENTITY_ROOT = 0000 0000 0000 0000 0000 0000 0000 0000
+// (001b) - I2C EEPROM Initialisation Time
+&I2C_EEPROM_INIT_TIME = 07d0
+// (001d) - Thermometer offset adjustment
+&TEMPERATURE_ADJUST = 0000
+// (0022) - I2C Pull resistors config
+&I2C_DISABLED_PULL_MODE = 0005
+// (0012) - Encryption Root
+&ENCRYPTION_ROOT = 0000 0000 0000 0000 0000 0000 0000 0000
+// (0016) - Battery "low" threshold voltage
+&BATTERY_THRESHOLD = 0834

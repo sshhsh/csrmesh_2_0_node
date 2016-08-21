@@ -1,0 +1,105 @@
+<project buildenvironment="{067c869e-5bd9-4595-9f4c-60348133ad8e}" buildenvironmentname="uEnergy" executionenvironmentoption="XAP2+ P0 ELF DWARF BINUTILS UENERGYSDK" buildenvironmentoption="UENERGYSDK" executionenvironmentname="uEnergy" name="CSR uEnergy" executionenvironment="{39e65239-59f4-4d78-b84a-26eaebfaa4de}" >
+ <folder name="C Files" >
+  <extension name="c" />
+  <file path="csr_mesh_light_hw.c" />
+  <file path="csr_mesh_light.c" />
+  <file path="csr_mesh_light_gatt.c" />
+  <file path="csr_mesh_light_util.c" />
+  <file path="csr_ota_service.c" />
+  <file path="fast_pwm.c" />
+  <file path="gap_service.c" />
+  <file path="gatt_service.c" />
+  <file path="iot_hw.c" />
+  <file path="mesh_control_service.c" />
+  <file path="nvm_access.c" />
+  <file path="app_data_stream.c" />
+  <file path="battery_hw.c" />
+  <file path="app_fw_event_handler.c" />
+  <file path="app_mesh_event_handler.c" />
+ </folder>
+ <folder name="Header Files" >
+  <extension name="h" />
+  <file path="app_debug.h" />
+  <file path="app_gatt.h" />
+  <file path="appearance.h" />
+  <file path="csr_mesh_light_hw.h" />
+  <file path="csr_mesh_light.h" />
+  <file path="csr_mesh_light_gatt.h" />
+  <file path="csr_mesh_light_util.h" />
+  <file path="csr_ota_service.h" />
+  <file path="csr_ota_uuids.h" />
+  <file path="fast_pwm.h" />
+  <file path="gap_conn_params.h" />
+  <file path="gap_service.h" />
+  <file path="gap_uuids.h" />
+  <file path="gatt_service.h" />
+  <file path="gatt_service_uuids.h" />
+  <file path="iot_hw.h" />
+  <file path="mesh_control_service.h" />
+  <file path="mesh_control_service_uuids.h" />
+  <file path="ota_customisation.h" />
+  <file path="user_config.h" />
+  <file path="app_data_stream.h" />
+  <file path="battery_hw.h" />
+  <file path="app_fw_event_handler.h" />
+  <file path="app_mesh_event_handler.h" />
+ </folder>
+ <folder name="Assembler Files" >
+  <extension name="asm" />
+  <file path="pio_ctrlr_code.asm" />
+ </folder>
+ <folder name="GATT db files" >
+  <extension name="db" />
+  <file path="app_gatt_db.db" />
+  <file path="csr_ota_db.db" />
+  <file path="gap_service_db.db" />
+  <file path="gatt_service_db.db" />
+  <file path="mesh_control_service_db.db" />
+ </folder>
+ <file path="CSRmesh_light_csr101x_A05.keyr" />
+ <file path="otau_bootloader.keyr" />
+ <properties currentconfiguration="Release" >
+  <configuration name="Debug" >
+   <property key="csr101x_a05_keyr" >CSRmesh_light_csr101x_A05.keyr</property>
+   <property key="debugtransport" ></property>
+   <property key="defines" ></property>
+   <property key="download_into" >0</property>
+   <property key="erase_nvm" >1</property>
+   <property key="flash_clock" ></property>
+   <property key="flash_miso" ></property>
+   <property key="hw_version" >v1</property>
+   <property key="incpaths" >..\..\include</property>
+   <property key="libpaths" >..\..\libraries</property>
+   <property key="libs" >csrmesh light_server power_server attention_server data_server data_client battery_server</property>
+   <property key="master_db" >app_gatt_db.db</property>
+   <property key="otau_bootloader" >1</property>
+   <property key="otau_keyr" >otau_bootloader.keyr</property>
+   <property key="otau_name" >CSRmesh-OTA</property>
+   <property key="otau_secret" >00112233445566778899aabbccddeeff</property>
+   <property key="otau_slot_1" >0x4300</property>
+   <property key="otau_slot_end" >0x10000</property>
+   <property key="output" ></property>
+  </configuration>
+  <configuration name="Release" >
+   <property key="csr101x_a05_keyr" >CSRmesh_light_csr101x_A05.keyr</property>
+   <property key="debugtransport" ></property>
+   <property key="defines" ></property>
+   <property key="download_into" >0</property>
+   <property key="erase_nvm" >1</property>
+   <property key="flash_clock" ></property>
+   <property key="flash_miso" ></property>
+   <property key="hw_version" >v1</property>
+   <property key="incpaths" >..\..\include</property>
+   <property key="libpaths" >..\..\libraries</property>
+   <property key="libs" >csrmesh light_server power_server attention_server data_server data_client battery_server</property>
+   <property key="master_db" >app_gatt_db.db</property>
+   <property key="otau_bootloader" >1</property>
+   <property key="otau_keyr" >otau_bootloader.keyr</property>
+   <property key="otau_name" >CSRmesh-OTA</property>
+   <property key="otau_secret" >00112233445566778899aabbccddeeff</property>
+   <property key="otau_slot_1" >0x4300</property>
+   <property key="otau_slot_end" >0x10000</property>
+   <property key="output" ></property>
+  </configuration>
+ </properties>
+</project>

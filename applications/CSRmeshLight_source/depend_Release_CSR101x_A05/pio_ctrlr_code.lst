@@ -1,0 +1,250 @@
+                   ;/**********************************************************
+                   ; *  Copyright 2015 Qualcomm Technologies International, Ltd
+                   ; *  Bluetooth Low Energy CSRmesh 2.0
+                   ; *  Application version 2.0
+                   ; *
+                   ; * FILE
+                   ; *    pio_ctrlr_code.asm
+                   ; *
+                   ; *  DESCRIPTION
+                   ; *    This file contains the low level 8051 assembly code f
+                   ; *
+                   ; *  NOTICE
+                   ; *
+                   ; **********************************************************
+                   ; 
+                   ; Local variables
+0000:              .equ TEMP, 0x3e
+                   
+                   ; Shared memory from 0x40
+                   ; 0~7 BRIGHT duty cycles
+                   ; 8~15 DULL duty cycles
+                   ; 16 Initial states of outputs
+                   ; 18 BRIGHT period
+                   ; 20 DULL period
+                   ; 22 RESET
+                   
+0000:              .equ SHARED_MEM, 0x40
+0000:              .equ INIT_STATE, SHARED_MEM+16
+0000:              .equ BRIGHT_PERIOD, SHARED_MEM+18
+0000:              .equ DULL_PERIOD, SHARED_MEM+20
+0000:              .equ PWM_RESET, SHARED_MEM+22
+                   
+                   ; HW registers
+0000:              .equ P0_DRIVE_EN, 0xc0
+0000:              .equ P1_DRIVE_EN, 0xc8
+0000:              .equ P2_DRIVE_EN, 0xd8
+0000:              .equ P3_DRIVE_EN, 0xe8
+                   
+                   ; IDLE LOOP COUNT to make each step 4 microseconds
+0000:              .equ IDLE_COUNT, 6
+                   
+                   ; R1 (LSB) and R2 (MSB) are used to count the number of puls
+                   
+                   START:
+                       
+                   ; Set the stack up
+0000: 75 81 30         mov SP, #30H
+                       
+                   ; Adjust to the used PWM pins. This case is for all 8 pins o
+                   ; If needed apply only to required pins
+0003: 75 C8 FF         mov P1_DRIVE_EN, #0xFF
+                   
+                   ;***********************************************************
+                   ;   BRIGHT phase
+                   ;***********************************************************
+                   
+                   RESET:
+                   
+0006: 79 00            mov  R1, #0
+0008: 7A 00            mov  R2, #0
+                   
+                   BRIGHT_START:
+                   
+                   ;   Check if we should start this pulse or jump to dull phas
+                   
+000A: E9               mov  A, R1
+000B: B5 52 0B         cjne A, BRIGHT_PERIOD, LSB_NE
+000E: EA               mov  A, R2
+000F: B5 53 06         cjne A, BRIGHT_PERIOD+1, MSB_NE
+0012: 79 00            mov  R1, #0
+0014: 7A 00            mov  R2, #0
+0016: 01 71            ajmp DULL_START
+                      
+                   MSB_NE:
+                   
+0018: E9               mov  A, R1
+                       
+                   LSB_NE:
+                   
+                       ; A is R1
+0019: 24 01            add  A, #1
+001B: F9               mov  R1, A
+001C: EA               mov  A, R2
+001D: 34 00            addc A, #0
+001F: FA               mov  R2, A
+                       
+                   START_PULSE:
+                   
+                       ; A is now the step number
+0020: 74 00            mov  A, #0
+0022: 85 50 3E         mov  TEMP, INIT_STATE
+                   
+                   BIT0:
+0025: B5 40 03         cjne A, SHARED_MEM, BIT1
+0028: 63 3E 01         xrl  TEMP, #1
+                   BIT1:
+002B: B5 41 03         cjne A, SHARED_MEM+1, BIT2
+002E: 63 3E 02         xrl  TEMP, #2
+                   BIT2:
+0031: B5 42 03         cjne A, SHARED_MEM+2, BIT3
+0034: 63 3E 04         xrl  TEMP, #4
+                   BIT3:
+0037: B5 43 03         cjne A, SHARED_MEM+3, BIT4
+003A: 63 3E 08         xrl  TEMP, #8
+                   BIT4:
+003D: B5 44 03         cjne A, SHARED_MEM+4, BIT5
+0040: 63 3E 10         xrl  TEMP, #16
+                   BIT5:
+0043: B5 45 03         cjne A, SHARED_MEM+5, BIT6
+0046: 63 3E 20         xrl  TEMP, #32
+                   BIT6:
+0049: B5 46 03         cjne A, SHARED_MEM+6, BIT7
+004C: 63 3E 40         xrl  TEMP, #64
+                   BIT7:
+004F: B5 47 03         cjne A, SHARED_MEM+7, DONE
+0052: 63 3E 80         xrl  TEMP, #128
+                   DONE:
+                   
+                   ; Output the resulted state
+                   
+0055: 85 3E 90         mov  P1, TEMP
+                   
+                   ; Filling the rest of the step with a loop
+                   
+0058: 78 00            mov  R0, #0
+                   IDLE:
+005A: 08               inc  R0
+005B: B8 06 FC         cjne R0, #IDLE_COUNT, IDLE   ; Change loop count for cor
+                   
+                   ; Finer adjustment of step size. Add or remove NOPs below
+005E: 00               nop
+                   ;    nop
+                   ;    nop
+                   
+                   
+                   ; Next pulse after 255 steps     
+005F: 04               inc  A
+0060: B4 FF C2         cjne A, #255, BIT0
+                   
+                   ; Even finer adjustment of pulse frequency can be done by ad
+                   ;   nop
+                   
+                   ; Check RESET at the end of each pulse
+                   
+0063: E5 56            mov  A, PWM_RESET
+0065: B4 00 02         cjne A, #0, DO_RESET
+0068: 01 6F            ajmp NO_RESET
+                   
+                   DO_RESET:
+                   
+006A: 75 56 00         mov  PWM_RESET, #0
+006D: 01 06            ajmp RESET
+                   
+                   NO_RESET:
+                   
+006F: 01 0A            ajmp BRIGHT_START
+                   
+                   ;***********************************************************
+                   ; DULL phase
+                   ;***********************************************************
+                   
+                   DULL_START:
+                   
+                   ;   Check if we should start this pulse
+                   
+0071: E9               mov  A, R1
+0072: B5 54 07         cjne A, DULL_PERIOD, LSB_NE2
+0075: EA               mov  A, R2
+0076: B5 55 02         cjne A, DULL_PERIOD+1, MSB_NE2
+0079: 01 06            ajmp RESET
+                       
+                   MSB_NE2:
+                   
+007B: E9               mov  A, R1
+                       
+                   LSB_NE2:
+                   
+                       ; A is R1
+007C: 24 01            add  A, #1
+007E: F9               mov  R1, A
+007F: EA               mov  A, R2
+0080: 34 00            addc A, #0
+0082: FA               mov  R2, A
+                   
+                   START_PULSE2:
+                   
+                       ; A is now the step number
+0083: 74 00            mov  A, #0
+0085: 85 50 3E         mov  TEMP, INIT_STATE
+                   BIT0_2:
+0088: B5 48 03         cjne A, SHARED_MEM+8, BIT1_2
+008B: 63 3E 01         xrl  TEMP, #1
+                   BIT1_2:
+008E: B5 49 03         cjne A, SHARED_MEM+9, BIT2_2
+0091: 63 3E 02         xrl  TEMP, #2
+                   BIT2_2:
+0094: B5 4A 03         cjne A, SHARED_MEM+10, BIT3_2
+0097: 63 3E 04         xrl  TEMP, #4
+                   BIT3_2:
+009A: B5 4B 03         cjne A, SHARED_MEM+11, BIT4_2
+009D: 63 3E 08         xrl  TEMP, #8
+                   BIT4_2:
+00A0: B5 4C 03         cjne A, SHARED_MEM+12, BIT5_2
+00A3: 63 3E 10         xrl  TEMP, #16
+                   BIT5_2:
+00A6: B5 4D 03         cjne A, SHARED_MEM+13, BIT6_2
+00A9: 63 3E 20         xrl  TEMP, #32
+                   BIT6_2:
+00AC: B5 4E 03         cjne A, SHARED_MEM+14, BIT7_2
+00AF: 63 3E 40         xrl  TEMP, #64
+                   BIT7_2:
+00B2: B5 4F 03         cjne A, SHARED_MEM+15, DONE2
+00B5: 63 3E 80         xrl  TEMP, #128
+                   DONE2:
+                   
+                   ; Output the resulted state
+00B8: 85 3E 90         mov  P1, TEMP
+                   
+                   ; Filling the rest of the step
+00BB: 78 00            mov  R0, #0
+                   IDLE2:
+00BD: 08               inc  R0
+00BE: B8 06 FC         cjne R0, #IDLE_COUNT, IDLE2   ; Change loop count for co
+                   
+                   ; Finer adjustment of step size. Add or remove NOPs below
+00C1: 00               nop
+                   ;    nop
+                   ;    nop
+                   
+                   ; Next pulse after 255 steps     
+00C2: 04               inc    A
+00C3: B4 FF C2         cjne   A, #255, BIT0_2
+                   
+                   ; Even finer adjustment of pulse frequency can be done by ad
+                   ;   nop
+                   
+                   ; Check RESET at the end of each pulse
+                   
+00C6: E5 56            mov  A, PWM_RESET
+00C8: B4 00 02         cjne A, #0, DO_RESET2
+00CB: 01 D2            ajmp NO_RESET2
+                       
+                   DO_RESET2:
+                   
+00CD: 75 56 00         mov  PWM_RESET, #0
+00D0: 01 06            ajmp RESET
+                   
+                   NO_RESET2:
+                   
+00D2: 01 71            ajmp     DULL_START

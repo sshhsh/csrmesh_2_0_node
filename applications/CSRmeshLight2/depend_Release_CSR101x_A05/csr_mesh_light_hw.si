@@ -1,0 +1,1377 @@
+   1                 		.file	"csr_mesh_light_hw.c"
+   2                 		.variant xap2+
+   3                 	
+   4                 		.small
+   5                 	
+   6                 		.section	.debug_abbrev,"",@progbits
+   7                 	.Ldebug_abbrev0:
+   8                 		.section	.debug_info,"",@progbits
+   9                 	.Ldebug_info0:
+  10                 		.section	.debug_line,"",@progbits
+  11                 	.Ldebug_line0:
+  12 0000 00 00 00 00 		.text
+  12      00 02 00 00 
+  12      00 00 01 01 
+  12      FB 0E 0D 00 
+  12      01 01 01 01 
+  13                 	.Ltext0:
+  14                 		.section	.text.LightHardwareSetBlink,"ax",@progbits
+  15                 		.global	LightHardwareSetBlink
+  16                 		.type	LightHardwareSetBlink, @function
+  17                 	LightHardwareSetBlink:
+  18                 	.LFB6:
+  19                 		.file 1 "csr_mesh_light_hw.c"
+   0:csr_mesh_light_hw.c **** /******************************************************************************
+   1:csr_mesh_light_hw.c ****  *  Copyright 2015 Qualcomm Technologies International, Ltd.
+   2:csr_mesh_light_hw.c ****  *  Bluetooth Low Energy CSRmesh 2.0
+   3:csr_mesh_light_hw.c ****  *  Application version 2.0
+   4:csr_mesh_light_hw.c ****  *
+   5:csr_mesh_light_hw.c ****  *  FILE
+   6:csr_mesh_light_hw.c ****  *      csr_mesh_light_hw.c
+   7:csr_mesh_light_hw.c ****  *
+   8:csr_mesh_light_hw.c ****  *  DESCRIPTION
+   9:csr_mesh_light_hw.c ****  *      This file implements the CSRmesh light hardware specific functions.
+  10:csr_mesh_light_hw.c ****  *
+  11:csr_mesh_light_hw.c ****  *  NOTE
+  12:csr_mesh_light_hw.c ****  *      Default hardware is always IOT board.
+  13:csr_mesh_light_hw.c ****  *
+  14:csr_mesh_light_hw.c ****  *****************************************************************************/
+  15:csr_mesh_light_hw.c **** 
+  16:csr_mesh_light_hw.c **** /*============================================================================*
+  17:csr_mesh_light_hw.c ****  *  Local Header Files
+  18:csr_mesh_light_hw.c ****  *============================================================================*/
+  19:csr_mesh_light_hw.c **** #include "user_config.h"
+  20:csr_mesh_light_hw.c **** #include "iot_hw.h"
+  21:csr_mesh_light_hw.c **** #include "nvm_access.h"
+  22:csr_mesh_light_hw.c **** #include "csr_mesh_light.h"
+  23:csr_mesh_light_hw.c **** #include "csr_mesh_light_util.h"
+  24:csr_mesh_light_hw.c **** #include "csr_mesh_light_hw.h"
+  25:csr_mesh_light_hw.c **** 
+  26:csr_mesh_light_hw.c **** /*============================================================================*
+  27:csr_mesh_light_hw.c ****  *  Private Definitions
+  28:csr_mesh_light_hw.c ****  *============================================================================*/
+  29:csr_mesh_light_hw.c **** /* Color temperature calculation parameters */
+  30:csr_mesh_light_hw.c **** /* Temperature is stored in 500 Kelvin units */
+  31:csr_mesh_light_hw.c **** #define CCT_TEMP_FACTOR             (500)
+  32:csr_mesh_light_hw.c **** #define PACK_CCT_LEVEL(temp, level) (((uint16)level << 8)| \
+  33:csr_mesh_light_hw.c ****                                      ((temp/CCT_TEMP_FACTOR) & 0xFF))
+  34:csr_mesh_light_hw.c **** #define GET_LEVEL(val)              ((val >> 8) & 0xFF)
+  35:csr_mesh_light_hw.c **** #define GET_TEMP(val)               (val & 0xFF)
+  36:csr_mesh_light_hw.c **** #define LUT_SIZE(lut)               (sizeof(lut)/sizeof(lut[0]))
+  37:csr_mesh_light_hw.c **** 
+  38:csr_mesh_light_hw.c **** /*============================================================================*
+  39:csr_mesh_light_hw.c ****  *  Private Data
+  40:csr_mesh_light_hw.c ****  *============================================================================*/
+  41:csr_mesh_light_hw.c **** #ifdef USE_ASSOCIATION_REMOVAL_KEY
+  42:csr_mesh_light_hw.c **** /* Association Button Press Timer */
+  43:csr_mesh_light_hw.c **** static timer_id long_keypress_tid;
+  44:csr_mesh_light_hw.c **** #endif /* USE_ASSOCIATION_REMOVAL_KEY */
+  45:csr_mesh_light_hw.c **** 
+  46:csr_mesh_light_hw.c **** #ifdef COLOUR_TEMP_ENABLED
+  47:csr_mesh_light_hw.c **** /* Look up tables for color temperature
+  48:csr_mesh_light_hw.c ****  * (lower byte is Temperature in 500 Kelvin units)
+  49:csr_mesh_light_hw.c ****  * and color level (higher byte).
+  50:csr_mesh_light_hw.c ****  */
+  51:csr_mesh_light_hw.c **** 
+  52:csr_mesh_light_hw.c **** /* LUT for Red */
+  53:csr_mesh_light_hw.c **** static const uint16 cct_red_lut[] =
+  54:csr_mesh_light_hw.c **** {
+  55:csr_mesh_light_hw.c ****     PACK_CCT_LEVEL(  6500, 255),
+  56:csr_mesh_light_hw.c ****     PACK_CCT_LEVEL(  7000, 245),
+  57:csr_mesh_light_hw.c ****     PACK_CCT_LEVEL(  8000, 227),
+  58:csr_mesh_light_hw.c ****     PACK_CCT_LEVEL( 10000, 204),
+  59:csr_mesh_light_hw.c ****     PACK_CCT_LEVEL( 12500, 188),
+  60:csr_mesh_light_hw.c ****     PACK_CCT_LEVEL( 15000, 179),
+  61:csr_mesh_light_hw.c ****     PACK_CCT_LEVEL( 20000, 168),
+  62:csr_mesh_light_hw.c ****     PACK_CCT_LEVEL( 25000, 163),
+  63:csr_mesh_light_hw.c ****     PACK_CCT_LEVEL( 30000, 159),
+  64:csr_mesh_light_hw.c ****     PACK_CCT_LEVEL( 35000, 157),
+  65:csr_mesh_light_hw.c ****     PACK_CCT_LEVEL( 40000, 155)
+  66:csr_mesh_light_hw.c **** };
+  67:csr_mesh_light_hw.c **** 
+  68:csr_mesh_light_hw.c **** /* LUT for Green */
+  69:csr_mesh_light_hw.c **** static const uint16 cct_green_lut[] =
+  70:csr_mesh_light_hw.c **** {
+  71:csr_mesh_light_hw.c ****     PACK_CCT_LEVEL(  1000,  51),
+  72:csr_mesh_light_hw.c ****     PACK_CCT_LEVEL(  1500, 109),
+  73:csr_mesh_light_hw.c ****     PACK_CCT_LEVEL(  2500, 161),
+  74:csr_mesh_light_hw.c ****     PACK_CCT_LEVEL(  3000, 180),
+  75:csr_mesh_light_hw.c ****     PACK_CCT_LEVEL(  4000, 209),
+  76:csr_mesh_light_hw.c ****     PACK_CCT_LEVEL(  5000, 228),
+  77:csr_mesh_light_hw.c ****     PACK_CCT_LEVEL(  6000, 243),
+  78:csr_mesh_light_hw.c ****     PACK_CCT_LEVEL(  6500, 249),
+  79:csr_mesh_light_hw.c ****     PACK_CCT_LEVEL(  7000, 243),
+  80:csr_mesh_light_hw.c ****     PACK_CCT_LEVEL(  9000, 225),
+  81:csr_mesh_light_hw.c ****     PACK_CCT_LEVEL( 12000, 211),
+  82:csr_mesh_light_hw.c ****     PACK_CCT_LEVEL( 18000, 199),
+  83:csr_mesh_light_hw.c ****     PACK_CCT_LEVEL( 25000, 193),
+  84:csr_mesh_light_hw.c ****     PACK_CCT_LEVEL( 38000, 188)
+  85:csr_mesh_light_hw.c **** };
+  86:csr_mesh_light_hw.c **** 
+  87:csr_mesh_light_hw.c **** /* LUT for Blue */
+  88:csr_mesh_light_hw.c **** static const uint16 cct_blue_lut[] =
+  89:csr_mesh_light_hw.c **** {
+  90:csr_mesh_light_hw.c ****     PACK_CCT_LEVEL( 1500,   0),
+  91:csr_mesh_light_hw.c ****     PACK_CCT_LEVEL( 2000,  18),
+  92:csr_mesh_light_hw.c ****     PACK_CCT_LEVEL( 2500,  72),
+  93:csr_mesh_light_hw.c ****     PACK_CCT_LEVEL( 3000, 107),
+  94:csr_mesh_light_hw.c ****     PACK_CCT_LEVEL( 4000, 163),
+  95:csr_mesh_light_hw.c ****     PACK_CCT_LEVEL( 5000, 206),
+  96:csr_mesh_light_hw.c ****     PACK_CCT_LEVEL( 6000, 239),
+  97:csr_mesh_light_hw.c ****     PACK_CCT_LEVEL( 6500, 253),
+  98:csr_mesh_light_hw.c ****     PACK_CCT_LEVEL( 7000, 255)
+  99:csr_mesh_light_hw.c **** };
+ 100:csr_mesh_light_hw.c **** 
+ 101:csr_mesh_light_hw.c **** /*============================================================================*
+ 102:csr_mesh_light_hw.c ****  *  Private Function Prototypes
+ 103:csr_mesh_light_hw.c ****  *============================================================================*/
+ 104:csr_mesh_light_hw.c **** /* Function to convert Color temperature to level from LUT */
+ 105:csr_mesh_light_hw.c **** static uint8 getLevelFromCCTLut(uint16 temp, const uint16 *color_lut,
+ 106:csr_mesh_light_hw.c ****                                              uint16 sizeof_lut);
+ 107:csr_mesh_light_hw.c **** 
+ 108:csr_mesh_light_hw.c **** /*============================================================================*
+ 109:csr_mesh_light_hw.c ****  *  Private Function Implementations
+ 110:csr_mesh_light_hw.c ****  *============================================================================*/
+ 111:csr_mesh_light_hw.c **** /*----------------------------------------------------------------------------*
+ 112:csr_mesh_light_hw.c ****  *  NAME
+ 113:csr_mesh_light_hw.c ****  *      getLevelFromCCTLut
+ 114:csr_mesh_light_hw.c ****  *
+ 115:csr_mesh_light_hw.c ****  *  DESCRIPTION
+ 116:csr_mesh_light_hw.c ****  *      This function linearly interpolates the color value from LUT and
+ 117:csr_mesh_light_hw.c ****  *      color temperature.
+ 118:csr_mesh_light_hw.c ****  *
+ 119:csr_mesh_light_hw.c ****  *  RETURNS
+ 120:csr_mesh_light_hw.c ****  *      Level of the colour from 0 - 255.
+ 121:csr_mesh_light_hw.c ****  *
+ 122:csr_mesh_light_hw.c ****  *---------------------------------------------------------------------------*/
+ 123:csr_mesh_light_hw.c **** static uint8 getLevelFromCCTLut(uint16 temp, const uint16 *color_lut,
+ 124:csr_mesh_light_hw.c ****                                              uint16 sizeof_lut)
+ 125:csr_mesh_light_hw.c **** {
+ 126:csr_mesh_light_hw.c ****     uint16 idx;
+ 127:csr_mesh_light_hw.c ****     int16  x2,y2,x1,y1;
+ 128:csr_mesh_light_hw.c ****     int32  val;
+ 129:csr_mesh_light_hw.c ****     uint16 thk = temp/CCT_TEMP_FACTOR;
+ 130:csr_mesh_light_hw.c **** 
+ 131:csr_mesh_light_hw.c ****     for (idx = 0; idx < sizeof_lut; idx++)
+ 132:csr_mesh_light_hw.c ****     {
+ 133:csr_mesh_light_hw.c ****         /* Find the temperature just greater than temperature to be set */
+ 134:csr_mesh_light_hw.c ****         if (thk < GET_TEMP(color_lut[idx]))
+ 135:csr_mesh_light_hw.c ****         {
+ 136:csr_mesh_light_hw.c ****             if (0 == idx)
+ 137:csr_mesh_light_hw.c ****             {
+ 138:csr_mesh_light_hw.c ****                 /* if the temperature is less than first LUT element
+ 139:csr_mesh_light_hw.c ****                  * then saturate at that value.
+ 140:csr_mesh_light_hw.c ****                  */
+ 141:csr_mesh_light_hw.c ****                 return GET_LEVEL(color_lut[idx]);
+ 142:csr_mesh_light_hw.c ****             }
+ 143:csr_mesh_light_hw.c ****             else
+ 144:csr_mesh_light_hw.c ****             {
+ 145:csr_mesh_light_hw.c ****                 /* Get the points on interpolation line
+ 146:csr_mesh_light_hw.c ****                  * Multiply temperature by unit factor to get value
+ 147:csr_mesh_light_hw.c ****                  * in Kelvin.
+ 148:csr_mesh_light_hw.c ****                  */
+ 149:csr_mesh_light_hw.c ****                 y1 = (int16)GET_LEVEL(color_lut[idx - 1]);
+ 150:csr_mesh_light_hw.c ****                 x1 = (int16)GET_TEMP(color_lut[idx - 1]) * CCT_TEMP_FACTOR;
+ 151:csr_mesh_light_hw.c ****                 y2 = (int16)GET_LEVEL(color_lut[idx]);
+ 152:csr_mesh_light_hw.c ****                 x2 = (int16)GET_TEMP(color_lut[idx]) * CCT_TEMP_FACTOR;
+ 153:csr_mesh_light_hw.c **** 
+ 154:csr_mesh_light_hw.c ****                 /* Apply Straight Line interpolation.
+ 155:csr_mesh_light_hw.c ****                  * y = y1 + ((y2 - y1) * (x -x1))/(x2 - x1)
+ 156:csr_mesh_light_hw.c ****                  */
+ 157:csr_mesh_light_hw.c ****                 val = ((int32)(y2 - y1))*((int16)temp - x1);
+ 158:csr_mesh_light_hw.c ****                 val = (val)/(x2 - x1) + y1;
+ 159:csr_mesh_light_hw.c **** 
+ 160:csr_mesh_light_hw.c ****                 /* return the calculated value */
+ 161:csr_mesh_light_hw.c ****                 return ((uint8)val);
+ 162:csr_mesh_light_hw.c ****             }
+ 163:csr_mesh_light_hw.c ****         }
+ 164:csr_mesh_light_hw.c ****     }
+ 165:csr_mesh_light_hw.c **** 
+ 166:csr_mesh_light_hw.c ****     /* If temperature is greater than last element in LUT,
+ 167:csr_mesh_light_hw.c ****      * saturate to the highest
+ 168:csr_mesh_light_hw.c ****      */
+ 169:csr_mesh_light_hw.c ****     return GET_LEVEL(color_lut[sizeof_lut - 1]);
+ 170:csr_mesh_light_hw.c **** 
+ 171:csr_mesh_light_hw.c **** }
+ 172:csr_mesh_light_hw.c **** 
+ 173:csr_mesh_light_hw.c **** #endif /* COLOUR_TEMP_ENABLED */
+ 174:csr_mesh_light_hw.c **** 
+ 175:csr_mesh_light_hw.c **** #ifdef USE_ASSOCIATION_REMOVAL_KEY
+ 176:csr_mesh_light_hw.c **** /*-----------------------------------------------------------------------------*
+ 177:csr_mesh_light_hw.c ****  *  NAME
+ 178:csr_mesh_light_hw.c ****  *      longKeyPressTimeoutHandler
+ 179:csr_mesh_light_hw.c ****  *
+ 180:csr_mesh_light_hw.c ****  *  DESCRIPTION
+ 181:csr_mesh_light_hw.c ****  *      This function handles the long key press timer event.
+ 182:csr_mesh_light_hw.c ****  *
+ 183:csr_mesh_light_hw.c ****  *  RETURNS/MODIFIES
+ 184:csr_mesh_light_hw.c ****  *      Nothing
+ 185:csr_mesh_light_hw.c ****  *
+ 186:csr_mesh_light_hw.c ****  *----------------------------------------------------------------------------*/
+ 187:csr_mesh_light_hw.c **** static void longKeyPressTimeoutHandler(timer_id tid)
+ 188:csr_mesh_light_hw.c **** {
+ 189:csr_mesh_light_hw.c ****     if (long_keypress_tid == tid)
+ 190:csr_mesh_light_hw.c ****     {
+ 191:csr_mesh_light_hw.c ****         if (app_state_not_associated != g_lightapp_data.assoc_state)
+ 192:csr_mesh_light_hw.c ****         {
+ 193:csr_mesh_light_hw.c ****             /* API called to remove the network from the mesh stack */
+ 194:csr_mesh_light_hw.c ****             CSRmeshRemoveNetwork(CSR_MESH_DEFAULT_NETID);
+ 195:csr_mesh_light_hw.c **** 
+ 196:csr_mesh_light_hw.c ****             RemoveAssociation();
+ 197:csr_mesh_light_hw.c ****         }
+ 198:csr_mesh_light_hw.c ****         long_keypress_tid = TIMER_INVALID;
+ 199:csr_mesh_light_hw.c ****     }
+ 200:csr_mesh_light_hw.c **** }
+ 201:csr_mesh_light_hw.c **** #endif
+ 202:csr_mesh_light_hw.c **** 
+ 203:csr_mesh_light_hw.c **** /*============================================================================*
+ 204:csr_mesh_light_hw.c ****  *  Public function definitions
+ 205:csr_mesh_light_hw.c ****  *============================================================================*/
+ 206:csr_mesh_light_hw.c **** 
+ 207:csr_mesh_light_hw.c **** #ifdef USE_ASSOCIATION_REMOVAL_KEY
+ 208:csr_mesh_light_hw.c **** /*-----------------------------------------------------------------------------*
+ 209:csr_mesh_light_hw.c ****  *  NAME
+ 210:csr_mesh_light_hw.c ****  *      HandlePIOEvent
+ 211:csr_mesh_light_hw.c ****  *
+ 212:csr_mesh_light_hw.c ****  *  DESCRIPTION
+ 213:csr_mesh_light_hw.c ****  *      This function handles the PIO Events.
+ 214:csr_mesh_light_hw.c ****  *
+ 215:csr_mesh_light_hw.c ****  *  RETURNS/MODIFIES
+ 216:csr_mesh_light_hw.c ****  *      Nothing
+ 217:csr_mesh_light_hw.c ****  *
+ 218:csr_mesh_light_hw.c ****  *----------------------------------------------------------------------------*/
+ 219:csr_mesh_light_hw.c **** extern void HandlePIOEvent(pio_changed_data *data)
+ 220:csr_mesh_light_hw.c **** {
+ 221:csr_mesh_light_hw.c ****     uint32 changed = data->pio_cause & (SW2_MASK|SW3_MASK);
+ 222:csr_mesh_light_hw.c ****     /* If SW2 or SW3 event, process further. Ignore otherwise */
+ 223:csr_mesh_light_hw.c ****     if (changed)
+ 224:csr_mesh_light_hw.c ****     {
+ 225:csr_mesh_light_hw.c ****         /* Button Pressed */
+ 226:csr_mesh_light_hw.c ****         if ((data->pio_state & changed) == 0)
+ 227:csr_mesh_light_hw.c ****         {
+ 228:csr_mesh_light_hw.c ****             TimerDelete(long_keypress_tid);
+ 229:csr_mesh_light_hw.c **** 
+ 230:csr_mesh_light_hw.c ****             long_keypress_tid = TimerCreate(LONG_KEYPRESS_TIME, TRUE,
+ 231:csr_mesh_light_hw.c ****                                             longKeyPressTimeoutHandler);
+ 232:csr_mesh_light_hw.c ****         }
+ 233:csr_mesh_light_hw.c ****         else /* Button Released */
+ 234:csr_mesh_light_hw.c ****         {
+ 235:csr_mesh_light_hw.c ****             if (TIMER_INVALID != long_keypress_tid)
+ 236:csr_mesh_light_hw.c ****             {
+ 237:csr_mesh_light_hw.c ****                 /* Button released before long press timeout. Delete the Timer 
+ 238:csr_mesh_light_hw.c ****                  */
+ 239:csr_mesh_light_hw.c ****                 TimerDelete(long_keypress_tid);
+ 240:csr_mesh_light_hw.c ****                 long_keypress_tid = TIMER_INVALID;
+ 241:csr_mesh_light_hw.c ****             }
+ 242:csr_mesh_light_hw.c ****         }
+ 243:csr_mesh_light_hw.c ****     }
+ 244:csr_mesh_light_hw.c **** }
+ 245:csr_mesh_light_hw.c **** #endif /* USE_ASSOCIATION_REMOVAL_KEY */
+ 246:csr_mesh_light_hw.c **** 
+ 247:csr_mesh_light_hw.c **** /*----------------------------------------------------------------------------*
+ 248:csr_mesh_light_hw.c ****  *  NAME
+ 249:csr_mesh_light_hw.c ****  *      LightHardwareInit
+ 250:csr_mesh_light_hw.c ****  *
+ 251:csr_mesh_light_hw.c ****  *  DESCRIPTION
+ 252:csr_mesh_light_hw.c ****  *      This function initializes the light hardware, like PIO, interface etc.
+ 253:csr_mesh_light_hw.c ****  *
+ 254:csr_mesh_light_hw.c ****  * PARAMETERS
+ 255:csr_mesh_light_hw.c ****  *      Nothing.
+ 256:csr_mesh_light_hw.c ****  *
+ 257:csr_mesh_light_hw.c ****  * RETURNS
+ 258:csr_mesh_light_hw.c ****  *      Nothing.
+ 259:csr_mesh_light_hw.c ****  *
+ 260:csr_mesh_light_hw.c ****  *----------------------------------------------------------------------------*/
+ 261:csr_mesh_light_hw.c **** extern void LightHardwareInit(void)
+ 262:csr_mesh_light_hw.c **** {
+ 263:csr_mesh_light_hw.c ****     IOTLightControlDeviceInit();
+ 264:csr_mesh_light_hw.c **** #ifdef USE_ASSOCIATION_REMOVAL_KEY
+ 265:csr_mesh_light_hw.c ****     /* The buttons on the board can be used to remove device association */
+ 266:csr_mesh_light_hw.c ****     IOTSwitchInit();
+ 267:csr_mesh_light_hw.c **** #endif
+ 268:csr_mesh_light_hw.c **** }
+ 269:csr_mesh_light_hw.c **** 
+ 270:csr_mesh_light_hw.c **** /*----------------------------------------------------------------------------*
+ 271:csr_mesh_light_hw.c ****  *  NAME
+ 272:csr_mesh_light_hw.c ****  *      LightHardwarePowerControl
+ 273:csr_mesh_light_hw.c ****  *
+ 274:csr_mesh_light_hw.c ****  *  DESCRIPTION
+ 275:csr_mesh_light_hw.c ****  *      Controls the light device power.
+ 276:csr_mesh_light_hw.c ****  *
+ 277:csr_mesh_light_hw.c ****  * PARAMETERS
+ 278:csr_mesh_light_hw.c ****  *      power_on [in] Turns ON power if TRUE.
+ 279:csr_mesh_light_hw.c ****  *                    Turns OFF power if FALSE.
+ 280:csr_mesh_light_hw.c ****  *
+ 281:csr_mesh_light_hw.c ****  * RETURNS
+ 282:csr_mesh_light_hw.c ****  *      Nothing.
+ 283:csr_mesh_light_hw.c ****  *
+ 284:csr_mesh_light_hw.c ****  *----------------------------------------------------------------------------*/
+ 285:csr_mesh_light_hw.c **** extern void LightHardwarePowerControl(bool power_on)
+ 286:csr_mesh_light_hw.c **** {
+ 287:csr_mesh_light_hw.c ****     IOTLightControlDevicePower(power_on);
+ 288:csr_mesh_light_hw.c **** }
+ 289:csr_mesh_light_hw.c **** 
+ 290:csr_mesh_light_hw.c **** /*----------------------------------------------------------------------------*
+ 291:csr_mesh_light_hw.c ****  *  NAME
+ 292:csr_mesh_light_hw.c ****  *      LightHardwareSetColor
+ 293:csr_mesh_light_hw.c ****  *
+ 294:csr_mesh_light_hw.c ****  *  DESCRIPTION
+ 295:csr_mesh_light_hw.c ****  *      Controls the color of the light.
+ 296:csr_mesh_light_hw.c ****  *
+ 297:csr_mesh_light_hw.c ****  * PARAMETERS
+ 298:csr_mesh_light_hw.c ****  *      red   [in] 0-255 levels of Red colour component.
+ 299:csr_mesh_light_hw.c ****  *      green [in] 0-255 levels of Green colour component.
+ 300:csr_mesh_light_hw.c ****  *      blue  [in] 0-255 levels of Blue colour component.
+ 301:csr_mesh_light_hw.c ****  *
+ 302:csr_mesh_light_hw.c ****  * RETURNS
+ 303:csr_mesh_light_hw.c ****  *      TRUE  if set color is supported by device.
+ 304:csr_mesh_light_hw.c ****  *      FALSE if it device is a white light or mono-chromatic light.
+ 305:csr_mesh_light_hw.c ****  *
+ 306:csr_mesh_light_hw.c ****  *----------------------------------------------------------------------------*/
+ 307:csr_mesh_light_hw.c **** extern bool LightHardwareSetColor(uint8 red, uint8 green, uint8 blue)
+ 308:csr_mesh_light_hw.c **** {
+ 309:csr_mesh_light_hw.c ****     bool status = FALSE;
+ 310:csr_mesh_light_hw.c **** 
+ 311:csr_mesh_light_hw.c ****     status = TRUE;
+ 312:csr_mesh_light_hw.c ****     IOTLightControlDeviceSetColor(red, green, blue);
+ 313:csr_mesh_light_hw.c **** 
+ 314:csr_mesh_light_hw.c ****     return status;
+ 315:csr_mesh_light_hw.c **** }
+ 316:csr_mesh_light_hw.c **** 
+ 317:csr_mesh_light_hw.c **** /*----------------------------------------------------------------------------*
+ 318:csr_mesh_light_hw.c ****  *  NAME
+ 319:csr_mesh_light_hw.c ****  *      LightHardwareSetLevel
+ 320:csr_mesh_light_hw.c ****  *
+ 321:csr_mesh_light_hw.c ****  *  DESCRIPTION
+ 322:csr_mesh_light_hw.c ****  *      Controls the brightness of the White light.
+ 323:csr_mesh_light_hw.c ****  *
+ 324:csr_mesh_light_hw.c ****  * PARAMETERS
+ 325:csr_mesh_light_hw.c ****  *      red   [in] 0-255 levels of Red colour component.
+ 326:csr_mesh_light_hw.c ****  *      green [in] 0-255 levels of Green colour component.
+ 327:csr_mesh_light_hw.c ****  *      blue  [in] 0-255 levels of Blue colour component.
+ 328:csr_mesh_light_hw.c ****  *      level [in] 0-255 levels of intensity.
+ 329:csr_mesh_light_hw.c ****  *
+ 330:csr_mesh_light_hw.c ****  * RETURNS
+ 331:csr_mesh_light_hw.c ****  *      Nothing.
+ 332:csr_mesh_light_hw.c ****  *
+ 333:csr_mesh_light_hw.c ****  *----------------------------------------------------------------------------*/
+ 334:csr_mesh_light_hw.c **** extern void LightHardwareSetLevel(uint8 red, uint8 green, uint8 blue, 
+ 335:csr_mesh_light_hw.c ****                                   uint8 level)
+ 336:csr_mesh_light_hw.c **** {
+ 337:csr_mesh_light_hw.c ****     /* The brightness level is represented through RGB values */
+ 338:csr_mesh_light_hw.c ****     uint32 temp;
+ 339:csr_mesh_light_hw.c ****     temp  = (uint32)(red * level)/255;
+ 340:csr_mesh_light_hw.c ****     red = temp & 0xFF;
+ 341:csr_mesh_light_hw.c ****     temp  = (uint32)(green * level)/255;
+ 342:csr_mesh_light_hw.c ****     green = temp & 0xFF;
+ 343:csr_mesh_light_hw.c ****     temp  = (uint32)(blue * level)/255;
+ 344:csr_mesh_light_hw.c ****     blue = temp & 0xFF;
+ 345:csr_mesh_light_hw.c ****     IOTLightControlDeviceSetColor(red, green, blue);
+ 346:csr_mesh_light_hw.c **** }
+ 347:csr_mesh_light_hw.c **** 
+ 348:csr_mesh_light_hw.c **** #ifdef COLOUR_TEMP_ENABLED
+ 349:csr_mesh_light_hw.c **** /*----------------------------------------------------------------------------*
+ 350:csr_mesh_light_hw.c ****  *  NAME
+ 351:csr_mesh_light_hw.c ****  *      LightHardwareSetColorTemp
+ 352:csr_mesh_light_hw.c ****  *
+ 353:csr_mesh_light_hw.c ****  *  DESCRIPTION
+ 354:csr_mesh_light_hw.c ****  *      Controls the colour temperature.
+ 355:csr_mesh_light_hw.c ****  *
+ 356:csr_mesh_light_hw.c ****  * PARAMETERS
+ 357:csr_mesh_light_hw.c ****  *      temp   [in] Colour temperature in Kelvin.
+ 358:csr_mesh_light_hw.c ****  *
+ 359:csr_mesh_light_hw.c ****  * RETURNS
+ 360:csr_mesh_light_hw.c ****  *      TRUE  if Colour Temperature setting is supported by device.
+ 361:csr_mesh_light_hw.c ****  *      FALSE if Colour Temperature setting is NOT supported.
+ 362:csr_mesh_light_hw.c ****  *
+ 363:csr_mesh_light_hw.c ****  *----------------------------------------------------------------------------*/
+ 364:csr_mesh_light_hw.c **** extern bool LightHardwareSetColorTemp(uint16 temp)
+ 365:csr_mesh_light_hw.c **** {
+ 366:csr_mesh_light_hw.c ****     uint8  red, green, blue;
+ 367:csr_mesh_light_hw.c **** 
+ 368:csr_mesh_light_hw.c ****     red   = getLevelFromCCTLut(temp, cct_red_lut, LUT_SIZE(cct_red_lut));
+ 369:csr_mesh_light_hw.c ****     green = getLevelFromCCTLut(temp, cct_green_lut, LUT_SIZE(cct_green_lut));
+ 370:csr_mesh_light_hw.c ****     blue  = getLevelFromCCTLut(temp, cct_blue_lut, LUT_SIZE(cct_blue_lut));
+ 371:csr_mesh_light_hw.c **** 
+ 372:csr_mesh_light_hw.c ****     return LightHardwareSetColor(red, green, blue);
+ 373:csr_mesh_light_hw.c **** }
+ 374:csr_mesh_light_hw.c **** 
+ 375:csr_mesh_light_hw.c **** /*----------------------------------------------------------------------------*
+ 376:csr_mesh_light_hw.c ****  *  NAME
+ 377:csr_mesh_light_hw.c ****  *      LightHardwareGetRGBFromColorTemp
+ 378:csr_mesh_light_hw.c ****  *
+ 379:csr_mesh_light_hw.c ****  *  DESCRIPTION
+ 380:csr_mesh_light_hw.c ****  *      The function gets the RGB values for the passed color temperature.
+ 381:csr_mesh_light_hw.c ****  *
+ 382:csr_mesh_light_hw.c ****  * PARAMETERS
+ 383:csr_mesh_light_hw.c ****  *      temp   [in] Colour temperature in Kelvin.
+ 384:csr_mesh_light_hw.c ****  *      red    [out] red value based on color temp.
+ 385:csr_mesh_light_hw.c ****  *      green  [out] green value based on color temp
+ 386:csr_mesh_light_hw.c ****  *      blue   [out] blue value based on color temp
+ 387:csr_mesh_light_hw.c ****  *
+ 388:csr_mesh_light_hw.c ****  * RETURNS
+ 389:csr_mesh_light_hw.c ****  *      None
+ 390:csr_mesh_light_hw.c ****  *
+ 391:csr_mesh_light_hw.c ****  *----------------------------------------------------------------------------*/
+ 392:csr_mesh_light_hw.c **** extern void LightHardwareGetRGBFromColorTemp(uint16 temp, uint8 *red, 
+ 393:csr_mesh_light_hw.c ****                                              uint8 *green, uint8 *blue)
+ 394:csr_mesh_light_hw.c **** {
+ 395:csr_mesh_light_hw.c ****     *red   = getLevelFromCCTLut(temp, cct_red_lut, LUT_SIZE(cct_red_lut));
+ 396:csr_mesh_light_hw.c ****     *green = getLevelFromCCTLut(temp, cct_green_lut, LUT_SIZE(cct_green_lut));
+ 397:csr_mesh_light_hw.c ****     *blue  = getLevelFromCCTLut(temp, cct_blue_lut, LUT_SIZE(cct_blue_lut));
+ 398:csr_mesh_light_hw.c **** }
+ 399:csr_mesh_light_hw.c **** 
+ 400:csr_mesh_light_hw.c **** #endif /* COLOUR_TEMP_ENABLED */
+ 401:csr_mesh_light_hw.c **** 
+ 402:csr_mesh_light_hw.c **** /*----------------------------------------------------------------------------*
+ 403:csr_mesh_light_hw.c ****  *  NAME
+ 404:csr_mesh_light_hw.c ****  *      LightHardwareSetBlink
+ 405:csr_mesh_light_hw.c ****  *
+ 406:csr_mesh_light_hw.c ****  *  DESCRIPTION
+ 407:csr_mesh_light_hw.c ****  *      Controls the blink colour and duration of light.
+ 408:csr_mesh_light_hw.c ****  *
+ 409:csr_mesh_light_hw.c ****  * PARAMETERS
+ 410:csr_mesh_light_hw.c ****  *      red      [in] 0-255 levels of Red colour component.
+ 411:csr_mesh_light_hw.c ****  *      green    [in] 0-255 levels of Green colour component.
+ 412:csr_mesh_light_hw.c ****  *      blue     [in] 0-255 levels of Blue colour component.
+ 413:csr_mesh_light_hw.c ****  *      on_time  [in] ON duration in multiples of 16ms.
+ 414:csr_mesh_light_hw.c ****  *      off_time [in] OFF duration in multiples of 16ms.
+ 415:csr_mesh_light_hw.c ****  *
+ 416:csr_mesh_light_hw.c ****  * RETURNS
+ 417:csr_mesh_light_hw.c ****  *      TRUE  if light blink is supported by device.
+ 418:csr_mesh_light_hw.c ****  *      FALSE if light blink is NOT supported.
+ 419:csr_mesh_light_hw.c ****  *
+ 420:csr_mesh_light_hw.c ****  *----------------------------------------------------------------------------*/
+ 421:csr_mesh_light_hw.c **** extern bool LightHardwareSetBlink(uint8 red, uint8 green, uint8 blue,
+ 422:csr_mesh_light_hw.c ****                                   uint8 on_time, uint8 off_time)
+ 423:csr_mesh_light_hw.c **** {
+  20                 	:
+  21                 		enter	#0x0004
+  22 0000 04 0B       	.LCFI0:
+  23                 		.loc 1 425 0
+ 424:csr_mesh_light_hw.c **** )
+  24                 	X,@(0x0004,Y)
+  25 0001 04 1B       		st	X,@(0,Y)
+  26 0002 00 2B       		ld	X,@(0x0005,Y)
+  27 0003 05 1B       		st	X,@(0x0001,Y)
+  28 0004 01 2B       		ld	X,@(0x0006,Y)
+  29 0005 06 1B       		st	X,@(0x0002,Y)
+  30 0006 02 2B       		bsr	IOTLightControlDeviceBlink
+  31 0007 00 00 00 00 	.LVL1:
+  31      00 9C 
+  32                 		.loc 1 427 0
+ 425:csr_mesh_light_hw.c **** ime)
+ 426:csr_mesh_light_hw.c **** {
+  33                 	x0001
+  34 000a 01 14       		leave	#0x0004
+  35 000b 04 0F       	.LFE6:
+  36                 		.size	LightHardwareSetBlink, .-LightHardwareSetBlink
+  37                 		.global	__size_of_LightHardwareSetBlink
+  38                 		.equ	__size_of_LightHardwareSetBlink,. - LightHardwareSetBlink
+  39                 		.section	.text.LightHardwareSetLevel,"ax",@progbits
+  40                 		.global	LightHardwareSetLevel
+  41                 		.type	LightHardwareSetLevel, @function
+  42                 	LightHardwareSetLevel:
+  43                 	.LFB5:
+  44                 		.loc 1 337 0
+ 337:csr_mesh_light_hw.c **** {
+  45                 	r	#0x0001
+  46                 	.LCFI1:
+  47 0000 01 0B       		st	AL,@0xfff8
+  48                 		st	AH,@0xfffa
+  49 0001 F8 25       		ld	X,@(0x0002,Y)
+  50 0002 FA 21       		.loc 1 340 0
+  51 0003 02 1B       		ld	AL,@$XAP_UXL
+ 340:csr_mesh_light_hw.c ****     temp  = (uint32)(red * level)/255;
+  52                 		smult	@0xfff8
+  53 0004 00 00 00 15 	.LVL4:
+  54                 		ld	AH,#0x0000
+  55 0006 F8 91       		udiv	#0x00ff
+  56                 		st	AL,@0xfff9
+  57 0007 00 10       		.loc 1 342 0
+  58 0008 00 09 01 00 		ld	AL,@$XAP_UXL
+  58      FF 94 
+  59 000b F9 25       		smult	@0xfffa
+ 342:csr_mesh_light_hw.c ****     temp  = (uint32)(green * level)/255;
+  60                 	0x0000
+  61 000c 00 00 00 15 		udiv	#0x00ff
+  62 000e FA 91       		st	AL,@0xfff8
+  63 000f 00 10       	.LVL5:
+  64 0010 00 09 01 00 		.loc 1 344 0
+  64      FF 94 
+  65 0013 F8 25       		ld	AL,@$XAP_UXL
+  66                 		smult	@(0x0001,Y)
+ 344:csr_mesh_light_hw.c ****     temp  = (uint32)(blue * level)/255;
+  67                 	#0x0000
+  68 0014 00 00 00 15 		udiv	#0x00ff
+  69 0016 01 93       		.loc 1 346 0
+  70 0017 00 10       		ld	X,@0xfff9
+  71 0018 00 09 01 00 		and	X,#0x00ff
+  71      FF 94 
+ 346:csr_mesh_light_hw.c ****     IOTLightControlDeviceSetColor(red, green, blue);
+  72                 	,@0xfff9
+  73 001b F9 19       		ld	X,@0xfff8
+  74 001c 01 00 FF C8 		and	X,#0x00ff
+  75 001e F9 29       		and	AL,#0x00ff
+  76 001f F8 19       		st	AL,@(0x0001,Y)
+  77 0020 01 00 FF C8 		ld	AL,@0xfff9
+  78 0022 01 00 FF C4 		ld	AH,@$XAP_UXL
+  79 0024 01 27       		.loc 1 347 0
+  80 0025 F9 15       		ld	X,@(0x0000,Y)
+  81 0026 00 00 00 11 		add	Y,#0x0001
+ 347:csr_mesh_light_hw.c **** }
+  82                 	6 0
+  83 0028 00 1B       		bra	IOTLightControlDeviceSetColor
+  84 0029 01 3C       	.LVL6:
+ 346:csr_mesh_light_hw.c ****     IOTLightControlDeviceSetColor(red, green, blue);
+  85                 	.LFE5:
+  86 002a 00 00 00 00 		.size	LightHardwareSetLevel, .-LightHardwareSetLevel
+  86      00 E0 
+  87                 		.global	__size_of_LightHardwareSetLevel
+  88                 		.equ	__size_of_LightHardwareSetLevel,. - LightHardwareSetLevel
+  89                 		.section	.text.LightHardwareSetColor,"ax",@progbits
+  90                 		.global	LightHardwareSetColor
+  91                 		.type	LightHardwareSetColor, @function
+  92                 	LightHardwareSetColor:
+  93                 	.LFB4:
+  94                 		.loc 1 309 0
+  95                 	.LVL7:
+  96                 		enter	#0x0002
+ 309:csr_mesh_light_hw.c **** {
+  97                 	 313 0
+  98                 		ld	X,@(0x0002,Y)
+  99 0000 02 0B       		st	X,@(0,Y)
+ 100                 		bsr	IOTLightControlDeviceSetColor
+ 313:csr_mesh_light_hw.c ****     IOTLightControlDeviceSetColor(red, green, blue);
+ 101                 	8:
+ 102 0001 02 1B       		.loc 1 316 0
+ 103 0002 00 2B       		ld	AL,#0x0001
+ 104 0003 00 00 00 00 		leave	#0x0002
+ 104      00 9C 
+ 105                 	.LFE4:
+ 316:csr_mesh_light_hw.c **** }
+ 106                 	e	LightHardwareSetColor, .-LightHardwareSetColor
+ 107 0006 01 14       		.global	__size_of_LightHardwareSetColor
+ 108 0007 02 0F       		.equ	__size_of_LightHardwareSetColor,. - LightHardwareSetColor
+ 109                 		.section	.text.LightHardwarePowerControl,"ax",@progbits
+ 110                 		.global	LightHardwarePowerControl
+ 111                 		.type	LightHardwarePowerControl, @function
+ 112                 	LightHardwarePowerControl:
+ 113                 	.LFB3:
+ 114                 		.loc 1 287 0
+ 115                 	.LVL9:
+ 116                 		.loc 1 288 0
+ 117                 		bra	IOTLightControlDevicePower
+ 287:csr_mesh_light_hw.c **** {
+ 118                 	3:
+ 119                 		.size	LightHardwarePowerControl, .-LightHardwarePowerControl
+ 288:csr_mesh_light_hw.c ****     IOTLightControlDevicePower(power_on);
+ 120                 	global	__size_of_LightHardwarePowerControl
+ 121 0000 00 00 00 00 		.equ	__size_of_LightHardwarePowerControl,. - LightHardwarePowerControl
+ 121      00 E0 
+ 122                 		.section	.text.LightHardwareInit,"ax",@progbits
+ 123                 		.global	LightHardwareInit
+ 124                 		.type	LightHardwareInit, @function
+ 125                 	LightHardwareInit:
+ 126                 	.LFB2:
+ 127                 		.loc 1 263 0
+ 128                 		.loc 1 264 0
+ 129                 		bra	IOTLightControlDeviceInit
+ 130                 	.LFE2:
+ 131                 		.size	LightHardwareInit, .-LightHardwareInit
+ 263:csr_mesh_light_hw.c **** {
+ 132                 	ize_of_LightHardwareInit
+ 264:csr_mesh_light_hw.c ****     IOTLightControlDeviceInit();
+ 133                 	.equ	__size_of_LightHardwareInit,. - LightHardwareInit
+ 134 0000 00 00 00 00 		.section	.debug_frame,"",@progbits
+ 134      00 E0 
+ 135                 	.Lframe0:
+ 136                 		.4byte	.LECIE0-.LSCIE0
+ 137                 	.LSCIE0:
+ 138                 		.4byte	0xffffffff
+ 139                 		.1byte	0x1
+ 140                 		.ascii "\000"
+ 141 0000 00 00 00 00 		.1byte	0x1
+ 142                 		.1byte	0x7f
+ 143 0002 FF FF FF FF 		.1byte	0x3
+ 144 0004 01          		.1byte	0xc
+ 145 0004 00          		.1byte	0x5
+ 146 0005 01          		.1byte	0x0
+ 147 0005 7F          		.p2align	2
+ 148 0006 03          	.LECIE0:
+ 149 0006 0C          	.LSFDE0:
+ 150 0007 05          		.4byte	.LEFDE0-.LASFDE0
+ 151 0007 00          	.LASFDE0:
+ 152                 		.4byte	.Lframe0
+ 153                 		.4byte	.LFB6
+ 154                 		.4byte	.LFE6-.LFB6
+ 155 0008 00 00 00 00 		.1byte	0x4
+ 156                 		.4byte	.LCFI0-.LFB6
+ 157 000a 00 00 00 00 		.1byte	0xe
+ 158 000c 00 00 00 00 		.1byte	0x4
+ 159 000e 00 00 00 00 		.1byte	0x83
+ 160 0010 41          		.1byte	0x1
+ 161                 		.p2align	2
+ 162 0010 0E          	.LEFDE0:
+ 163 0011 04          	.LSFDE2:
+ 164 0011 83          		.4byte	.LEFDE2-.LASFDE2
+ 165 0012 01          	.LASFDE2:
+ 166 0012 00 00 00    		.4byte	.Lframe0
+ 167                 		.4byte	.LFB5
+ 168                 		.4byte	.LFE5-.LFB5
+ 169 0014 00 00 00 00 		.1byte	0x4
+ 170                 		.4byte	.LCFI1-.LFB5
+ 171 0016 00 00 00 00 		.1byte	0xe
+ 172 0018 00 00 00 00 		.1byte	0x1
+ 173 001a 00 00 00 00 		.1byte	0x83
+ 174 001c 41          		.1byte	0x1
+ 175                 		.p2align	2
+ 176 001c 0E          	.LEFDE2:
+ 177 001d 01          	.LSFDE4:
+ 178 001d 83          		.4byte	.LEFDE4-.LASFDE4
+ 179 001e 01          	.LASFDE4:
+ 180 001e 00 00 00    		.4byte	.Lframe0
+ 181                 		.4byte	.LFB4
+ 182                 		.4byte	.LFE4-.LFB4
+ 183 0020 00 00 00 00 		.1byte	0x4
+ 184                 		.4byte	.LCFI2-.LFB4
+ 185 0022 00 00 00 00 		.1byte	0xe
+ 186 0024 00 00 00 00 		.1byte	0x2
+ 187 0026 00 00 00 00 		.1byte	0x83
+ 188 0028 41          		.1byte	0x1
+ 189                 		.p2align	2
+ 190 0028 0E          	.LEFDE4:
+ 191 0029 02          	.LSFDE6:
+ 192 0029 83          		.4byte	.LEFDE6-.LASFDE6
+ 193 002a 01          	.LASFDE6:
+ 194 002a 00 00 00    		.4byte	.Lframe0
+ 195                 		.4byte	.LFB3
+ 196                 		.4byte	.LFE3-.LFB3
+ 197 002c 00 00 00 00 		.p2align	2
+ 198                 	.LEFDE6:
+ 199 002e 00 00 00 00 	.LSFDE8:
+ 200 0030 00 00 00 00 		.4byte	.LEFDE8-.LASFDE8
+ 201 0032 00 00 00 00 	.LASFDE8:
+ 202                 		.4byte	.Lframe0
+ 203                 		.4byte	.LFB2
+ 204                 		.4byte	.LFE2-.LFB2
+ 205 0034 00 00 00 00 		.p2align	2
+ 206                 	.LEFDE8:
+ 207 0036 00 00 00 00 		.text
+ 208 0038 00 00 00 00 	.Letext0:
+ 209 003a 00 00 00 00 		.section	.debug_loc,"",@progbits
+ 210                 	.Ldebug_loc0:
+ 211                 	.LLST0:
+ 212                 		.4byte	.LFB6
+ 213                 		.4byte	.LCFI0
+ 214                 		.2byte	0x1
+ 215                 		.1byte	0x55
+ 216                 		.4byte	.LCFI0
+ 217 0000 00 00 00 00 		.4byte	.LFE6
+ 218 0002 00 00 00 00 		.2byte	0x2
+ 219 0004 00 01       		.1byte	0x75
+ 220 0005 55          		.1byte	0x4
+ 221 0005 00 00 00 00 		.4byte	0x0
+ 222 0007 00 00 00 00 		.4byte	0x0
+ 223 0009 00 02       	.LLST1:
+ 224 000a 75          		.4byte	.LVL0
+ 225 000b 04          		.4byte	.LVL1
+ 226 000b 00 00 00 00 		.2byte	0x1
+ 227 000d 00 00 00 00 		.1byte	0x51
+ 228                 		.4byte	0x0
+ 229 000f 00 00 00 00 		.4byte	0x0
+ 230 0011 00 00 00 00 	.LLST2:
+ 231 0013 00 01       		.4byte	.LVL0
+ 232 0014 51          		.4byte	.LVL1
+ 233 0015 00 00 00 00 		.2byte	0x1
+ 234 0017 00 00 00 00 		.1byte	0x50
+ 235                 		.4byte	0x0
+ 236 0019 00 00 00 00 		.4byte	0x0
+ 237 001b 00 00 00 00 	.LLST3:
+ 238 001d 00 01       		.4byte	.LFB5
+ 239 001e 50          		.4byte	.LCFI1
+ 240 001e 00 00 00 00 		.2byte	0x1
+ 241 0020 00 00 00 00 		.1byte	0x55
+ 242                 		.4byte	.LCFI1
+ 243 0022 00 00 00 00 		.4byte	.LFE5
+ 244 0024 00 00 00 00 		.2byte	0x2
+ 245 0026 00 01       		.1byte	0x75
+ 246 0027 55          		.1byte	0x1
+ 247 0028 00 00 00 00 		.4byte	0x0
+ 248 002a 00 00 00 00 		.4byte	0x0
+ 249 002c 00 02       	.LLST4:
+ 250 002d 75          		.4byte	.LVL2
+ 251 002d 01          		.4byte	.LVL3
+ 252 002e 00 00 00 00 		.2byte	0x1
+ 253 0030 00 00 00 00 		.1byte	0x51
+ 254                 		.4byte	.LVL3
+ 255 0032 00 00 00 00 		.4byte	.LVL5
+ 256 0034 00 00 00 00 		.2byte	0x1
+ 257 0036 00 01       		.1byte	0x57
+ 258 0037 51          		.4byte	0x0
+ 259 0037 00 00 00 00 		.4byte	0x0
+ 260 0039 00 00 00 00 	.LLST5:
+ 261 003b 00 01       		.4byte	.LVL2
+ 262 003c 57          		.4byte	.LVL4
+ 263 003d 00 00 00 00 		.2byte	0x1
+ 264 003f 00 00 00 00 		.1byte	0x50
+ 265                 		.4byte	.LVL4
+ 266 0041 00 00 00 00 		.4byte	.LVL6
+ 267 0043 00 00 00 00 		.2byte	0x1
+ 268 0045 00 01       		.1byte	0x59
+ 269 0046 50          		.4byte	0x0
+ 270 0046 00 00 00 00 		.4byte	0x0
+ 271 0048 00 00 00 00 	.LLST6:
+ 272 004a 00 01       		.4byte	.LFB4
+ 273 004b 59          		.4byte	.LCFI2
+ 274 004c 00 00 00 00 		.2byte	0x1
+ 275 004e 00 00 00 00 		.1byte	0x55
+ 276                 		.4byte	.LCFI2
+ 277 0050 00 00 00 00 		.4byte	.LFE4
+ 278 0052 00 00 00 00 		.2byte	0x2
+ 279 0054 00 01       		.1byte	0x75
+ 280 0055 55          		.1byte	0x2
+ 281 0055 00 00 00 00 		.4byte	0x0
+ 282 0057 00 00 00 00 		.4byte	0x0
+ 283 0059 00 02       	.LLST7:
+ 284 005a 75          		.4byte	.LVL7
+ 285 005b 02          		.4byte	.LVL8
+ 286 005b 00 00 00 00 		.2byte	0x1
+ 287 005d 00 00 00 00 		.1byte	0x51
+ 288                 		.4byte	0x0
+ 289 005f 00 00 00 00 		.4byte	0x0
+ 290 0061 00 00 00 00 	.LLST8:
+ 291 0063 00 01       		.4byte	.LVL7
+ 292 0064 51          		.4byte	.LVL8
+ 293 0065 00 00 00 00 		.2byte	0x1
+ 294 0067 00 00 00 00 		.1byte	0x50
+ 295                 		.4byte	0x0
+ 296 0069 00 00 00 00 		.4byte	0x0
+ 297 006b 00 00 00 00 	.LLST10:
+ 298 006d 00 01       		.4byte	.LVL9
+ 299 006e 50          		.4byte	.LVL10
+ 300 006e 00 00 00 00 		.2byte	0x1
+ 301 0070 00 00 00 00 		.1byte	0x51
+ 302                 		.4byte	0x0
+ 303 0072 00 00 00 00 		.4byte	0x0
+ 304 0074 00 00 00 00 		.file 2 "C:/CSR_uEnergy_SDK-2.5.1/tools/include/CSR101x_A05/types.h"
+ 305 0076 00 01       		.section	.debug_info
+ 306 0077 51          		.4byte	0x1ea
+ 307 0078 00 00 00 00 		.2byte	0x2
+ 308 007a 00 00 00 00 		.4byte	.Ldebug_abbrev0
+ 309                 		.1byte	0x4
+ 310                 		.1byte	0x1
+ 311 0000 00 00 01 EA 		.4byte	.LASF23
+ 312 0002 00 02       		.1byte	0x1
+ 313 0003 00 00 00 00 		.4byte	.LASF24
+ 314 0005 04          		.4byte	.LASF25
+ 315 0005 01          		.4byte	0x0
+ 316 0006 00 00 00 00 		.4byte	0x0
+ 317 0008 01          		.4byte	.Ldebug_ranges0+0x0
+ 318 0008 00 00 00 00 		.4byte	.Ldebug_line0
+ 319 000a 00 00 00 00 		.1byte	0x2
+ 320 000c 00 00 00 00 		.4byte	.LASF2
+ 321 000e 00 00 00 00 		.1byte	0x2
+ 322 0010 00 00 00 00 		.1byte	0x1e
+ 323 0012 00 00 00 00 		.4byte	0x34
+ 324 0014 02          		.1byte	0x3
+ 325 0015 00 00 00 00 		.1byte	0x2
+ 326 0017 02          		.1byte	0x8
+ 327 0017 1E          		.4byte	.LASF0
+ 328 0018 00 00 00 34 		.1byte	0x3
+ 329 001a 03          		.1byte	0x2
+ 330 001a 02          		.1byte	0x7
+ 331 001b 08          		.4byte	.LASF1
+ 332 001b 00 00 00 00 		.1byte	0x2
+ 333 001d 03          		.4byte	.LASF3
+ 334 001e 02          		.1byte	0x2
+ 335 001e 07          		.1byte	0x20
+ 336 001f 00 00 00 00 		.4byte	0x4d
+ 337 0021 02          		.1byte	0x3
+ 338 0021 00 00 00 00 		.1byte	0x4
+ 339 0023 02          		.1byte	0x7
+ 340 0024 20          		.4byte	.LASF4
+ 341 0024 00 00 00 4D 		.1byte	0x3
+ 342 0026 03          		.1byte	0x2
+ 343 0027 04          		.1byte	0x6
+ 344 0027 07          		.4byte	.LASF5
+ 345 0028 00 00 00 00 		.1byte	0x3
+ 346 002a 03          		.1byte	0x2
+ 347 002a 02          		.1byte	0x5
+ 348 002b 06          		.4byte	.LASF6
+ 349 002b 00 00 00 00 		.1byte	0x3
+ 350 002d 03          		.1byte	0x4
+ 351 002e 02          		.1byte	0x5
+ 352 002e 05          		.4byte	.LASF7
+ 353 002f 00 00 00 00 		.1byte	0x2
+ 354 0031 03          		.4byte	.LASF8
+ 355 0031 04          		.1byte	0x2
+ 356 0032 05          		.1byte	0x2a
+ 357 0032 00 00 00 00 		.4byte	0x74
+ 358 0034 02          		.1byte	0x3
+ 359 0035 00 00 00 00 		.1byte	0x2
+ 360 0037 02          		.1byte	0x7
+ 361 0037 2A          		.4byte	.LASF9
+ 362 0038 00 00 00 74 		.1byte	0x4
+ 363 003a 03          		.1byte	0x2
+ 364 003a 02          		.1byte	0x7
+ 365 003b 07          		.1byte	0x3
+ 366 003b 00 00 00 00 		.1byte	0x2
+ 367 003d 04          		.1byte	0x8
+ 368 003e 02          		.4byte	.LASF10
+ 369 003e 07          		.1byte	0x5
+ 370 003f 03          		.1byte	0x1
+ 371 003f 02          		.4byte	.LASF16
+ 372 0040 08          		.1byte	0x1
+ 373 0040 00 00 00 00 		.2byte	0x1a8
+ 374 0042 05          		.1byte	0x1
+ 375 0043 01          		.4byte	0x69
+ 376 0043 00 00 00 00 		.4byte	.LFB6
+ 377 0045 01          		.4byte	.LFE6
+ 378 0046 01 A8       		.4byte	.LLST0
+ 379 0047 01          		.4byte	0xf1
+ 380 0047 00 00 00 69 		.1byte	0x6
+ 381 0049 00 00 00 00 		.ascii "red\000"
+ 382 004b 00 00 00 00 		.1byte	0x1
+ 383 004d 00 00 00 00 		.2byte	0x1a6
+ 384 004f 00 00 00 F1 		.4byte	0x29
+ 385 0051 06          		.4byte	.LLST1
+ 386 0052 72 65 64 00 		.1byte	0x7
+ 387 0054 01          		.4byte	.LASF11
+ 388 0054 01 A6       		.1byte	0x1
+ 389 0055 00 00 00 29 		.2byte	0x1a6
+ 390 0057 00 00 00 00 		.4byte	0x29
+ 391 0059 07          		.4byte	.LLST2
+ 392 005a 00 00 00 00 		.1byte	0x8
+ 393 005c 01          		.4byte	.LASF12
+ 394 005c 01 A6       		.1byte	0x1
+ 395 005d 00 00 00 29 		.2byte	0x1a6
+ 396 005f 00 00 00 00 		.4byte	0x29
+ 397 0061 08          		.1byte	0x2
+ 398 0062 00 00 00 00 		.1byte	0x91
+ 399 0064 01          		.1byte	0x0
+ 400 0064 01 A6       		.1byte	0x8
+ 401 0065 00 00 00 29 		.4byte	.LASF13
+ 402 0067 02          		.1byte	0x1
+ 403 0068 91          		.2byte	0x1a7
+ 404 0068 00          		.4byte	0x29
+ 405 0069 08          		.1byte	0x2
+ 406 0069 00 00 00 00 		.1byte	0x91
+ 407 006b 01          		.1byte	0x1
+ 408 006c 01 A7       		.1byte	0x8
+ 409 006d 00 00 00 29 		.4byte	.LASF14
+ 410 006f 02          		.1byte	0x1
+ 411 006f 91          		.2byte	0x1a7
+ 412 0070 01          		.4byte	0x29
+ 413 0070 08          		.1byte	0x2
+ 414 0071 00 00 00 00 		.1byte	0x91
+ 415 0073 01          		.1byte	0x2
+ 416 0073 01 A7       		.1byte	0x0
+ 417 0074 00 00 00 29 		.1byte	0x9
+ 418 0076 02          		.1byte	0x1
+ 419 0077 91          		.4byte	.LASF20
+ 420 0077 02          		.1byte	0x1
+ 421 0078 00          		.2byte	0x151
+ 422 0078 09          		.1byte	0x1
+ 423 0079 01          		.4byte	.LFB5
+ 424 0079 00 00 00 00 		.4byte	.LFE5
+ 425 007b 01          		.4byte	.LLST3
+ 426 007c 01 51       		.4byte	0x156
+ 427 007d 01          		.1byte	0x6
+ 428 007d 00 00 00 00 		.ascii "red\000"
+ 429 007f 00 00 00 00 		.1byte	0x1
+ 430 0081 00 00 00 00 		.2byte	0x14f
+ 431 0083 00 00 01 56 		.4byte	0x29
+ 432 0085 06          		.4byte	.LLST4
+ 433 0086 72 65 64 00 		.1byte	0x7
+ 434 0088 01          		.4byte	.LASF11
+ 435 0088 01 4F       		.1byte	0x1
+ 436 0089 00 00 00 29 		.2byte	0x14f
+ 437 008b 00 00 00 00 		.4byte	0x29
+ 438 008d 07          		.4byte	.LLST5
+ 439 008e 00 00 00 00 		.1byte	0x8
+ 440 0090 01          		.4byte	.LASF12
+ 441 0090 01 4F       		.1byte	0x1
+ 442 0091 00 00 00 29 		.2byte	0x14f
+ 443 0093 00 00 00 00 		.4byte	0x29
+ 444 0095 08          		.1byte	0x2
+ 445 0096 00 00 00 00 		.1byte	0x91
+ 446 0098 01          		.1byte	0x0
+ 447 0098 01 4F       		.1byte	0x8
+ 448 0099 00 00 00 29 		.4byte	.LASF15
+ 449 009b 02          		.1byte	0x1
+ 450 009c 91          		.2byte	0x150
+ 451 009c 00          		.4byte	0x29
+ 452 009d 08          		.1byte	0x2
+ 453 009d 00 00 00 00 		.1byte	0x91
+ 454 009f 01          		.1byte	0x1
+ 455 00a0 01 50       		.1byte	0xa
+ 456 00a1 00 00 00 29 		.4byte	.LASF18
+ 457 00a3 02          		.1byte	0x1
+ 458 00a3 91          		.2byte	0x153
+ 459 00a4 01          		.4byte	0x42
+ 460 00a4 0A          		.1byte	0x0
+ 461 00a5 00 00 00 00 		.1byte	0x5
+ 462 00a7 01          		.1byte	0x1
+ 463 00a7 01 53       		.4byte	.LASF17
+ 464 00a8 00 00 00 42 		.1byte	0x1
+ 465 00aa 00          		.2byte	0x135
+ 466 00ab 05          		.1byte	0x1
+ 467 00ab 01          		.4byte	0x69
+ 468 00ac 00 00 00 00 		.4byte	.LFB4
+ 469 00ae 01          		.4byte	.LFE4
+ 470 00ae 01 35       		.4byte	.LLST6
+ 471 00af 01          		.4byte	0x1b0
+ 472 00b0 00 00 00 69 		.1byte	0x6
+ 473 00b2 00 00 00 00 		.ascii "red\000"
+ 474 00b4 00 00 00 00 		.1byte	0x1
+ 475 00b6 00 00 00 00 		.2byte	0x134
+ 476 00b8 00 00 01 B0 		.4byte	0x29
+ 477 00ba 06          		.4byte	.LLST7
+ 478 00ba 72 65 64 00 		.1byte	0x7
+ 479 00bc 01          		.4byte	.LASF11
+ 480 00bd 01 34       		.1byte	0x1
+ 481 00be 00 00 00 29 		.2byte	0x134
+ 482 00c0 00 00 00 00 		.4byte	0x29
+ 483 00c2 07          		.4byte	.LLST8
+ 484 00c2 00 00 00 00 		.1byte	0x8
+ 485 00c4 01          		.4byte	.LASF12
+ 486 00c5 01 34       		.1byte	0x1
+ 487 00c6 00 00 00 29 		.2byte	0x134
+ 488 00c8 00 00 00 00 		.4byte	0x29
+ 489 00ca 08          		.1byte	0x2
+ 490 00ca 00 00 00 00 		.1byte	0x91
+ 491 00cc 01          		.1byte	0x0
+ 492 00cd 01 34       		.1byte	0xa
+ 493 00ce 00 00 00 29 		.4byte	.LASF19
+ 494 00d0 02          		.1byte	0x1
+ 495 00d0 91          		.2byte	0x136
+ 496 00d1 00          		.4byte	0x69
+ 497 00d1 0A          		.1byte	0x0
+ 498 00d2 00 00 00 00 		.1byte	0xb
+ 499 00d4 01          		.1byte	0x1
+ 500 00d4 01 36       		.4byte	.LASF21
+ 501 00d5 00 00 00 69 		.1byte	0x1
+ 502 00d7 00          		.2byte	0x11f
+ 503 00d8 0B          		.1byte	0x1
+ 504 00d8 01          		.4byte	.LFB3
+ 505 00d9 00 00 00 00 		.4byte	.LFE3
+ 506 00db 01          		.1byte	0x1
+ 507 00db 01 1F       		.1byte	0x55
+ 508 00dc 01          		.4byte	0x1d9
+ 509 00dd 00 00 00 00 		.1byte	0x7
+ 510 00df 00 00 00 00 		.4byte	.LASF22
+ 511 00e1 01          		.1byte	0x1
+ 512 00e1 55          		.2byte	0x11e
+ 513 00e2 00 00 01 D9 		.4byte	0x69
+ 514 00e4 07          		.4byte	.LLST10
+ 515 00e4 00 00 00 00 		.1byte	0x0
+ 516 00e6 01          		.1byte	0xc
+ 517 00e7 01 1E       		.1byte	0x1
+ 518 00e8 00 00 00 69 		.4byte	.LASF26
+ 519 00ea 00 00 00 00 		.1byte	0x1
+ 520 00ec 00          		.2byte	0x107
+ 521 00ec 0C          		.1byte	0x1
+ 522 00ed 01          		.4byte	.LFB2
+ 523 00ed 00 00 00 00 		.4byte	.LFE2
+ 524 00ef 01          		.1byte	0x1
+ 525 00f0 01 07       		.1byte	0x55
+ 526 00f1 01          		.1byte	0x0
+ 527 00f1 00 00 00 00 		.section	.debug_abbrev
+ 528 00f3 00 00 00 00 		.1byte	0x1
+ 529 00f5 01          		.1byte	0x11
+ 530 00f6 55          		.1byte	0x1
+ 531 00f6 00          		.1byte	0x25
+ 532                 		.1byte	0xe
+ 533 0000 01          		.1byte	0x13
+ 534 0000 11          		.1byte	0xb
+ 535 0001 01          		.1byte	0x3
+ 536 0001 25          		.1byte	0xe
+ 537 0002 0E          		.1byte	0x1b
+ 538 0002 13          		.1byte	0xe
+ 539 0003 0B          		.1byte	0x11
+ 540 0003 03          		.1byte	0x1
+ 541 0004 0E          		.1byte	0x52
+ 542 0004 1B          		.1byte	0x1
+ 543 0005 0E          		.1byte	0x55
+ 544 0005 11          		.1byte	0x6
+ 545 0006 01          		.1byte	0x10
+ 546 0006 52          		.1byte	0x6
+ 547 0007 01          		.1byte	0x0
+ 548 0007 55          		.1byte	0x0
+ 549 0008 06          		.1byte	0x2
+ 550 0008 10          		.1byte	0x16
+ 551 0009 06          		.1byte	0x0
+ 552 0009 00          		.1byte	0x3
+ 553 000a 00          		.1byte	0xe
+ 554 000a 02          		.1byte	0x3a
+ 555 000b 16          		.1byte	0xb
+ 556 000b 00          		.1byte	0x3b
+ 557 000c 03          		.1byte	0xb
+ 558 000c 0E          		.1byte	0x49
+ 559 000d 3A          		.1byte	0x13
+ 560 000d 0B          		.1byte	0x0
+ 561 000e 3B          		.1byte	0x0
+ 562 000e 0B          		.1byte	0x3
+ 563 000f 49          		.1byte	0x24
+ 564 000f 13          		.1byte	0x0
+ 565 0010 00          		.1byte	0xb
+ 566 0010 00          		.1byte	0xb
+ 567 0011 03          		.1byte	0x3e
+ 568 0011 24          		.1byte	0xb
+ 569 0012 00          		.1byte	0x3
+ 570 0012 0B          		.1byte	0xe
+ 571 0013 0B          		.1byte	0x0
+ 572 0013 3E          		.1byte	0x0
+ 573 0014 0B          		.1byte	0x4
+ 574 0014 03          		.1byte	0x24
+ 575 0015 0E          		.1byte	0x0
+ 576 0015 00          		.1byte	0xb
+ 577 0016 00          		.1byte	0xb
+ 578 0016 04          		.1byte	0x3e
+ 579 0017 24          		.1byte	0xb
+ 580 0017 00          		.1byte	0x0
+ 581 0018 0B          		.1byte	0x0
+ 582 0018 0B          		.1byte	0x5
+ 583 0019 3E          		.1byte	0x2e
+ 584 0019 0B          		.1byte	0x1
+ 585 001a 00          		.1byte	0x3f
+ 586 001a 00          		.1byte	0xc
+ 587 001b 05          		.1byte	0x3
+ 588 001b 2E          		.1byte	0xe
+ 589 001c 01          		.1byte	0x3a
+ 590 001c 3F          		.1byte	0xb
+ 591 001d 0C          		.1byte	0x3b
+ 592 001d 03          		.1byte	0x5
+ 593 001e 0E          		.1byte	0x27
+ 594 001e 3A          		.1byte	0xc
+ 595 001f 0B          		.1byte	0x49
+ 596 001f 3B          		.1byte	0x13
+ 597 0020 05          		.1byte	0x11
+ 598 0020 27          		.1byte	0x1
+ 599 0021 0C          		.1byte	0x12
+ 600 0021 49          		.1byte	0x1
+ 601 0022 13          		.1byte	0x40
+ 602 0022 11          		.1byte	0x6
+ 603 0023 01          		.1byte	0x1
+ 604 0023 12          		.1byte	0x13
+ 605 0024 01          		.1byte	0x0
+ 606 0024 40          		.1byte	0x0
+ 607 0025 06          		.1byte	0x6
+ 608 0025 01          		.1byte	0x5
+ 609 0026 13          		.1byte	0x0
+ 610 0026 00          		.1byte	0x3
+ 611 0027 00          		.1byte	0x8
+ 612 0027 06          		.1byte	0x3a
+ 613 0028 05          		.1byte	0xb
+ 614 0028 00          		.1byte	0x3b
+ 615 0029 03          		.1byte	0x5
+ 616 0029 08          		.1byte	0x49
+ 617 002a 3A          		.1byte	0x13
+ 618 002a 0B          		.1byte	0x2
+ 619 002b 3B          		.1byte	0x6
+ 620 002b 05          		.1byte	0x0
+ 621 002c 49          		.1byte	0x0
+ 622 002c 13          		.1byte	0x7
+ 623 002d 02          		.1byte	0x5
+ 624 002d 06          		.1byte	0x0
+ 625 002e 00          		.1byte	0x3
+ 626 002e 00          		.1byte	0xe
+ 627 002f 07          		.1byte	0x3a
+ 628 002f 05          		.1byte	0xb
+ 629 0030 00          		.1byte	0x3b
+ 630 0030 03          		.1byte	0x5
+ 631 0031 0E          		.1byte	0x49
+ 632 0031 3A          		.1byte	0x13
+ 633 0032 0B          		.1byte	0x2
+ 634 0032 3B          		.1byte	0x6
+ 635 0033 05          		.1byte	0x0
+ 636 0033 49          		.1byte	0x0
+ 637 0034 13          		.1byte	0x8
+ 638 0034 02          		.1byte	0x5
+ 639 0035 06          		.1byte	0x0
+ 640 0035 00          		.1byte	0x3
+ 641 0036 00          		.1byte	0xe
+ 642 0036 08          		.1byte	0x3a
+ 643 0037 05          		.1byte	0xb
+ 644 0037 00          		.1byte	0x3b
+ 645 0038 03          		.1byte	0x5
+ 646 0038 0E          		.1byte	0x49
+ 647 0039 3A          		.1byte	0x13
+ 648 0039 0B          		.1byte	0x2
+ 649 003a 3B          		.1byte	0xa
+ 650 003a 05          		.1byte	0x0
+ 651 003b 49          		.1byte	0x0
+ 652 003b 13          		.1byte	0x9
+ 653 003c 02          		.1byte	0x2e
+ 654 003c 0A          		.1byte	0x1
+ 655 003d 00          		.1byte	0x3f
+ 656 003d 00          		.1byte	0xc
+ 657 003e 09          		.1byte	0x3
+ 658 003e 2E          		.1byte	0xe
+ 659 003f 01          		.1byte	0x3a
+ 660 003f 3F          		.1byte	0xb
+ 661 0040 0C          		.1byte	0x3b
+ 662 0040 03          		.1byte	0x5
+ 663 0041 0E          		.1byte	0x27
+ 664 0041 3A          		.1byte	0xc
+ 665 0042 0B          		.1byte	0x11
+ 666 0042 3B          		.1byte	0x1
+ 667 0043 05          		.1byte	0x12
+ 668 0043 27          		.1byte	0x1
+ 669 0044 0C          		.1byte	0x40
+ 670 0044 11          		.1byte	0x6
+ 671 0045 01          		.1byte	0x1
+ 672 0045 12          		.1byte	0x13
+ 673 0046 01          		.1byte	0x0
+ 674 0046 40          		.1byte	0x0
+ 675 0047 06          		.1byte	0xa
+ 676 0047 01          		.1byte	0x34
+ 677 0048 13          		.1byte	0x0
+ 678 0048 00          		.1byte	0x3
+ 679 0049 00          		.1byte	0xe
+ 680 0049 0A          		.1byte	0x3a
+ 681 004a 34          		.1byte	0xb
+ 682 004a 00          		.1byte	0x3b
+ 683 004b 03          		.1byte	0x5
+ 684 004b 0E          		.1byte	0x49
+ 685 004c 3A          		.1byte	0x13
+ 686 004c 0B          		.1byte	0x0
+ 687 004d 3B          		.1byte	0x0
+ 688 004d 05          		.1byte	0xb
+ 689 004e 49          		.1byte	0x2e
+ 690 004e 13          		.1byte	0x1
+ 691 004f 00          		.1byte	0x3f
+ 692 004f 00          		.1byte	0xc
+ 693 0050 0B          		.1byte	0x3
+ 694 0050 2E          		.1byte	0xe
+ 695 0051 01          		.1byte	0x3a
+ 696 0051 3F          		.1byte	0xb
+ 697 0052 0C          		.1byte	0x3b
+ 698 0052 03          		.1byte	0x5
+ 699 0053 0E          		.1byte	0x27
+ 700 0053 3A          		.1byte	0xc
+ 701 0054 0B          		.1byte	0x11
+ 702 0054 3B          		.1byte	0x1
+ 703 0055 05          		.1byte	0x12
+ 704 0055 27          		.1byte	0x1
+ 705 0056 0C          		.1byte	0x40
+ 706 0056 11          		.1byte	0xa
+ 707 0057 01          		.1byte	0x1
+ 708 0057 12          		.1byte	0x13
+ 709 0058 01          		.1byte	0x0
+ 710 0058 40          		.1byte	0x0
+ 711 0059 0A          		.1byte	0xc
+ 712 0059 01          		.1byte	0x2e
+ 713 005a 13          		.1byte	0x0
+ 714 005a 00          		.1byte	0x3f
+ 715 005b 00          		.1byte	0xc
+ 716 005b 0C          		.1byte	0x3
+ 717 005c 2E          		.1byte	0xe
+ 718 005c 00          		.1byte	0x3a
+ 719 005d 3F          		.1byte	0xb
+ 720 005d 0C          		.1byte	0x3b
+ 721 005e 03          		.1byte	0x5
+ 722 005e 0E          		.1byte	0x27
+ 723 005f 3A          		.1byte	0xc
+ 724 005f 0B          		.1byte	0x11
+ 725 0060 3B          		.1byte	0x1
+ 726 0060 05          		.1byte	0x12
+ 727 0061 27          		.1byte	0x1
+ 728 0061 0C          		.1byte	0x40
+ 729 0062 11          		.1byte	0xa
+ 730 0062 01          		.1byte	0x0
+ 731 0063 12          		.1byte	0x0
+ 732 0063 01          		.1byte	0x0
+ 733 0064 40          		.section	.debug_pubnames,"",@progbits
+ 734 0064 0A          		.4byte	0x90
+ 735 0065 00          		.2byte	0x2
+ 736 0065 00          		.4byte	.Ldebug_info0
+ 737 0066 00          		.4byte	0x1ee
+ 738                 		.4byte	0x85
+ 739 0000 00 00 00 90 		.ascii "LightHardwareSetBlink\000"
+ 740 0002 00 02       		.4byte	0xf1
+ 741 0003 00 00 00 00 		.ascii "LightHardwareSetLevel\000"
+ 742 0005 00 00 01 EE 		.4byte	0x156
+ 743 0007 00 00 00 85 		.ascii "LightHardwareSetColor\000"
+ 744 0009 4C 69 67 68 		.4byte	0x1b0
+ 744      74 48 61 72 
+ 744      64 77 61 72 
+ 744      65 53 65 74 
+ 744      42 6C 69 6E 
+ 745 0014 00 00 00 F1 		.ascii "LightHardwarePowerControl\000"
+ 746 0016 4C 69 67 68 		.4byte	0x1d9
+ 746      74 48 61 72 
+ 746      64 77 61 72 
+ 746      65 53 65 74 
+ 746      4C 65 76 65 
+ 747 0021 00 00 01 56 		.ascii "LightHardwareInit\000"
+ 748 0023 4C 69 67 68 		.4byte	0x0
+ 748      74 48 61 72 
+ 748      64 77 61 72 
+ 748      65 53 65 74 
+ 748      43 6F 6C 6F 
+ 749 002e 00 00 01 B0 		.section	.debug_aranges,"",@progbits
+ 750 0030 4C 69 67 68 		.4byte	0x3c
+ 750      74 48 61 72 
+ 750      64 77 61 72 
+ 750      65 50 6F 77 
+ 750      65 72 43 6F 
+ 751 003d 00 00 01 D9 		.2byte	0x2
+ 752 003f 4C 69 67 68 		.4byte	.Ldebug_info0
+ 752      74 48 61 72 
+ 752      64 77 61 72 
+ 752      65 49 6E 69 
+ 752      74 00 
+ 753 0048 00 00 00 00 		.1byte	0x4
+ 754                 		.1byte	0x0
+ 755 0000 00 00 00 3C 		.2byte	0x0
+ 756 0002 00 02       		.2byte	0x0
+ 757 0003 00 00 00 00 		.4byte	.LFB6
+ 758 0005 04          		.4byte	.LFE6-.LFB6
+ 759 0005 00          		.4byte	.LFB5
+ 760 0006 00 00       		.4byte	.LFE5-.LFB5
+ 761 0007 00 00       		.4byte	.LFB4
+ 762 0008 00 00 00 00 		.4byte	.LFE4-.LFB4
+ 763 000a 00 00 00 00 		.4byte	.LFB3
+ 764 000c 00 00 00 00 		.4byte	.LFE3-.LFB3
+ 765 000e 00 00 00 00 		.4byte	.LFB2
+ 766 0010 00 00 00 00 		.4byte	.LFE2-.LFB2
+ 767 0012 00 00 00 00 		.4byte	0x0
+ 768 0014 00 00 00 00 		.4byte	0x0
+ 769 0016 00 00 00 00 		.section	.debug_ranges,"",@progbits
+ 770 0018 00 00 00 00 	.Ldebug_ranges0:
+ 771 001a 00 00 00 00 		.4byte	.Ltext0
+ 772 001c 00 00 00 00 		.4byte	.Letext0
+ 773 001e 00 00 00 00 		.4byte	.LFB6
+ 774                 		.4byte	.LFE6
+ 775                 		.4byte	.LFB5
+ 776 0000 00 00 00 00 		.4byte	.LFE5
+ 777 0002 00 00 00 00 		.4byte	.LFB4
+ 778 0004 00 00 00 00 		.4byte	.LFE4
+ 779 0006 00 00 00 00 		.4byte	.LFB3
+ 780 0008 00 00 00 00 		.4byte	.LFE3
+ 781 000a 00 00 00 00 		.4byte	.LFB2
+ 782 000c 00 00 00 00 		.4byte	.LFE2
+ 783 000e 00 00 00 00 		.4byte	0x0
+ 784 0010 00 00 00 00 		.4byte	0x0
+ 785 0012 00 00 00 00 		.section	.debug_str,"MS",@progbits,1
+ 786 0014 00 00 00 00 	.LASF3:
+ 787 0016 00 00 00 00 		.ascii "uint32\000"
+ 788 0018 00 00 00 00 	.LASF26:
+ 789 001a 00 00 00 00 		.ascii "LightHardwareInit\000"
+ 790                 	.LASF12:
+ 791                 		.ascii "blue\000"
+ 792 0000 75 69 6E 74 	.LASF18:
+ 792      33 32 00 
+ 793                 		.ascii "temp\000"
+ 794 0003 4C 69 67 68 	.LASF20:
+ 794      74 48 61 72 
+ 794      64 77 61 72 
+ 794      65 49 6E 69 
+ 794      74 00 
+ 795                 		.ascii "LightHardwareSetLevel\000"
+ 796 000c 62 6C 75 65 	.LASF17:
+ 796      00 
+ 797                 		.ascii "LightHardwareSetColor\000"
+ 798 000f 74 65 6D 70 	.LASF19:
+ 798      00 
+ 799                 		.ascii "status\000"
+ 800 0011 4C 69 67 68 	.LASF2:
+ 800      74 48 61 72 
+ 800      64 77 61 72 
+ 800      65 53 65 74 
+ 800      4C 65 76 65 
+ 801                 		.ascii "uint8\000"
+ 802 001c 4C 69 67 68 	.LASF4:
+ 802      74 48 61 72 
+ 802      64 77 61 72 
+ 802      65 53 65 74 
+ 802      43 6F 6C 6F 
+ 803                 		.ascii "long unsigned int\000"
+ 804 0027 73 74 61 74 	.LASF24:
+ 804      75 73 00 
+ 805                 		.ascii "csr_mesh_light_hw.c\000"
+ 806 002b 75 69 6E 74 	.LASF11:
+ 806      38 00 
+ 807                 		.ascii "green\000"
+ 808 002e 6C 6F 6E 67 	.LASF8:
+ 808      20 75 6E 73 
+ 808      69 67 6E 65 
+ 808      64 20 69 6E 
+ 808      74 00 
+ 809                 		.ascii "bool\000"
+ 810 0037 63 73 72 5F 	.LASF16:
+ 810      6D 65 73 68 
+ 810      5F 6C 69 67 
+ 810      68 74 5F 68 
+ 810      77 2E 63 00 
+ 811                 		.ascii "LightHardwareSetBlink\000"
+ 812 0041 67 72 65 65 	.LASF0:
+ 812      6E 00 
+ 813                 		.ascii "unsigned char\000"
+ 814 0044 62 6F 6F 6C 	.LASF10:
+ 814      00 
+ 815                 		.ascii "char\000"
+ 816 0046 4C 69 67 68 	.LASF14:
+ 816      74 48 61 72 
+ 816      64 77 61 72 
+ 816      65 53 65 74 
+ 816      42 6C 69 6E 
+ 817                 		.ascii "off_time\000"
+ 818 0051 75 6E 73 69 	.LASF7:
+ 818      67 6E 65 64 
+ 818      20 63 68 61 
+ 818      72 00 
+ 819                 		.ascii "long int\000"
+ 820 0058 63 68 61 72 	.LASF23:
+ 820      00 
+ 821                 		.ascii "GNU C 4.3.4 CSR version 28 for xap [2131110]\000"
+ 822 005b 6F 66 66 5F 	.LASF22:
+ 822      74 69 6D 65 
+ 822      00 
+ 823                 		.ascii "power_on\000"
+ 824 005f 6C 6F 6E 67 	.LASF1:
+ 824      20 69 6E 74 
+ 824      00 
+ 825                 		.ascii "short unsigned int\000"
+ 826 0064 47 4E 55 20 	.LASF5:
+ 826      43 20 34 2E 
+ 826      33 2E 34 20 
+ 826      43 53 52 20 
+ 826      76 65 72 73 
+ 827                 		.ascii "signed char\000"
+ 828 007a 70 6F 77 65 	.LASF9:
+ 828      72 5F 6F 6E 
+ 828      00 
+ 829                 		.ascii "unsigned int\000"
+ 830 007f 73 68 6F 72 	.LASF25:
+ 830      74 20 75 6E 
+ 830      73 69 67 6E 
+ 830      65 64 20 69 
+ 830      6E 74 00 
+ 831                 		.ascii "C:\\csrmesh_2_0_node\\applications\\CSRmeshLight2\000"
+ 832 0088 73 69 67 6E 	.LASF21:
+ 832      65 64 20 63 
+ 832      68 61 72 00 
+ 833                 		.ascii "LightHardwarePowerControl\000"
+ 834 008e 75 6E 73 69 	.LASF13:
+ 834      67 6E 65 64 
+ 834      20 69 6E 74 
+ 834      00 
+ 835                 		.ascii "on_time\000"
+ 836 0095 43 3A 5C 63 	.LASF15:
+ 836      73 72 6D 65 
+ 836      73 68 5F 32 
+ 836      5F 30 5F 6E 
+ 836      6F 64 65 5C 
+ 837                 		.ascii "level\000"
+ 838 00ac 4C 69 67 68 	.LASF6:
+ 838      74 48 61 72 
+ 838      64 77 61 72 
+ 838      65 50 6F 77 
+ 838      65 72 43 6F 
+ 839                 		.ascii "short int\000"
+ 840 00b9 6F 6E 5F 74 		.ident	"GCC: (GNU) 4.3.4 CSR version 28 for xap [2131110]"
+ 840      69 6D 65 00 
+ 841                 	...
